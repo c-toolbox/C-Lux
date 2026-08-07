@@ -1,0 +1,7 @@
+{
+  "nLights": 512,
+  "server": {
+    "tick-rate": 30,
+    "port": 8787
+  }
+}
