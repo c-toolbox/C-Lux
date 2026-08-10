@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ActionIcon,
   Alert,
@@ -149,6 +150,9 @@ function App() {
             <Title order={1}>C-Lux</Title>
             <Text c={'dimmed'}>Lighting pattern control</Text>
           </div>
+          <Button component={Link} to={'/'} variant={'default'}>
+            Home
+          </Button>
         </Group>
 
         <Group justify={'space-between'}>
