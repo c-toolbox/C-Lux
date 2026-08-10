@@ -4,11 +4,21 @@ import express from 'express';
 import config from '../config.json' with { type: 'json' };
 
 import { Pattern } from './patterns/pattern';
-import { type PatternParameters, patternByType } from './patterns/patterns';
-import { loadLibrary, loadPatterns, saveLibrary, savePatterns } from './storage';
+import {
+  type PatternParameters,
+  patternByType,
+  type StoredPatternSet
+} from './patterns/patterns';
+import {
+  loadLibrary,
+  loadPatterns,
+  patternFromParameters,
+  saveLibrary,
+  savePatterns
+} from './storage';
 
 let individualPatterns: Array<Pattern> = [];
-let library: Array<PatternParameters> = [];
+let library: Array<StoredPatternSet> = [];
 
 // Persist the current patterns to disk, logging any failure without crashing.
 function persist() {
@@ -136,13 +146,26 @@ function storedPatterns(_req: express.Request, res: express.Response) {
   res.json(library);
 }
 
-// Store the current active list into the library, replacing entries by name
-async function storePatterns(_req: express.Request, res: express.Response) {
-  const byName = new Map(library.map((p) => [p.name, p]));
-  for (const p of individualPatterns) {
-    byName.set(p.name, p.parameters() as PatternParameters);
+// Store the current active list as one named set, replacing any set with the same name
+async function storePatterns(req: express.Request, res: express.Response) {
+  const { name } = req.body ?? {};
+
+  if (typeof name !== 'string' || name.trim() === '') {
+    res.status(400).json({ error: `Missing name for stored pattern set` });
+    return;
   }
-  library = [...byName.values()];
+
+  const entry: StoredPatternSet = {
+    name,
+    patterns: individualPatterns.map((p) => p.parameters() as PatternParameters)
+  };
+
+  const index = library.findIndex((e) => e.name === name);
+  if (index === -1) {
+    library.push(entry);
+  } else {
+    library[index] = entry;
+  }
 
   try {
     await saveLibrary(library);
@@ -155,13 +178,41 @@ async function storePatterns(_req: express.Request, res: express.Response) {
   res.json(library);
 }
 
-// Remove a pattern from the library
+// Re-add every pattern from a stored set, skipping names that already exist
+function addStoredPatterns(req: express.Request, res: express.Response) {
+  const { name } = req.body ?? {};
+
+  const entry = library.find((e) => e.name === name);
+  if (!entry) {
+    res.status(404).json({ error: `No stored pattern set named: ${name}` });
+    return;
+  }
+
+  const existing = new Set(individualPatterns.map((p) => p.name));
+  for (const params of entry.patterns) {
+    if (existing.has(params.name)) continue;
+
+    const instance = patternFromParameters(params);
+    if (!instance) {
+      console.warn(`Skipping unknown stored pattern type: ${params.type}`);
+      continue;
+    }
+
+    individualPatterns.push(instance);
+    existing.add(instance.name);
+  }
+
+  persist();
+  res.json(individualPatterns.map((p) => p.parameters()));
+}
+
+// Remove a stored set from the library
 async function removeStoredPattern(req: express.Request, res: express.Response) {
   const { name } = req.body ?? {};
 
-  const index = library.findIndex((p) => p.name === name);
+  const index = library.findIndex((e) => e.name === name);
   if (index === -1) {
-    res.status(404).json({ error: `No stored pattern named: ${name}` });
+    res.status(404).json({ error: `No stored pattern set named: ${name}` });
     return;
   }
 
@@ -196,6 +247,7 @@ async function main() {
   app.get('/pattern', pattern);
   app.get('/stored_patterns', storedPatterns);
   app.post('/store_patterns', storePatterns);
+  app.post('/add_stored_patterns', addStoredPatterns);
   app.post('/remove_stored_pattern', removeStoredPattern);
 
   // Advance every pattern at a fixed rate so animations progress over time

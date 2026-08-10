@@ -11,13 +11,15 @@ import {
   Modal,
   Stack,
   Text,
+  TextInput,
   Title,
   Tooltip
 } from '@mantine/core';
 
 import {
   api,
-  type PatternParameters
+  type PatternParameters,
+  type StoredPatternSet
 } from './lib/api';
 import { rgbToHex } from './lib/color';
 
@@ -46,7 +48,9 @@ function App() {
   const [namePlaceholder, setNamePlaceholder] = useState(randomName());
   const [editing, setEditing] = useState<PatternParameters | null>(null);
   const [storedOpen, setStoredOpen] = useState(false);
-  const [stored, setStored] = useState<PatternParameters[]>([]);
+  const [stored, setStored] = useState<StoredPatternSet[]>([]);
+  const [storeOpen, setStoreOpen] = useState(false);
+  const [storeName, setStoreName] = useState('');
 
   async function refresh() {
     try {
@@ -106,13 +110,16 @@ function App() {
     }
   }
 
-  function handleStore() {
-    run(() => api.storePatterns());
+  function handleStore(name: string) {
+    run(async () => {
+      await api.storePatterns(name);
+      setStoreOpen(false);
+    });
   }
 
-  function handleAddStored(p: PatternParameters) {
+  function handleAddStored(set: StoredPatternSet) {
     run(async () => {
-      await api.addPattern(p.type, toProps(fromParameters(p)));
+      await api.addStoredPatterns(set.name);
       setStoredOpen(false);
     });
   }
@@ -153,7 +160,10 @@ function App() {
             <Button
               variant={'default'}
               disabled={busy || patterns.length === 0}
-              onClick={handleStore}
+              onClick={() => {
+                setStoreName(randomName());
+                setStoreOpen(true);
+              }}
             >
               Store patterns
             </Button>
@@ -297,9 +307,9 @@ function App() {
           </Text>
         ) : (
           <Stack gap={'sm'}>
-            {stored.map((p) => (
+            {stored.map((set) => (
               <Group
-                key={p.name}
+                key={set.name}
                 justify={'space-between'}
                 p={'sm'}
                 style={{
@@ -307,22 +317,24 @@ function App() {
                   borderRadius: 8
                 }}
               >
-                <Group>
-                  <ColorSwatch color={rgbToHex(p.color)} />
-                  <div>
-                    <Text fw={600}>{p.name}</Text>
+                <div>
+                  <Text fw={600}>{set.name}</Text>
+                  <Group gap={4} mt={4}>
+                    {set.patterns.map((p) => (
+                      <ColorSwatch key={p.name} color={rgbToHex(p.color)} size={16} />
+                    ))}
                     <Badge variant={'light'} size={'sm'}>
-                      {p.type}
+                      {set.patterns.length} pattern(s)
                     </Badge>
-                  </div>
-                </Group>
+                  </Group>
+                </div>
 
                 <Group gap={'xs'}>
                   <Button
                     size={'xs'}
                     variant={'light'}
-                    disabled={busy || existingNames.includes(p.name)}
-                    onClick={() => handleAddStored(p)}
+                    disabled={busy}
+                    onClick={() => handleAddStored(set)}
                   >
                     Add
                   </Button>
@@ -331,7 +343,7 @@ function App() {
                     color={'red'}
                     variant={'light'}
                     disabled={busy}
-                    onClick={() => handleRemoveStored(p.name)}
+                    onClick={() => handleRemoveStored(set.name)}
                   >
                     Delete
                   </Button>
@@ -340,6 +352,27 @@ function App() {
             ))}
           </Stack>
         )}
+      </Modal>
+
+      <Modal
+        opened={storeOpen}
+        onClose={() => setStoreOpen(false)}
+        title={'Store patterns'}
+        centered
+      >
+        <Stack gap={'md'}>
+          <TextInput
+            label={'Name'}
+            value={storeName}
+            onChange={(e) => setStoreName(e.currentTarget.value)}
+          />
+          <Button
+            disabled={busy || storeName.trim() === ''}
+            onClick={() => handleStore(storeName.trim())}
+          >
+            Store {patterns.length} pattern(s)
+          </Button>
+        </Stack>
       </Modal>
     </Container>
   );

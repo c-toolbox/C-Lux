@@ -4,14 +4,16 @@ export type {
   PatternParameters,
   PatternProps,
   PatternType,
-  StaticProps
+  StaticProps,
+  StoredPatternSet
 } from '../../server/patterns/patterns';
 export { PATTERN_TYPES } from '../../server/patterns/patterns';
 
 import type {
   PatternParameters,
   PatternProps,
-  PatternType
+  PatternType,
+  StoredPatternSet
 } from '../../server/patterns/patterns';
 
 async function request<T>(url: string, body?: unknown): Promise<T> {
@@ -45,8 +47,11 @@ export const api = {
     request<{ name: string }>('/remove_new_pattern', { name }),
   reorderPatterns: (order: string[]) => request<string[]>('/reorder_patterns', { order }),
   getPattern: () => request<number[]>('/pattern'),
-  storedPatterns: () => request<PatternParameters[]>('/stored_patterns'),
-  storePatterns: () => request<PatternParameters[]>('/store_patterns', {}),
+  storedPatterns: () => request<StoredPatternSet[]>('/stored_patterns'),
+  storePatterns: (name: string) =>
+    request<StoredPatternSet[]>('/store_patterns', { name }),
+  addStoredPatterns: (name: string) =>
+    request<PatternParameters[]>('/add_stored_patterns', { name }),
   removeStoredPattern: (name: string) =>
     request<{ name: string }>('/remove_stored_pattern', { name })
 };
