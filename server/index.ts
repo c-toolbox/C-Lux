@@ -4,9 +4,18 @@ import express from 'express';
 import config from '../config.json' with { type: 'json' };
 
 import { Pattern } from './patterns/pattern';
-import { patternByType } from './patterns/patterns';
+import { type PatternParameters, patternByType } from './patterns/patterns';
+import { loadLibrary, loadPatterns, saveLibrary, savePatterns } from './storage';
 
 let individualPatterns: Array<Pattern> = [];
+let library: Array<PatternParameters> = [];
+
+// Persist the current patterns to disk, logging any failure without crashing.
+function persist() {
+  savePatterns(individualPatterns).catch((err) => {
+    console.error('Failed to save patterns:', err);
+  });
+}
 
 // Return the list of current patterns
 function currentPatterns(_req: express.Request, res: express.Response) {
@@ -39,6 +48,7 @@ function addNewPattern(req: express.Request, res: express.Response) {
 
   const instance = new cls(props);
   individualPatterns.push(instance);
+  persist();
   res.status(201).json({ name: instance.name });
 }
 
@@ -53,6 +63,7 @@ function removePattern(req: express.Request, res: express.Response) {
   }
 
   individualPatterns.splice(index, 1);
+  persist();
   res.json({ name });
 }
 
@@ -67,6 +78,7 @@ function updatePattern(req: express.Request, res: express.Response) {
   }
 
   instance.set(props);
+  persist();
   res.json(instance.parameters());
 }
 
@@ -91,6 +103,7 @@ function reorderPatterns(req: express.Request, res: express.Response) {
   }
 
   individualPatterns = reordered;
+  persist();
   res.json(individualPatterns.map((p) => p.name));
 }
 
@@ -118,7 +131,58 @@ function pattern(_req: express.Request, res: express.Response) {
   res.json(out.map(Math.round));
 }
 
-function main() {
+// Return the stored pattern library
+function storedPatterns(_req: express.Request, res: express.Response) {
+  res.json(library);
+}
+
+// Store the current active list into the library, replacing entries by name
+async function storePatterns(_req: express.Request, res: express.Response) {
+  const byName = new Map(library.map((p) => [p.name, p]));
+  for (const p of individualPatterns) {
+    byName.set(p.name, p.parameters() as PatternParameters);
+  }
+  library = [...byName.values()];
+
+  try {
+    await saveLibrary(library);
+  } catch (err) {
+    console.error('Failed to save library:', err);
+    res.status(500).json({ error: 'Failed to store patterns' });
+    return;
+  }
+
+  res.json(library);
+}
+
+// Remove a pattern from the library
+async function removeStoredPattern(req: express.Request, res: express.Response) {
+  const { name } = req.body ?? {};
+
+  const index = library.findIndex((p) => p.name === name);
+  if (index === -1) {
+    res.status(404).json({ error: `No stored pattern named: ${name}` });
+    return;
+  }
+
+  library.splice(index, 1);
+
+  try {
+    await saveLibrary(library);
+  } catch (err) {
+    console.error('Failed to save library:', err);
+    res.status(500).json({ error: 'Failed to remove stored pattern' });
+    return;
+  }
+
+  res.json({ name });
+}
+
+async function main() {
+  // Restore any patterns saved from a previous run before serving requests.
+  individualPatterns = await loadPatterns();
+  library = await loadLibrary();
+
   const app = express();
 
   app.use(cors());
@@ -130,6 +194,9 @@ function main() {
   app.post('/update_pattern', updatePattern);
   app.post('/reorder_patterns', reorderPatterns);
   app.get('/pattern', pattern);
+  app.get('/stored_patterns', storedPatterns);
+  app.post('/store_patterns', storePatterns);
+  app.post('/remove_stored_pattern', removeStoredPattern);
 
   // Advance every pattern at a fixed rate so animations progress over time
   let last = Date.now();
@@ -150,4 +217,7 @@ function main() {
 //
 // main()
 //
-main();
+main().catch((err) => {
+  console.error('Failed to start C-Lux server:', err);
+  process.exit(1);
+});

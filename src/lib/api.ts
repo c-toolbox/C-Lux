@@ -44,5 +44,9 @@ export const api = {
   removePattern: (name: string) =>
     request<{ name: string }>('/remove_new_pattern', { name }),
   reorderPatterns: (order: string[]) => request<string[]>('/reorder_patterns', { order }),
-  getPattern: () => request<number[]>('/pattern')
+  getPattern: () => request<number[]>('/pattern'),
+  storedPatterns: () => request<PatternParameters[]>('/stored_patterns'),
+  storePatterns: () => request<PatternParameters[]>('/store_patterns', {}),
+  removeStoredPattern: (name: string) =>
+    request<{ name: string }>('/remove_stored_pattern', { name })
 };

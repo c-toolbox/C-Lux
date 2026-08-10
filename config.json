@@ -1,7 +1,9 @@
 {
-  "nLights": 512,
+  "nLights": 142,
   "server": {
     "tick-rate": 30,
-    "port": 8787
+    "port": 8787,
+    "storage": "patterns.json",
+    "library": "library.json"
   }
 }

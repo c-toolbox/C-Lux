@@ -15,6 +15,9 @@ export class MovingGaussianPattern extends Pattern {
   sigma!: number;
   speed!: number;
 
+  // Carries the sub-step remainder between ticks so slow speeds still advance.
+  private offset = 0;
+
   constructor(props: MovingGaussianProps) {
     super(props);
     this.set(props);
@@ -47,23 +50,27 @@ export class MovingGaussianPattern extends Pattern {
     this.sigma = sigma ?? this.sigma;
     this.speed = speed ?? this.speed;
 
-    // @TODO Proper gaussian
-    this.state[-5] = { r: this.r, g: this.g, b: this.b };
-    this.state[-4] = { r: this.r, g: this.g, b: this.b };
-    this.state[-3] = { r: this.r, g: this.g, b: this.b };
-    this.state[-2] = { r: this.r, g: this.g, b: this.b };
-    this.state[-1] = { r: this.r, g: this.g, b: this.b };
-    this.state[0] = { r: this.r, g: this.g, b: this.b };
-    this.state[1] = { r: this.r, g: this.g, b: this.b };
-    this.state[2] = { r: this.r, g: this.g, b: this.b };
-    this.state[3] = { r: this.r, g: this.g, b: this.b };
-    this.state[3] = { r: this.r, g: this.g, b: this.b };
-    this.state[5] = { r: this.r, g: this.g, b: this.b };
-
-    // @TODO Don't start the traversal at zero but use the current location
+    // Gaussian bump centered on index 0; rotation moves it around the ring.
+    const n = this.state.length;
+    const twoSigmaSq = 2 * this.sigma * this.sigma;
+    for (let i = 0; i < n; i++) {
+      const d = Math.min(i, n - i); // circular distance from the center
+      const intensity =
+        twoSigmaSq > 0 ? Math.exp(-(d * d) / twoSigmaSq) : d === 0 ? 1 : 0;
+      this.state[i] = {
+        r: Math.round(this.r * intensity),
+        g: Math.round(this.g * intensity),
+        b: Math.round(this.b * intensity)
+      };
+    }
   }
 
   tick(dt: number) {
-    this.rotate(this.speed * dt);
+    this.offset += this.speed * dt;
+    const steps = Math.trunc(this.offset);
+    if (steps !== 0) {
+      this.offset -= steps;
+      this.rotate(steps);
+    }
   }
 }

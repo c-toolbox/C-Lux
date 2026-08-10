@@ -11,7 +11,10 @@ export default defineConfig({
       '/remove_new_pattern': 'http://localhost:8787',
       '/update_pattern': 'http://localhost:8787',
       '/reorder_patterns': 'http://localhost:8787',
-      '/pattern': 'http://localhost:8787'
+      '/pattern': 'http://localhost:8787',
+      '/stored_patterns': 'http://localhost:8787',
+      '/store_patterns': 'http://localhost:8787',
+      '/remove_stored_pattern': 'http://localhost:8787'
     }
   }
 });
