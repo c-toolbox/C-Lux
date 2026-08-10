@@ -5,10 +5,11 @@ import config from '../config.json' with { type: 'json' };
 
 import { Pattern } from './patterns/pattern';
 import {
-  type PatternParameters,
   patternByType,
+  type PatternParameters,
   type StoredPatternSet
 } from './patterns/patterns';
+import { startOutputs } from './output';
 import {
   loadLibrary,
   loadPatterns,
@@ -117,8 +118,8 @@ function reorderPatterns(req: express.Request, res: express.Response) {
   res.json(individualPatterns.map((p) => p.name));
 }
 
-// Blend the existing individual patterns and return the result
-function pattern(_req: express.Request, res: express.Response) {
+// Blend the existing individual patterns into a single flat RGB array
+function blendPatterns(): number[] {
   const layers = individualPatterns.map((p) => p.data());
   const length = layers[0]?.length ?? 0;
   const out = new Array<number>(length).fill(0);
@@ -138,7 +139,12 @@ function pattern(_req: express.Request, res: express.Response) {
     }
   }
 
-  res.json(out.map(Math.round));
+  return out.map(Math.round);
+}
+
+// Return the blended frame over HTTP
+function pattern(_req: express.Request, res: express.Response) {
+  res.json(blendPatterns());
 }
 
 // Return the stored pattern library
@@ -260,6 +266,9 @@ async function main() {
       p.tick(dt);
     }
   }, 1000 / config.server['tick-rate']);
+
+  // Share the blended frame over DMX-512 and/or Art-Net when enabled in config.json
+  await startOutputs(blendPatterns);
 
   app.listen(config.server.port, () => {
     console.log(`C-Lux listening on http://localhost:${config.server.port}`);

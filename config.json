@@ -5,5 +5,23 @@
     "port": 8787,
     "storage": "patterns.json",
     "library": "library.json"
+  },
+  "output": {
+    "dmx": {
+      "enabled": false,
+      "device": "COM3",
+      "startChannel": 1,
+      "refreshRate": 40
+    },
+    "artnet": {
+      "enabled": false,
+      "host": "255.255.255.255",
+      "port": 6454,
+      "net": 0,
+      "subnet": 0,
+      "universe": 0,
+      "startChannel": 1,
+      "refreshRate": 40
+    }
   }
 }

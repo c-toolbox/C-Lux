@@ -69,9 +69,52 @@ visualizer:
 
 ```json
 {
-  "nLights": 512
+  "nLights": 142,
+  "server": {
+    "tick-rate": 30,
+    "port": 8787,
+    "storage": "patterns.json",
+    "library": "library.json"
+  },
+  "output": {
+    "dmx": {
+      "enabled": false,
+      "device": "COM3",
+      "startChannel": 1,
+      "refreshRate": 40
+    },
+    "artnet": {
+      "enabled": false,
+      "host": "255.255.255.255",
+      "port": 6454,
+      "net": 0,
+      "subnet": 0,
+      "universe": 0,
+      "startChannel": 1,
+      "refreshRate": 40
+    }
+  }
 }
 ```
+
+### Sharing lighting data (DMX-512 & Art-Net)
+
+The blended frame can be streamed live to lighting hardware. Each output is independent and
+disabled by default; set `enabled` to `true` to turn one on. RGB values map to consecutive
+DMX channels starting at `startChannel`, and `refreshRate` is the send rate in frames per
+second.
+
+- **`output.dmx`** — physical DMX-512 through an Enttec-compatible USB widget (e.g. DMX USB
+  Pro). Set `device` to the serial port (`COM3` on Windows, `/dev/ttyUSB0` on Linux). One
+  universe (512 channels) is sent.
+- **`output.artnet`** — Art-Net over the network. Point `host` at a node's IP or a broadcast
+  address, and set the `net`/`subnet`/`universe` addressing. Frames longer than 512 channels
+  are split across consecutive universes automatically.
+
+> Enabling `output.dmx` loads the native `serialport` binding. If your package manager blocked
+> its install scripts, allow them (e.g. `npm install-scripts approve @serialport/bindings-cpp`)
+> before enabling DMX output.
+
 
 ## Adding a pattern
 
