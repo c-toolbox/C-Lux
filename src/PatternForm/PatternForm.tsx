@@ -51,7 +51,8 @@ export function fromParameters(p: PatternParameters): FormValues {
         name: p.name,
         hex: rgbToHex(p.color),
         sigma: p.sigma,
-        speed: p.speed
+        speed: p.speed,
+        origin: p.origin
       };
   }
 }

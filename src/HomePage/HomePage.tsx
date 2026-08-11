@@ -8,6 +8,7 @@ import {
   Container,
   Group,
   Loader,
+  Modal,
   Stack,
   Text,
   Title
@@ -23,6 +24,7 @@ export function HomePage() {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<StoredPatternSet | null>(null);
 
   async function refresh() {
     try {
@@ -52,6 +54,22 @@ export function HomePage() {
       setError(describeError(e));
     } finally {
       setBusy(false);
+    }
+  }
+
+  // Delete a stored set from the library.
+  async function remove(set: StoredPatternSet) {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.removeStoredPattern(set.name);
+      if (selected === set.name) setSelected(null);
+      await refresh();
+    } catch (e) {
+      setError(describeError(e));
+    } finally {
+      setBusy(false);
+      setConfirmRemove(null);
     }
   }
 
@@ -122,9 +140,19 @@ export function HomePage() {
                   </Group>
                 </div>
 
-                <Button disabled={busy} onClick={() => select(set)}>
-                  Select
-                </Button>
+                <Group gap={'xs'}>
+                  <Button disabled={busy} onClick={() => select(set)}>
+                    Select
+                  </Button>
+                  <Button
+                    color={'red'}
+                    variant={'light'}
+                    disabled={busy}
+                    onClick={() => setConfirmRemove(set)}
+                  >
+                    Remove
+                  </Button>
+                </Group>
               </Group>
             ))}
           </Stack>
@@ -132,6 +160,36 @@ export function HomePage() {
 
         <PatternVisualizer />
       </Stack>
+
+      <Modal
+        opened={confirmRemove !== null}
+        onClose={() => setConfirmRemove(null)}
+        title={'Remove stored pattern'}
+        centered
+      >
+        <Stack gap={'md'}>
+          <Text>
+            Are you sure you want to remove “{confirmRemove?.name}”? This cannot be
+            undone.
+          </Text>
+          <Group justify={'flex-end'}>
+            <Button
+              variant={'default'}
+              disabled={busy}
+              onClick={() => setConfirmRemove(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              color={'red'}
+              loading={busy}
+              onClick={() => confirmRemove && remove(confirmRemove)}
+            >
+              Remove
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Container>
   );
 }

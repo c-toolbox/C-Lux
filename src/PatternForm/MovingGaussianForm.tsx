@@ -16,6 +16,7 @@ export interface MovingGaussianFormValues extends CommonValues {
   type: 'MovingGaussian';
   sigma: number;
   speed: number | string;
+  origin: number | string;
 }
 
 export const MOVING_GAUSSIAN_DEFAULTS: MovingGaussianFormValues = {
@@ -23,12 +24,14 @@ export const MOVING_GAUSSIAN_DEFAULTS: MovingGaussianFormValues = {
   name: '',
   hex: '#4dabf7',
   sigma: 5,
-  speed: 10
+  speed: 10,
+  origin: 0
 };
 
 export function movingGaussianToProps(v: MovingGaussianFormValues): PatternProps {
   const speed = typeof v.speed === 'number' ? v.speed : Number(v.speed) || 0;
-  return { name: v.name, ...hexToRgb(v.hex), sigma: v.sigma, speed };
+  const origin = typeof v.origin === 'number' ? v.origin : Number(v.origin) || 0;
+  return { name: v.name, ...hexToRgb(v.hex), sigma: v.sigma, speed, origin };
 }
 
 export function MovingGaussianForm({
@@ -89,6 +92,14 @@ export function MovingGaussianForm({
           onChange={(v) => setValues((prev) => ({ ...prev, speed: v }))}
         />
       </Group>
+
+      <NumberInput
+        label={'Origin'}
+        min={0}
+        step={1}
+        value={values.origin}
+        onChange={(v) => setValues((prev) => ({ ...prev, origin: v }))}
+      />
 
       <Button
         onClick={() => onSubmit(values)}
