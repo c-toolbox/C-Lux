@@ -4,6 +4,7 @@ export type StaticProps = PatternBaseProps & Color;
 
 export class StaticPattern extends Pattern {
   static readonly Type = 'StaticPattern';
+  static readonly DisplayName = 'Static';
 
   r!: number;
   g!: number;
@@ -14,7 +15,11 @@ export class StaticPattern extends Pattern {
     this.set(props);
   }
 
-  parameters(): { name: string; type: typeof StaticPattern.Type; color: Color } {
+  parameters(): {
+    name: string;
+    type: typeof StaticPattern.Type;
+    color: Color;
+  } {
     return {
       name: this.name,
       type: StaticPattern.Type,
@@ -35,11 +40,11 @@ export class StaticPattern extends Pattern {
       state.r = this.r;
       state.g = this.g;
       state.b = this.b;
+      state.a = 1;
     }
   }
 
-  /* eslint-disable  @typescript-eslint/no-unused-vars */
-  tick(_dt: number) {
+  advance(_dt: number) {
     // noop
   }
 }

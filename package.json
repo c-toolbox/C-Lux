@@ -8,17 +8,22 @@
     "dev": "vite",
     "server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
-    "lint": "npx prettier . --check & eslint .",
-    "lint-fix": "npx prettier . --write & eslint . --fix",
+    "start": "tsx server/index.ts",
+    "lint": "npx prettier . --check && eslint .",
+    "lint-fix": "npx prettier . --write && eslint . --fix",
     "preview": "vite preview"
   },
   "dependencies": {
     "@mantine/core": "^9.5.1",
     "@mantine/hooks": "^9.5.1",
+    "@mantine/notifications": "^9.5.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2",
+    "serialport": "^13.0.0",
+    "tsx": "^4.23.10"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
@@ -35,11 +40,10 @@
     "eslint-plugin-react-refresh": "^0.4.9",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "globals": "^15.9.0",
-    "prettier": "^3.5.1",
     "postcss": "^8.5.26",
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
-    "tsx": "^4.23.10",
+    "prettier": "^3.5.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.0.1",
     "vite": "^8.2.0"

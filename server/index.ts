@@ -1,146 +1,223 @@
 import cors from 'cors';
 import express from 'express';
+import { existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import config from '../config.json' with { type: 'json' };
 
-import { Pattern } from './patterns/pattern';
-import { patternByType } from './patterns/patterns';
+import type { PatternProps } from './patterns/patterns';
+import { PatternEngine } from './engine';
+import { HttpError } from './errors';
+import { startOutputs } from './output';
+import { validateBoolean } from './validation';
 
-let individualPatterns: Array<Pattern> = [];
+const engine = new PatternEngine();
 
-// Return the list of current patterns
-function currentPatterns(_req: express.Request, res: express.Response) {
-  res.json(individualPatterns.map((p) => p.parameters()));
+// How often to send an SSE keep-alive comment so idle proxies don't close the stream.
+const SSE_HEARTBEAT_MS = 15000;
+
+//
+// Route handlers — thin adapters over the engine. Handlers throw `HttpError` on failure;
+// the error middleware below turns those into JSON responses.
+//
+
+function listPatterns(_req: express.Request, res: express.Response) {
+  res.json(engine.listPatterns());
 }
 
-// Add a new pattern
-function addNewPattern(req: express.Request, res: express.Response) {
-  const { type, props } = req.body ?? {};
-
-  const { name } = props ?? '';
-
-  if (name === '') {
-    res.status(400).json({ error: `Missing name for new pattern` });
-    return;
-  }
-
-  if (individualPatterns.find((p) => p.name === name)) {
-    res.status(400).json({ error: `Pattern Missing name for new pattern` });
-    return;
-  }
-
-  // Look up the registered pattern class by its type tag
-  const cls = patternByType(type);
-
-  if (!cls) {
-    res.status(400).json({ error: `Unknown pattern type: ${type}` });
-    return;
-  }
-
-  const instance = new cls(props);
-  individualPatterns.push(instance);
-  res.status(201).json({ name: instance.name });
+function addPattern(req: express.Request, res: express.Response) {
+  const { type, props } = (req.body ?? {}) as { type?: unknown; props?: unknown };
+  if (typeof type !== 'string') throw new HttpError(400, 'Missing pattern type');
+  res
+    .status(201)
+    .json(engine.addPattern(type, (props ?? {}) as PatternProps & { name?: string }));
 }
 
-// Remove an existing pattern
-function removePattern(req: express.Request, res: express.Response) {
-  const { name } = req.body ?? {};
-
-  const index = individualPatterns.findIndex((p) => p.name === name);
-  if (index === -1) {
-    res.status(404).json({ error: `No pattern named: ${name}` });
-    return;
-  }
-
-  individualPatterns.splice(index, 1);
-  res.json({ name });
-}
-
-// Update an existing pattern
 function updatePattern(req: express.Request, res: express.Response) {
-  const { name, props } = req.body ?? {};
+  const { props } = (req.body ?? {}) as { props?: unknown };
+  res.json(engine.updatePattern(String(req.params.name), props ?? {}));
+}
 
-  const instance = individualPatterns.find((p) => p.name === name);
-  if (!instance) {
-    res.status(404).json({ error: `No pattern named: ${name}` });
-    return;
-  }
-
-  instance.set(props);
-  res.json(instance.parameters());
+function removePattern(req: express.Request, res: express.Response) {
+  res.json(engine.removePattern(String(req.params.name)));
 }
 
 function reorderPatterns(req: express.Request, res: express.Response) {
-  const { order } = req.body ?? {};
-
-  if (!Array.isArray(order) || order.length !== individualPatterns.length) {
-    res.status(400).json({ error: `order must list every existing pattern name once` });
-    return;
-  }
-
-  const byName = new Map(individualPatterns.map((p) => [p.name, p]));
-  const reordered: Array<Pattern> = [];
-  for (const name of order) {
-    const instance = byName.get(name);
-    if (!instance) {
-      res.status(400).json({ error: `Unknown or duplicate pattern name: ${name}` });
-      return;
-    }
-    byName.delete(name);
-    reordered.push(instance);
-  }
-
-  individualPatterns = reordered;
-  res.json(individualPatterns.map((p) => p.name));
+  const { order } = (req.body ?? {}) as { order?: unknown };
+  res.json(engine.reorderPatterns(order));
 }
 
-// Blend the existing individual patterns and return the result
-function pattern(_req: express.Request, res: express.Response) {
-  const layers = individualPatterns.map((p) => p.data());
-  const length = layers[0]?.length ?? 0;
-  const out = new Array<number>(length).fill(0);
-
-  // Source-over alpha compositing, first pattern on the bottom, last on top
-  for (const layer of layers) {
-    for (let i = 0; i < length; i += 3) {
-      const sr = layer[i];
-      const sg = layer[i + 1];
-      const sb = layer[i + 2];
-
-      // No dedicated alpha channel, so derive it from pixel brightness
-      const alpha = Math.max(sr, sg, sb) / 255;
-      out[i] = sr * alpha + out[i] * (1 - alpha);
-      out[i + 1] = sg * alpha + out[i + 1] * (1 - alpha);
-      out[i + 2] = sb * alpha + out[i + 2] * (1 - alpha);
-    }
-  }
-
-  res.json(out.map(Math.round));
+function getPause(_req: express.Request, res: express.Response) {
+  res.json({ paused: engine.isPaused() });
 }
 
-function main() {
+function setPause(req: express.Request, res: express.Response) {
+  const { paused } = (req.body ?? {}) as { paused?: unknown };
+  res.json({ paused: engine.setPaused(validateBoolean(paused, 'paused')) });
+}
+
+function getBlackout(_req: express.Request, res: express.Response) {
+  res.json({ blackout: engine.isBlackout() });
+}
+
+function setBlackout(req: express.Request, res: express.Response) {
+  const { blackout } = (req.body ?? {}) as { blackout?: unknown };
+  res.json({ blackout: engine.setBlackout(validateBoolean(blackout, 'blackout')) });
+}
+
+function getHalfLight(_req: express.Request, res: express.Response) {
+  res.json({ halfLight: engine.isHalfLight() });
+}
+
+function setHalfLight(req: express.Request, res: express.Response) {
+  const { halfLight } = (req.body ?? {}) as { halfLight?: unknown };
+  res.json({ halfLight: engine.setHalfLight(validateBoolean(halfLight, 'halfLight')) });
+}
+
+function getFrame(_req: express.Request, res: express.Response) {
+  res.json(engine.blend());
+}
+
+// Durability of the pattern list on disk. Pattern mutations answer before the debounced
+// write runs, so this is how a client or monitor learns a save is failing.
+function getHealth(_req: express.Request, res: express.Response) {
+  const persistence = engine.persistenceStatus();
+  res.status(persistence.ok ? 200 : 503).json({ ok: persistence.ok, persistence });
+}
+
+// Force the pending write and answer 500 if it fails, so a caller can confirm its
+// changes actually reached the disk.
+async function persistPatterns(_req: express.Request, res: express.Response) {
+  res.json(await engine.flushPersist());
+}
+
+// Stream the blended frame to the client on every tick via Server-Sent Events.
+function streamFrames(req: express.Request, res: express.Response) {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    // Ask reverse proxies (e.g. nginx) not to buffer the stream.
+    'X-Accel-Buffering': 'no'
+  });
+  res.write(`data: ${JSON.stringify(engine.blend())}\n\n`);
+
+  const unsubscribe = engine.onFrame((frame) => {
+    res.write(`data: ${JSON.stringify(frame)}\n\n`);
+  });
+
+  // Keep idle proxies/load balancers from timing out the connection between frames.
+  const heartbeat = setInterval(() => res.write(':heartbeat\n\n'), SSE_HEARTBEAT_MS);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    unsubscribe();
+  });
+}
+
+function getLibrary(_req: express.Request, res: express.Response) {
+  res.json(engine.getLibrary());
+}
+
+async function storeCurrent(req: express.Request, res: express.Response) {
+  const { name } = (req.body ?? {}) as { name?: unknown };
+  res.json(await engine.storeCurrent(name));
+}
+
+function applyStored(req: express.Request, res: express.Response) {
+  res.json(engine.addStored(String(req.params.name)));
+}
+
+function replaceWithStored(req: express.Request, res: express.Response) {
+  res.json(engine.replaceWithStored(String(req.params.name)));
+}
+
+async function renameStored(req: express.Request, res: express.Response) {
+  const { newName } = (req.body ?? {}) as { newName?: unknown };
+  res.json(await engine.renameStored(String(req.params.name), newName));
+}
+
+async function removeStored(req: express.Request, res: express.Response) {
+  res.json(await engine.removeStored(String(req.params.name)));
+}
+
+async function main() {
+  await engine.load();
+
   const app = express();
 
   app.use(cors());
   app.use(express.json());
 
-  app.get('/current_patterns', currentPatterns);
-  app.post('/add_new_pattern', addNewPattern);
-  app.post('/remove_new_pattern', removePattern);
-  app.post('/update_pattern', updatePattern);
-  app.post('/reorder_patterns', reorderPatterns);
-  app.get('/pattern', pattern);
+  // All endpoints live under /api so a single proxy/CORS rule covers them.
+  const routes = express.Router();
+  routes.get('/patterns', listPatterns);
+  routes.post('/patterns', addPattern);
+  routes.post('/patterns/reorder', reorderPatterns);
+  routes.patch('/patterns/:name', updatePattern);
+  routes.delete('/patterns/:name', removePattern);
+  routes.get('/pause', getPause);
+  routes.put('/pause', setPause);
+  routes.get('/blackout', getBlackout);
+  routes.put('/blackout', setBlackout);
+  routes.get('/half-light', getHalfLight);
+  routes.put('/half-light', setHalfLight);
+  routes.get('/frame', getFrame);
+  routes.get('/stream', streamFrames);
+  routes.get('/health', getHealth);
+  routes.post('/persist', persistPatterns);
+  routes.get('/library', getLibrary);
+  routes.post('/library', storeCurrent);
+  routes.post('/library/:name/apply', applyStored);
+  routes.post('/library/:name/replace', replaceWithStored);
+  routes.patch('/library/:name', renameStored);
+  routes.delete('/library/:name', removeStored);
+  app.use('/api', routes);
 
-  // Advance every pattern at a fixed rate so animations progress over time
+  // Unknown API routes get a JSON 404 instead of falling through to the SPA.
+  app.use('/api', (_req: express.Request, res: express.Response) => {
+    res.status(404).json({ error: 'Not found' });
+  });
+
+  // In production, serve the built SPA from the same origin (skipped in dev, where Vite
+  // serves the frontend and proxies /api).
+  const distDir = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
+  if (existsSync(distDir)) {
+    app.use(express.static(distDir));
+    app.get('/*splat', (_req: express.Request, res: express.Response) => {
+      res.sendFile(resolve(distDir, 'index.html'));
+    });
+  }
+
+  // Centralized error handling: map `HttpError` to its status, everything else to 500.
+  app.use(
+    (
+      err: unknown,
+      _req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction
+    ) => {
+      if (err instanceof HttpError) {
+        res.status(err.status).json({ error: err.message });
+        return;
+      }
+      console.error('Unhandled request error:', err);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  );
+
+  // Advance every pattern at a fixed rate so animations progress over time.
   let last = Date.now();
   setInterval(() => {
     const now = Date.now();
     const dt = (now - last) / 1000;
     last = now;
-    for (const p of individualPatterns) {
-      p.tick(dt);
-    }
+    engine.tick(dt);
   }, 1000 / config.server['tick-rate']);
+
+  // Share the blended frame over DMX-512 and/or Art-Net when enabled in config.json.
+  await startOutputs(() => engine.blend());
 
   app.listen(config.server.port, () => {
     console.log(`C-Lux listening on http://localhost:${config.server.port}`);
@@ -150,4 +227,7 @@ function main() {
 //
 // main()
 //
-main();
+main().catch((err) => {
+  console.error('Failed to start C-Lux server:', err);
+  process.exit(1);
+});

@@ -6,8 +6,35 @@ export interface Color {
   b: number;
 }
 
+// Internal per-light color carrying an alpha channel in [0, 1] used for blending.
+export interface ColorAlpha extends Color {
+  a: number;
+}
+
 export interface PatternBaseProps {
   name: string;
+}
+
+// Convert HSV (h in degrees, s and v in [0, 1]) to 8-bit RGB.
+export function hsvToRgb(h: number, s: number, v: number): Color {
+  h = ((h % 360) + 360) % 360;
+  const c = v * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = v - c;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  if (h < 60) [r, g] = [c, x];
+  else if (h < 120) [r, g] = [x, c];
+  else if (h < 180) [g, b] = [c, x];
+  else if (h < 240) [g, b] = [x, c];
+  else if (h < 300) [r, b] = [x, c];
+  else [r, b] = [c, x];
+  return {
+    r: Math.round((r + m) * 255),
+    g: Math.round((g + m) * 255),
+    b: Math.round((b + m) * 255)
+  };
 }
 
 // This type is a lighting pattern that is shown on the light display. The `tick` function
@@ -15,14 +42,19 @@ export interface PatternBaseProps {
 // pattern itself is returned through the `data` function
 export abstract class Pattern {
   name: string;
-  state: Array<Color>;
+  state: Array<ColorAlpha>;
 
   previous_time: number = 0;
   current_time: number = 0;
 
   constructor({ name }: PatternBaseProps) {
     this.name = name;
-    this.state = Array.from({ length: config.nLights }, () => ({ r: 0, g: 0, b: 0 }));
+    this.state = Array.from({ length: config.nLights }, () => ({
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 0
+    }));
   }
 
   /**
@@ -37,19 +69,45 @@ export abstract class Pattern {
   abstract set(values: object): void;
 
   /**
+   * Inverse of `parameters()`: flatten a serialized parameter object back into the flat
+   * props a pattern constructor expects. `parameters()` nests color as `{ color: { r, g,
+   * b } }`, so undo that nesting and drop the `type` tag.
+   */
+  static propsFromParameters(params: object): object {
+    const { type, color, ...rest } = params as {
+      type?: string;
+      color?: Color;
+    } & Record<string, unknown>;
+    void type;
+    return { ...rest, ...color };
+  }
+
+  /**
    * Perform a single tick to support animations.
    *
    * @param dt The frame time, so how much time has passed (in seconds) since the previous
    *           update
    */
-  abstract tick(dt: number): void;
+  tick(dt: number): void {
+    this.advance(dt);
+  }
 
+  /**
+   * Advance the animation by one frame. Subclasses implement their motion here.
+   *
+   * @param dt The frame time, so how much time has passed (in seconds) since the previous
+   *           update
+   */
+  protected abstract advance(dt: number): void;
+
+  // Flat per-light values as [r, g, b, a, ...]; alpha lets the server blend layers.
   data(): Array<number> {
     const res: Array<number> = [];
     for (const c of this.state) {
       res.push(c.r);
       res.push(c.g);
       res.push(c.b);
+      res.push(c.a);
     }
     return res;
   }

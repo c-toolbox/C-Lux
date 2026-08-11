@@ -1,7 +1,31 @@
 {
-  "nLights": 512,
+  "nLights": 142,
   "server": {
     "tick-rate": 30,
-    "port": 8787
+    "port": 8787,
+    "storage": "patterns.json",
+    "library": "library.json",
+    "pause-transition": 1.0,
+    "blackout-transition": 1.0,
+    "half-light-transition": 1.0,
+    "half-light-feather": 0.5
+  },
+  "output": {
+    "dmx": {
+      "enabled": false,
+      "device": "COM3",
+      "startChannel": 1,
+      "refreshRate": 40
+    },
+    "artnet": {
+      "enabled": false,
+      "host": "255.255.255.255",
+      "port": 6454,
+      "net": 0,
+      "subnet": 0,
+      "universe": 0,
+      "startChannel": 1,
+      "refreshRate": 40
+    }
   }
 }

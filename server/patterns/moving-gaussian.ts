@@ -4,16 +4,22 @@ export type MovingGaussianProps = PatternBaseProps &
   Color & {
     sigma: number;
     speed: number;
+    origin: number;
   };
 
 export class MovingGaussianPattern extends Pattern {
   static readonly Type = 'MovingGaussian';
+  static readonly DisplayName = 'Moving Gaussian';
 
   r!: number;
   g!: number;
   b!: number;
   sigma!: number;
   speed!: number;
+  origin!: number;
+
+  // Carries the sub-step remainder between ticks so slow speeds still advance.
+  private offset = 0;
 
   constructor(props: MovingGaussianProps) {
     super(props);
@@ -26,6 +32,7 @@ export class MovingGaussianPattern extends Pattern {
     color: Color;
     sigma: number;
     speed: number;
+    origin: number;
   } {
     return {
       name: this.name,
@@ -36,34 +43,43 @@ export class MovingGaussianPattern extends Pattern {
         b: this.b
       },
       sigma: this.sigma,
-      speed: this.speed
+      speed: this.speed,
+      origin: this.origin
     };
   }
 
-  set({ r, g, b, sigma, speed }: Partial<MovingGaussianProps>) {
+  set({ r, g, b, sigma, speed, origin }: Partial<MovingGaussianProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
     this.sigma = sigma ?? this.sigma;
     this.speed = speed ?? this.speed;
+    this.origin = origin ?? this.origin;
 
-    // @TODO Proper gaussian
-    this.state[-5] = { r: this.r, g: this.g, b: this.b };
-    this.state[-4] = { r: this.r, g: this.g, b: this.b };
-    this.state[-3] = { r: this.r, g: this.g, b: this.b };
-    this.state[-2] = { r: this.r, g: this.g, b: this.b };
-    this.state[-1] = { r: this.r, g: this.g, b: this.b };
-    this.state[0] = { r: this.r, g: this.g, b: this.b };
-    this.state[1] = { r: this.r, g: this.g, b: this.b };
-    this.state[2] = { r: this.r, g: this.g, b: this.b };
-    this.state[3] = { r: this.r, g: this.g, b: this.b };
-    this.state[3] = { r: this.r, g: this.g, b: this.b };
-    this.state[5] = { r: this.r, g: this.g, b: this.b };
-
-    // @TODO Don't start the traversal at zero but use the current location
+    // Gaussian bump centered on the origin index; rotation moves it around the ring.
+    const n = this.state.length;
+    origin = n > 0 ? ((this.origin % n) + n) % n : 0;
+    const twoSigmaSq = 2 * this.sigma * this.sigma;
+    for (let i = 0; i < n; i++) {
+      const diff = Math.abs(i - origin);
+      const d = Math.min(diff, n - diff); // circular distance from the origin
+      const intensity =
+        twoSigmaSq > 0 ? Math.exp(-(d * d) / twoSigmaSq) : d === 0 ? 1 : 0;
+      this.state[i] = {
+        r: this.r,
+        g: this.g,
+        b: this.b,
+        a: intensity
+      };
+    }
   }
 
-  tick(dt: number) {
-    this.rotate(this.speed * dt);
+  advance(dt: number) {
+    this.offset += this.speed * dt;
+    const steps = Math.trunc(this.offset);
+    if (steps !== 0) {
+      this.offset -= steps;
+      this.rotate(steps);
+    }
   }
 }
