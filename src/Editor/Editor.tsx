@@ -1,42 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ActionIcon,
   Alert,
-  Badge,
   Button,
-  ColorSwatch,
   Container,
   Group,
   Loader,
-  Modal,
   Stack,
   Text,
-  TextInput,
   Title
 } from '@mantine/core';
 
-import names from '../assets/names.json' with { type: 'json' };
-import {
-  api,
-  patternDisplayName,
-  type PatternParameters,
-  type StoredPatternSet
-} from '../lib/api';
-import { patternSwatchHex } from '../lib/color';
-import {
-  type FormValues,
-  fromParameters,
-  PatternForm,
-  PatternSubForm,
-  toProps
-} from '../PatternForm/PatternForm';
+import { api, type PatternParameters, type StoredPatternSet } from '../lib/api';
+import { type FormValues, toProps } from '../PatternForm/PatternForm';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
-function randomName(): string {
-  const pick = (a: string[]) => a[Math.floor(Math.random() * a.length)];
-  return `${pick(names.adjectives)}-${pick(names.nouns)}`;
-}
+import { AddPatternModal } from './AddPatternModal';
+import { EditPatternModal } from './EditPatternModal';
+import { ManageStoredModal } from './ManageStoredModal';
+import { PatternList } from './PatternList';
+import { describeError, randomName } from './utils';
 
 function Editor() {
   const [patterns, setPatterns] = useState<PatternParameters[]>([]);
@@ -50,8 +33,6 @@ function Editor() {
   const [stored, setStored] = useState<StoredPatternSet[]>([]);
   const [storeName, setStoreName] = useState('');
   const [serverPaused, setServerPaused] = useState(false);
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   async function refresh() {
     try {
@@ -155,16 +136,10 @@ function Editor() {
     void run(() => api.reorderPatterns(order));
   }
 
-  function handleDrop(index: number) {
-    if (dragIndex !== null) move(dragIndex, index);
-    setDragIndex(null);
-    setDragOverIndex(null);
-  }
-
   const existingNames = patterns.map((p) => p.name);
 
   return (
-    <Container size={'sm'} py={'xl'}>
+    <Container size={'sm'} w={'100%'} py={'xl'}>
       <Title
         order={1}
         ta={'center'}
@@ -225,236 +200,50 @@ function Editor() {
             No patterns yet. Add one to get started.
           </Text>
         ) : (
-          <Stack gap={'sm'}>
-            {patterns.map((p, i) => (
-              <Group
-                key={p.name}
-                justify={'space-between'}
-                p={'md'}
-                onDragOver={(e) => {
-                  if (dragIndex === null) return;
-                  e.preventDefault();
-                  setDragOverIndex(i);
-                }}
-                onDrop={() => handleDrop(i)}
-                style={{
-                  borderRadius: 8,
-                  opacity: dragIndex === i ? 0.5 : 1,
-                  border:
-                    dragOverIndex === i
-                      ? '2px solid var(--mantine-color-blue-5)'
-                      : '1px solid var(--mantine-color-default-border)'
-                }}
-              >
-                <Group>
-                  <ActionIcon
-                    variant={'subtle'}
-                    color={'gray'}
-                    draggable={!busy}
-                    onDragStart={() => setDragIndex(i)}
-                    onDragEnd={() => {
-                      setDragIndex(null);
-                      setDragOverIndex(null);
-                    }}
-                    style={{ cursor: 'grab' }}
-                    aria-label={'Drag to reorder'}
-                  >
-                    ⠿
-                  </ActionIcon>
-                  <Stack gap={2}>
-                    <ActionIcon
-                      variant={'subtle'}
-                      color={'gray'}
-                      size={'sm'}
-                      disabled={busy || i === 0}
-                      onClick={() => move(i, i - 1)}
-                      aria-label={'Move pattern up'}
-                    >
-                      ▲
-                    </ActionIcon>
-                    <ActionIcon
-                      variant={'subtle'}
-                      color={'gray'}
-                      size={'sm'}
-                      disabled={busy || i === patterns.length - 1}
-                      onClick={() => move(i, i + 1)}
-                      aria-label={'Move pattern down'}
-                    >
-                      ▼
-                    </ActionIcon>
-                  </Stack>
-                  <ColorSwatch color={patternSwatchHex(p)} />
-                  <div>
-                    <Text fw={600}>{p.name}</Text>
-                    <Group gap={'xs'} mt={4}>
-                      <Badge variant={'light'} size={'sm'}>
-                        {patternDisplayName(p.type)}
-                      </Badge>
-                    </Group>
-                  </div>
-                </Group>
-
-                <Group gap={'xs'}>
-                  <Button size={'xs'} variant={'light'} onClick={() => setEditing(p)}>
-                    Edit
-                  </Button>
-                  <Button
-                    size={'xs'}
-                    color={'red'}
-                    variant={'light'}
-                    disabled={busy}
-                    onClick={() => handleRemove(p.name)}
-                  >
-                    Remove
-                  </Button>
-                </Group>
-              </Group>
-            ))}
-          </Stack>
+          <PatternList
+            patterns={patterns}
+            busy={busy}
+            onMove={move}
+            onEdit={setEditing}
+            onRemove={handleRemove}
+          />
         )}
       </Stack>
 
       <PatternVisualizer />
 
-      <Modal
+      <AddPatternModal
         opened={addOpen}
         onClose={() => setAddOpen(false)}
-        title={'Add pattern'}
-        centered
-      >
-        <PatternForm
-          key={namePlaceholder}
-          namePlaceholder={namePlaceholder}
-          existingNames={existingNames}
-          busy={busy}
-          onSubmit={(values) => void handleAdd(values)}
-        />
-      </Modal>
+        namePlaceholder={namePlaceholder}
+        existingNames={existingNames}
+        busy={busy}
+        onSubmit={(values) => void handleAdd(values)}
+      />
 
-      <Modal
-        opened={editing !== null}
+      <EditPatternModal
+        editing={editing}
         onClose={() => setEditing(null)}
-        title={editing ? `Edit ${editing.name}` : ''}
-        centered
-      >
-        {editing && (
-          <PatternSubForm
-            mode={'edit'}
-            initial={fromParameters(editing)}
-            namePlaceholder={editing.name}
-            existingNames={existingNames}
-            busy={busy}
-            onSubmit={(values) => void handleEdit(values)}
-          />
-        )}
-      </Modal>
+        existingNames={existingNames}
+        busy={busy}
+        onSubmit={(values) => void handleEdit(values)}
+      />
 
-      <Modal
+      <ManageStoredModal
         opened={manageOpen}
         onClose={() => setManageOpen(false)}
-        title={'Manage stored patterns'}
-        centered
-      >
-        <Stack gap={'md'}>
-          <Group align={'flex-end'} gap={'xs'}>
-            <TextInput
-              label={'Store current patterns'}
-              placeholder={'Name'}
-              value={storeName}
-              disabled={busy}
-              onChange={(e) => setStoreName(e.currentTarget.value)}
-              style={{ flex: 1 }}
-            />
-            <Button
-              disabled={busy || patterns.length === 0 || storeName.trim() === ''}
-              onClick={() => handleStore(storeName.trim())}
-            >
-              Store {patterns.length} pattern(s)
-            </Button>
-          </Group>
-
-          {stored.length === 0 ? (
-            <Text c={'dimmed'} ta={'center'} py={'md'}>
-              No stored patterns yet. Use the field above to save the current list.
-            </Text>
-          ) : (
-            <Stack gap={'sm'}>
-              {stored.map((set) => (
-                <ManageStoredRow
-                  key={set.name}
-                  set={set}
-                  busy={busy}
-                  onAdd={handleAddStored}
-                  onRename={handleRenameStored}
-                  onRemove={handleRemoveStored}
-                />
-              ))}
-            </Stack>
-          )}
-        </Stack>
-      </Modal>
+        stored={stored}
+        patternCount={patterns.length}
+        busy={busy}
+        storeName={storeName}
+        onStoreNameChange={setStoreName}
+        onStore={handleStore}
+        onAdd={handleAddStored}
+        onRename={handleRenameStored}
+        onRemove={handleRemoveStored}
+      />
     </Container>
   );
-}
-
-interface ManageStoredRowProps {
-  set: StoredPatternSet;
-  busy: boolean;
-  onAdd: (set: StoredPatternSet) => void;
-  onRename: (name: string, newName: string) => void;
-  onRemove: (name: string) => void;
-}
-
-// A single editable row in the manage-stored modal: apply, rename, or remove a set.
-function ManageStoredRow({ set, busy, onAdd, onRename, onRemove }: ManageStoredRowProps) {
-  const [name, setName] = useState(set.name);
-  const trimmed = name.trim();
-  const changed = trimmed !== '' && trimmed !== set.name;
-
-  return (
-    <Group
-      align={'flex-end'}
-      justify={'space-between'}
-      p={'sm'}
-      style={{
-        border: '1px solid var(--mantine-color-default-border)',
-        borderRadius: 8
-      }}
-    >
-      <TextInput
-        label={`${set.patterns.length} pattern(s)`}
-        value={name}
-        disabled={busy}
-        onChange={(e) => setName(e.currentTarget.value)}
-        style={{ flex: 1 }}
-      />
-      <Group gap={'xs'}>
-        <Button size={'xs'} variant={'light'} disabled={busy} onClick={() => onAdd(set)}>
-          Add
-        </Button>
-        <Button
-          size={'xs'}
-          disabled={busy || !changed}
-          onClick={() => onRename(set.name, trimmed)}
-        >
-          Rename
-        </Button>
-        <Button
-          size={'xs'}
-          color={'red'}
-          variant={'light'}
-          disabled={busy}
-          onClick={() => onRemove(set.name)}
-        >
-          Remove
-        </Button>
-      </Group>
-    </Group>
-  );
-}
-
-function describeError(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
 }
 
 export default Editor;

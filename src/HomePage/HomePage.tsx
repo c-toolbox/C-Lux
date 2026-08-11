@@ -96,7 +96,7 @@ export function HomePage() {
   }
 
   return (
-    <Container size={'sm'} py={'xl'}>
+    <Container size={'sm'} w={'100%'} py={'xl'}>
       <Title
         order={1}
         ta={'center'}
