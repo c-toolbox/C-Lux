@@ -9,6 +9,7 @@ export type {
   StoredPatternSet
 } from '../../server/patterns/patterns';
 export { PATTERN_TYPES } from '../../server/patterns/patterns';
+export { patternDisplayName } from '../../server/patterns/patterns';
 
 import type {
   PatternParameters,
@@ -44,11 +45,12 @@ export const api = {
     request<{ name: string }>('/add_new_pattern', { type, props }),
   updatePattern: (name: string, props: Partial<PatternProps>) =>
     request<PatternParameters>('/update_pattern', { name, props }),
-  setPatternPaused: (name: string, paused: boolean) =>
-    request<PatternParameters>('/set_pattern_paused', { name, paused }),
   serverPaused: () => request<{ paused: boolean }>('/server_paused'),
   setServerPaused: (paused: boolean) =>
     request<{ paused: boolean }>('/set_server_paused', { paused }),
+  blackout: () => request<{ blackout: boolean }>('/blackout'),
+  setBlackout: (blackout: boolean) =>
+    request<{ blackout: boolean }>('/set_blackout', { blackout }),
   removePattern: (name: string) =>
     request<{ name: string }>('/remove_new_pattern', { name }),
   reorderPatterns: (order: string[]) => request<string[]>('/reorder_patterns', { order }),

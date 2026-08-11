@@ -8,6 +8,7 @@ export type SparkleProps = PatternBaseProps &
 
 export class SparklePattern extends Pattern {
   static readonly Type = 'Sparkle';
+  static readonly DisplayName = 'Sparkle';
 
   r!: number;
   g!: number;
@@ -29,7 +30,6 @@ export class SparklePattern extends Pattern {
   parameters(): {
     name: string;
     type: typeof SparklePattern.Type;
-    paused: boolean;
     color: Color;
     density: number;
     decay: number;
@@ -37,7 +37,6 @@ export class SparklePattern extends Pattern {
     return {
       name: this.name,
       type: SparklePattern.Type,
-      paused: this.paused,
       color: {
         r: this.r,
         g: this.g,
@@ -48,13 +47,12 @@ export class SparklePattern extends Pattern {
     };
   }
 
-  set({ r, g, b, density, decay, paused }: Partial<SparkleProps>) {
+  set({ r, g, b, density, decay }: Partial<SparkleProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
     this.density = density ?? this.density;
     this.decay = decay ?? this.decay;
-    this.paused = paused ?? this.paused;
 
     this.render();
   }

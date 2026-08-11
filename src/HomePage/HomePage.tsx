@@ -19,15 +19,18 @@ export function HomePage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [blackout, setBlackout] = useState(false);
 
   async function refresh() {
     try {
-      const [sets, { paused }] = await Promise.all([
+      const [sets, { paused }, { blackout }] = await Promise.all([
         api.storedPatterns(),
-        api.serverPaused()
+        api.serverPaused(),
+        api.blackout()
       ]);
       setStored(sets);
       setPaused(paused);
+      setBlackout(blackout);
     } catch (e) {
       showError(e);
     }
@@ -43,6 +46,19 @@ export function HomePage() {
     try {
       const { paused: next } = await api.setServerPaused(!paused);
       setPaused(next);
+    } catch (e) {
+      showError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Fade the output to black or restore it.
+  async function toggleBlackout() {
+    setBusy(true);
+    try {
+      const { blackout: next } = await api.setBlackout(!blackout);
+      setBlackout(next);
     } catch (e) {
       showError(e);
     } finally {
@@ -73,22 +89,35 @@ export function HomePage() {
 
   return (
     <Container size={'sm'} py={'xl'}>
-      <Stack gap={'lg'}>
-        <Group justify={'space-between'} align={'center'}>
-          <Title order={1}>C-Lux</Title>
-          <Group gap={'xs'}>
-            <Button
-              disabled={busy}
-              onClick={togglePaused}
-              variant={paused ? 'filled' : 'default'}
-              color={paused ? 'orange' : undefined}
-            >
-              {paused ? 'Resume' : 'Pause'}
-            </Button>
-            <Button component={Link} to={'/editor'} variant={'default'}>
-              Open editor
-            </Button>
-          </Group>
+      <Title order={1} ta={'center'} style={{ position: 'fixed', top: 16, left: 0, right: 0, zIndex: 100 }}>
+        C-Lux
+      </Title>
+      <Button
+        component={Link}
+        to={'/editor'}
+        variant={'default'}
+        style={{ position: 'fixed', top: 16, right: 16, zIndex: 100 }}
+      >
+        Open editor
+      </Button>
+      <Stack gap={'lg'} mt={'xl'}>
+        <Group gap={'xs'}>
+          <Button
+            disabled={busy}
+            onClick={togglePaused}
+            variant={paused ? 'filled' : 'default'}
+            color={paused ? 'orange' : undefined}
+          >
+            {paused ? 'Resume' : 'Pause'}
+          </Button>
+          <Button
+            disabled={busy}
+            onClick={toggleBlackout}
+            variant={blackout ? 'filled' : 'default'}
+            color={blackout ? 'blue' : undefined}
+          >
+            {blackout ? 'Restore' : 'Fade to black'}
+          </Button>
         </Group>
 
         {loading ? (

@@ -3,9 +3,13 @@ import { type Color, Pattern } from './pattern.ts';
 import { SparklePattern, type SparkleProps } from './sparkle.ts';
 import { StaticPattern, type StaticProps } from './static.ts';
 
-// A concrete pattern class: constructable and tagged with a static `Type`
+// A concrete pattern class: constructable and tagged with a static `Type` and a
+// user-facing `DisplayName`.
 /* eslint-disable  @typescript-eslint/no-explicit-any */
-export type PatternClass = (new (props: any) => Pattern) & { Type: string };
+export type PatternClass = (new (props: any) => Pattern) & {
+  Type: string;
+  DisplayName: string;
+};
 
 // The list of all available patterns. Register a new pattern by adding its class here
 export const PATTERNS = [StaticPattern, MovingGaussianPattern, SparklePattern] as const;
@@ -17,6 +21,11 @@ export const PATTERN_TYPES = PATTERNS.map((p) => p.Type) as PatternType[];
 // Look up a pattern class by its `Type` tag
 export function patternByType(type: string): PatternClass | undefined {
   return PATTERNS.find((p) => p.Type === type);
+}
+
+// The user-facing name for a pattern `Type`, falling back to the raw type.
+export function patternDisplayName(type: string): string {
+  return patternByType(type)?.DisplayName ?? type;
 }
 
 export type { Color, MovingGaussianProps, SparkleProps, StaticProps };

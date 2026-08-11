@@ -4,6 +4,7 @@ export type StaticProps = PatternBaseProps & Color;
 
 export class StaticPattern extends Pattern {
   static readonly Type = 'StaticPattern';
+  static readonly DisplayName = 'Static';
 
   r!: number;
   g!: number;
@@ -17,13 +18,11 @@ export class StaticPattern extends Pattern {
   parameters(): {
     name: string;
     type: typeof StaticPattern.Type;
-    paused: boolean;
     color: Color;
   } {
     return {
       name: this.name,
       type: StaticPattern.Type,
-      paused: this.paused,
       color: {
         r: this.r,
         g: this.g,
@@ -32,11 +31,10 @@ export class StaticPattern extends Pattern {
     };
   }
 
-  set({ r, g, b, paused }: Partial<StaticProps>) {
+  set({ r, g, b }: Partial<StaticProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
-    this.paused = paused ?? this.paused;
 
     for (const state of this.state) {
       state.r = this.r;

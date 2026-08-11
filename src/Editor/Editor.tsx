@@ -18,6 +18,7 @@ import {
 
 import {
   api,
+  patternDisplayName,
   type PatternParameters,
   type StoredPatternSet
 } from '../lib/api';
@@ -101,10 +102,6 @@ function Editor() {
     run(() => api.removePattern(name));
   }
 
-  function handleTogglePause(p: PatternParameters) {
-    run(() => api.setPatternPaused(p.name, !p.paused));
-  }
-
   function handleToggleServerPause() {
     run(async () => {
       const next = !serverPaused;
@@ -183,14 +180,18 @@ function Editor() {
 
   return (
     <Container size={'sm'} py={'xl'}>
-      <Stack gap={'lg'}>
-        <Group justify={'space-between'} align={'center'}>
-          <Title order={1}>C-Lux</Title>
-          <Button component={Link} to={'/'} variant={'default'}>
-            Home
-          </Button>
-        </Group>
-
+      <Title order={1} ta={'center'} style={{ position: 'fixed', top: 16, left: 0, right: 0, zIndex: 100 }}>
+        C-Lux
+      </Title>
+      <Button
+        component={Link}
+        to={'/'}
+        variant={'default'}
+        style={{ position: 'fixed', top: 16, right: 16, zIndex: 100 }}
+      >
+        Home
+      </Button>
+      <Stack gap={'lg'} mt={'xl'}>
         <Group justify={'space-between'}>
           <Text fw={500}>{patterns.length} pattern(s)</Text>
           <Group gap={'xs'}>
@@ -290,26 +291,13 @@ function Editor() {
                     <Text fw={600}>{p.name}</Text>
                     <Group gap={'xs'} mt={4}>
                       <Badge variant={'light'} size={'sm'}>
-                        {p.type}
+                        {patternDisplayName(p.type)}
                       </Badge>
-                      {p.paused && (
-                        <Badge variant={'light'} size={'sm'} color={'yellow'}>
-                          Paused
-                        </Badge>
-                      )}
                     </Group>
                   </div>
                 </Group>
 
                 <Group gap={'xs'}>
-                  <Button
-                    size={'xs'}
-                    variant={'light'}
-                    disabled={busy}
-                    onClick={() => handleTogglePause(p)}
-                  >
-                    {p.paused ? 'Resume' : 'Pause'}
-                  </Button>
                   <Button size={'xs'} variant={'light'} onClick={() => setEditing(p)}>
                     Edit
                   </Button>
