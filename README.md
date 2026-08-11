@@ -97,7 +97,11 @@ visualizer:
     "tick-rate": 30,
     "port": 8787,
     "storage": "patterns.json",
-    "library": "library.json"
+    "library": "library.json",
+    "pause-transition": 1.0,
+    "blackout-transition": 1.0,
+    "half-light-transition": 1.0,
+    "half-light-feather": 0.5
   },
   "output": {
     "dmx": {
