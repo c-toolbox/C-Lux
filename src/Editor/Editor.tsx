@@ -13,16 +13,15 @@ import {
   Stack,
   Text,
   TextInput,
-  Title,
-  Tooltip
+  Title
 } from '@mantine/core';
 
 import {
   api,
   type PatternParameters,
   type StoredPatternSet
-} from './lib/api';
-import { rgbToHex } from './lib/color';
+} from '../lib/api';
+import { rgbToHex } from '../lib/color';
 
 import {
   type FormValues,
@@ -30,17 +29,17 @@ import {
   PatternForm,
   PatternSubForm,
   toProps
-} from './PatternForm/PatternForm';
-import { PatternVisualizer } from './PatternVisualizer/PatternVisualizer';
+} from '../PatternForm/PatternForm';
+import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
-import names from './assets/names.json' with { type: 'json' };
+import names from '../assets/names.json' with { type: 'json' };
 
 function randomName(): string {
   const pick = (a: string[]) => a[Math.floor(Math.random() * a.length)];
   return `${pick(names.adjectives)}-${pick(names.nouns)}`;
 }
 
-function App() {
+function Editor() {
   const [patterns, setPatterns] = useState<PatternParameters[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -54,6 +53,8 @@ function App() {
   const [storeOpen, setStoreOpen] = useState(false);
   const [storeName, setStoreName] = useState('');
   const [serverPaused, setServerPaused] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   async function refresh() {
     try {
@@ -164,12 +165,18 @@ function App() {
     }
   }
 
-  function move(index: number, delta: number) {
-    const target = index + delta;
-    if (target < 0 || target >= patterns.length) return;
+  function move(from: number, to: number) {
+    if (from === to || to < 0 || to >= patterns.length) return;
     const order = patterns.map((p) => p.name);
-    [order[index], order[target]] = [order[target], order[index]];
+    const [moved] = order.splice(from, 1);
+    order.splice(to, 0, moved);
     run(() => api.reorderPatterns(order));
+  }
+
+  function handleDrop(index: number) {
+    if (dragIndex !== null) move(dragIndex, index);
+    setDragIndex(null);
+    setDragOverIndex(null);
   }
 
   const existingNames = patterns.map((p) => p.name);
@@ -178,10 +185,7 @@ function App() {
     <Container size={'sm'} py={'xl'}>
       <Stack gap={'lg'}>
         <Group justify={'space-between'} align={'center'}>
-          <div>
-            <Title order={1}>C-Lux</Title>
-            <Text c={'dimmed'}>Lighting pattern control</Text>
-          </div>
+          <Title order={1}>C-Lux</Title>
           <Button component={Link} to={'/'} variant={'default'}>
             Home
           </Button>
@@ -251,12 +255,36 @@ function App() {
                 key={p.name}
                 justify={'space-between'}
                 p={'md'}
+                onDragOver={(e) => {
+                  if (dragIndex === null) return;
+                  e.preventDefault();
+                  setDragOverIndex(i);
+                }}
+                onDrop={() => handleDrop(i)}
                 style={{
-                  border: '1px solid var(--mantine-color-default-border)',
-                  borderRadius: 8
+                  borderRadius: 8,
+                  opacity: dragIndex === i ? 0.5 : 1,
+                  border:
+                    dragOverIndex === i
+                      ? '2px solid var(--mantine-color-blue-5)'
+                      : '1px solid var(--mantine-color-default-border)',
                 }}
               >
                 <Group>
+                  <ActionIcon
+                    variant={'subtle'}
+                    color={'gray'}
+                    draggable={!busy}
+                    onDragStart={() => setDragIndex(i)}
+                    onDragEnd={() => {
+                      setDragIndex(null);
+                      setDragOverIndex(null);
+                    }}
+                    style={{ cursor: 'grab' }}
+                    aria-label={'Drag to reorder'}
+                  >
+                    ⠿
+                  </ActionIcon>
                   <ColorSwatch color={rgbToHex(p.color)} />
                   <div>
                     <Text fw={600}>{p.name}</Text>
@@ -274,24 +302,6 @@ function App() {
                 </Group>
 
                 <Group gap={'xs'}>
-                  <Tooltip label={'Move up'}>
-                    <ActionIcon
-                      variant={'subtle'}
-                      disabled={i === 0 || busy}
-                      onClick={() => move(i, -1)}
-                    >
-                      ↑
-                    </ActionIcon>
-                  </Tooltip>
-                  <Tooltip label={'Move down'}>
-                    <ActionIcon
-                      variant={'subtle'}
-                      disabled={i === patterns.length - 1 || busy}
-                      onClick={() => move(i, 1)}
-                    >
-                      ↓
-                    </ActionIcon>
-                  </Tooltip>
                   <Button
                     size={'xs'}
                     variant={'light'}
@@ -319,10 +329,7 @@ function App() {
         )}
       </Stack>
 
-      <Stack gap={'sm'} mt={'xl'}>
-        <Title order={3}>Visualizer</Title>
-        <PatternVisualizer />
-      </Stack>
+      <PatternVisualizer />
 
       <Modal
         opened={addOpen}
@@ -521,4 +528,4 @@ function describeError(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
-export default App;
+export default Editor;

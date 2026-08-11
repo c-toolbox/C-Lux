@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Badge,
   Button,
-  ColorSwatch,
   Container,
   Group,
   Loader,
-  Modal,
   Stack,
   Text,
   Title
@@ -15,19 +12,22 @@ import {
 import { notifications } from '@mantine/notifications';
 
 import { api, type StoredPatternSet } from '../lib/api';
-import { rgbToHex } from '../lib/color';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
 export function HomePage() {
   const [stored, setStored] = useState<StoredPatternSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [confirmRemove, setConfirmRemove] = useState<StoredPatternSet | null>(null);
+  const [paused, setPaused] = useState(false);
 
   async function refresh() {
     try {
-      setStored(await api.storedPatterns());
+      const [sets, { paused }] = await Promise.all([
+        api.storedPatterns(),
+        api.serverPaused()
+      ]);
+      setStored(sets);
+      setPaused(paused);
     } catch (e) {
       showError(e);
     }
@@ -36,6 +36,19 @@ export function HomePage() {
   useEffect(() => {
     refresh().finally(() => setLoading(false));
   }, []);
+
+  // Pause or resume all pattern output on the server.
+  async function togglePaused() {
+    setBusy(true);
+    try {
+      const { paused: next } = await api.setServerPaused(!paused);
+      setPaused(next);
+    } catch (e) {
+      showError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   // Replace the active patterns with the chosen stored set.
   async function select(set: StoredPatternSet) {
@@ -46,7 +59,6 @@ export function HomePage() {
         await api.removePattern(p.name);
       }
       await api.addStoredPatterns(set.name);
-      setSelected(set.name);
       notifications.show({
         color: 'green',
         title: 'Pattern selected',
@@ -59,32 +71,24 @@ export function HomePage() {
     }
   }
 
-  // Delete a stored set from the library.
-  async function remove(set: StoredPatternSet) {
-    setBusy(true);
-    try {
-      await api.removeStoredPattern(set.name);
-      if (selected === set.name) setSelected(null);
-      await refresh();
-    } catch (e) {
-      showError(e);
-    } finally {
-      setBusy(false);
-      setConfirmRemove(null);
-    }
-  }
-
   return (
     <Container size={'sm'} py={'xl'}>
       <Stack gap={'lg'}>
         <Group justify={'space-between'} align={'center'}>
-          <div>
-            <Title order={1}>C-Lux</Title>
-            <Text c={'dimmed'}>Select a stored pattern</Text>
-          </div>
-          <Button component={Link} to={'/editor'} variant={'default'}>
-            Open editor
-          </Button>
+          <Title order={1}>C-Lux</Title>
+          <Group gap={'xs'}>
+            <Button
+              disabled={busy}
+              onClick={togglePaused}
+              variant={paused ? 'filled' : 'default'}
+              color={paused ? 'orange' : undefined}
+            >
+              {paused ? 'Resume' : 'Pause'}
+            </Button>
+            <Button component={Link} to={'/editor'} variant={'default'}>
+              Open editor
+            </Button>
+          </Group>
         </Group>
 
         {loading ? (
@@ -107,29 +111,11 @@ export function HomePage() {
                   borderRadius: 8
                 }}
               >
-                <div>
-                  <Text fw={600}>{set.name}</Text>
-                  <Group gap={4} mt={4}>
-                    {set.patterns.map((p) => (
-                      <ColorSwatch key={p.name} color={rgbToHex(p.color)} size={16} />
-                    ))}
-                    <Badge variant={'light'} size={'sm'}>
-                      {set.patterns.length} pattern(s)
-                    </Badge>
-                  </Group>
-                </div>
+                <Text fw={600}>{set.name}</Text>
 
                 <Group gap={'xs'}>
                   <Button disabled={busy} onClick={() => select(set)}>
                     Select
-                  </Button>
-                  <Button
-                    color={'red'}
-                    variant={'light'}
-                    disabled={busy}
-                    onClick={() => setConfirmRemove(set)}
-                  >
-                    Remove
                   </Button>
                 </Group>
               </Group>
@@ -139,36 +125,6 @@ export function HomePage() {
 
         <PatternVisualizer />
       </Stack>
-
-      <Modal
-        opened={confirmRemove !== null}
-        onClose={() => setConfirmRemove(null)}
-        title={'Remove stored pattern'}
-        centered
-      >
-        <Stack gap={'md'}>
-          <Text>
-            Are you sure you want to remove “{confirmRemove?.name}”? This cannot be
-            undone.
-          </Text>
-          <Group justify={'flex-end'}>
-            <Button
-              variant={'default'}
-              disabled={busy}
-              onClick={() => setConfirmRemove(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              color={'red'}
-              loading={busy}
-              onClick={() => confirmRemove && remove(confirmRemove)}
-            >
-              Remove
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
     </Container>
   );
 }
