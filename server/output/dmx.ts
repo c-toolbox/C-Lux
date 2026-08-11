@@ -11,7 +11,7 @@ const END_OF_MESSAGE = 0xe7;
 const LABEL_SEND_DMX = 6;
 const DMX_START_CODE = 0x00;
 const UNIVERSE_SIZE = 512;
-const BAUD_RATE = 250000;
+const BAUD_RATE = 57600;
 
 // Minimal SerialPort surface used here, so the native module stays a dynamic import.
 interface SerialLike {
