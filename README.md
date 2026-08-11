@@ -75,6 +75,8 @@ Vite in development.
 | PUT    | `/api/pause`                  | `{ paused }`            | Pause or resume all patterns            |
 | GET    | `/api/blackout`               | —                       | Whether the master blackout is engaged  |
 | PUT    | `/api/blackout`               | `{ blackout }`          | Fade output to black or restore it      |
+| GET    | `/api/half-light`             | —                       | Whether half-light mode is engaged      |
+| PUT    | `/api/half-light`             | `{ halfLight }`         | Fade the top half out or restore it     |
 | GET    | `/api/frame`                  | —                       | The blended frame as a flat RGB array   |
 | GET    | `/api/stream`                 | —                       | Server-Sent Events stream of frames     |
 | GET    | `/api/library`                | —                       | List the stored pattern sets            |
