@@ -2,6 +2,7 @@ import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
 
 export type SparkleProps = PatternBaseProps &
   Color & {
+    // Share of the ring igniting per second (1 = as many sparkles as there are lights).
     density: number;
     decay: number;
   };
@@ -63,8 +64,8 @@ export class SparklePattern extends Pattern {
       this.intensities[i] *= factor;
     }
 
-    // Ignite new sparkles; `density` is the expected count spawned per second.
-    let expected = this.density * dt;
+    // Ignite new sparkles; `density` is the expected share of the ring spawned per second.
+    let expected = this.density * n * dt;
     while (expected > 0) {
       if (expected < 1 && Math.random() >= expected) break;
       const i = Math.floor(Math.random() * n);

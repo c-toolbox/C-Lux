@@ -18,8 +18,8 @@ export const MOVING_GAUSSIAN_DEFAULTS: MovingGaussianFormValues = {
   type: 'MovingGaussian',
   name: '',
   hex: '#4dabf7',
-  sigma: 5,
-  speed: 10,
+  sigma: 0.04,
+  speed: 0.07,
   origin: 0
 };
 
@@ -67,9 +67,10 @@ export function MovingGaussianForm({
 
       <Group grow>
         <NumberInput
-          label={'Sigma'}
+          label={'Sigma (fraction)'}
           min={0}
-          step={0.5}
+          max={1}
+          step={0.01}
           value={values.sigma}
           onChange={(v) =>
             setValues((prev) => ({
@@ -79,17 +80,18 @@ export function MovingGaussianForm({
           }
         />
         <NumberInput
-          label={'Speed'}
-          step={1}
+          label={'Speed (turns/s)'}
+          step={0.05}
           value={values.speed}
           onChange={(v) => setValues((prev) => ({ ...prev, speed: v }))}
         />
       </Group>
 
       <NumberInput
-        label={'Origin'}
+        label={'Origin (fraction)'}
         min={0}
-        step={1}
+        max={1}
+        step={0.01}
         value={values.origin}
         onChange={(v) => setValues((prev) => ({ ...prev, origin: v }))}
       />

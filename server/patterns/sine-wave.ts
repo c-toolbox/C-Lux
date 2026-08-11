@@ -2,6 +2,7 @@ import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
 
 export type SineWaveProps = PatternBaseProps &
   Color & {
+    // Wavelength is a fraction of the ring and speed is in full turns per second.
     wavelength: number;
     speed: number;
     min: number;
@@ -60,13 +61,13 @@ export class SineWavePattern extends Pattern {
   }
 
   advance(dt: number) {
-    this.phase += this.speed * dt;
+    this.phase += this.speed * this.state.length * dt;
     this.render();
   }
 
   private render() {
     const n = this.state.length;
-    const wl = this.wavelength > 0 ? this.wavelength : 1;
+    const wl = this.wavelength > 0 ? this.wavelength * n : 1;
     for (let i = 0; i < n; i++) {
       const wave = 0.5 + 0.5 * Math.sin((2 * Math.PI * (i - this.phase)) / wl);
       const a = this.min + (this.max - this.min) * wave;

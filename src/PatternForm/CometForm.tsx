@@ -10,13 +10,10 @@ import {
   TextInput
 } from '@mantine/core';
 
-import config from '../../config.json';
 import type { PatternProps } from '../lib/api';
 import { hexToRgb } from '../lib/color';
 
 import { type CommonValues, type SubFormProps } from './types';
-
-const LAST_LIGHT = config.nLights - 1;
 
 export interface CometFormValues extends CommonValues {
   type: 'Comet';
@@ -32,8 +29,8 @@ export const COMET_DEFAULTS: CometFormValues = {
   type: 'Comet',
   name: '',
   hex: '#ffffff',
-  speed: 15,
-  tail: 8,
+  speed: 0.1,
+  tail: 0.06,
   direction: 1,
   start: 0,
   end: 0
@@ -91,15 +88,16 @@ export function CometForm({
 
       <Group grow>
         <NumberInput
-          label={'Speed'}
-          step={1}
+          label={'Speed (turns/s)'}
+          step={0.05}
           value={values.speed}
           onChange={(v) => setValues((prev) => ({ ...prev, speed: v }))}
         />
         <NumberInput
-          label={'Tail'}
+          label={'Tail (fraction)'}
           min={0}
-          step={1}
+          max={1}
+          step={0.01}
           value={values.tail}
           onChange={(v) => setValues((prev) => ({ ...prev, tail: v }))}
         />
@@ -120,18 +118,18 @@ export function CometForm({
       <Stack gap={4}>
         <Group grow>
           <NumberInput
-            label={'Start'}
+            label={'Start (fraction)'}
             min={0}
-            max={LAST_LIGHT}
-            step={1}
+            max={1}
+            step={0.01}
             value={values.start}
             onChange={(v) => setValues((prev) => ({ ...prev, start: v }))}
           />
           <NumberInput
-            label={'End'}
+            label={'End (fraction)'}
             min={0}
-            max={LAST_LIGHT}
-            step={1}
+            max={1}
+            step={0.01}
             value={values.end}
             onChange={(v) => setValues((prev) => ({ ...prev, end: v }))}
           />

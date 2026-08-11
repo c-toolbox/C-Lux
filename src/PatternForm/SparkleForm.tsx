@@ -17,7 +17,7 @@ export const SPARKLE_DEFAULTS: SparkleFormValues = {
   type: 'Sparkle',
   name: '',
   hex: '#ffffff',
-  density: 20,
+  density: 0.14,
   decay: 3
 };
 
@@ -65,9 +65,9 @@ export function SparkleForm({
 
       <Group grow>
         <NumberInput
-          label={'Density'}
+          label={'Density (ring/s)'}
           min={0}
-          step={1}
+          step={0.01}
           value={values.density}
           onChange={(v) => setValues((prev) => ({ ...prev, density: v }))}
         />

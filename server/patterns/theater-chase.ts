@@ -2,6 +2,7 @@ import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
 
 export type TheaterChaseProps = PatternBaseProps &
   Color & {
+    // Spacing is a fraction of the ring and speed is in full turns per second.
     spacing: number;
     speed: number;
   };
@@ -51,7 +52,7 @@ export class TheaterChasePattern extends Pattern {
   }
 
   advance(dt: number) {
-    this.remainder += this.speed * dt;
+    this.remainder += this.speed * this.state.length * dt;
     const steps = Math.trunc(this.remainder);
     if (steps !== 0) {
       this.remainder -= steps;
@@ -61,7 +62,7 @@ export class TheaterChasePattern extends Pattern {
   }
 
   private render() {
-    const gap = Math.max(1, Math.round(this.spacing));
+    const gap = Math.max(1, Math.round(this.spacing * this.state.length));
     for (let i = 0; i < this.state.length; i++) {
       const lit = (((i + this.offset) % gap) + gap) % gap === 0;
       this.state[i] = { r: this.r, g: this.g, b: this.b, a: lit ? 1 : 0 };

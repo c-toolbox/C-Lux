@@ -2,6 +2,8 @@ import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
 
 export type CometProps = PatternBaseProps &
   Color & {
+    // Fractions of the ring: tail length and the start/end positions as a share of the
+    // circumference, speed in full turns per second.
     speed: number;
     tail: number;
     direction: number;
@@ -20,8 +22,8 @@ export class CometPattern extends Pattern {
   tail!: number;
   direction!: number;
 
-  // Light indices the head travels between. Equal values (the default for patterns stored
-  // before these existed) mean the comet loops around the whole ring.
+  // Positions on the ring the head travels between. Equal values (the default for
+  // patterns stored before these existed) mean the comet loops around the whole ring.
   start = 0;
   end = 0;
 
@@ -70,7 +72,7 @@ export class CometPattern extends Pattern {
   advance(dt: number) {
     const n = this.state.length;
     if (n === 0) return;
-    this.progress = mod(this.progress + this.speed * dt, this.cycle());
+    this.progress = mod(this.progress + this.speed * n * dt, this.cycle());
     this.render();
   }
 
@@ -78,8 +80,9 @@ export class CometPattern extends Pattern {
   // direction, or the whole ring when the two coincide.
   private span(): number {
     const n = this.state.length;
-    const distance =
-      this.direction >= 0 ? mod(this.end - this.start, n) : mod(this.start - this.end, n);
+    const start = this.start * n;
+    const end = this.end * n;
+    const distance = this.direction >= 0 ? mod(end - start, n) : mod(start - end, n);
     return distance === 0 ? n : distance;
   }
 
@@ -93,11 +96,12 @@ export class CometPattern extends Pattern {
   private render() {
     const n = this.state.length;
     const dir = this.direction >= 0 ? 1 : -1;
-    const tail = this.tail > 0 ? this.tail : 0.0001;
+    const tail = this.tail > 0 ? this.tail * n : 0.0001;
+    const start = this.start * n;
     const span = this.span();
     for (let i = 0; i < n; i++) {
       // Where light i sits along the arc, measured from `start` in the travel direction.
-      const offset = dir > 0 ? mod(i - this.start, n) : mod(this.start - i, n);
+      const offset = dir > 0 ? mod(i - start, n) : mod(start - i, n);
       let behind = this.progress - offset;
       // Over a full loop the tail keeps trailing across the seam; on a shorter arc it is
       // cut off at `start` instead of reappearing at the far end.

@@ -2,6 +2,7 @@ import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
 
 export type BounceProps = PatternBaseProps &
   Color & {
+    // Sigma is a fraction of the ring and speed is in full turns per second.
     sigma: number;
     speed: number;
   };
@@ -53,7 +54,7 @@ export class BouncePattern extends Pattern {
   advance(dt: number) {
     const n = this.state.length;
     if (n === 0) return;
-    let pos = this.position + this.speed * this.direction * dt;
+    let pos = this.position + this.speed * n * this.direction * dt;
     const max = n - 1;
     // Reflect off both ends so the bump ping-pongs instead of wrapping.
     while (pos < 0 || pos > max) {
@@ -72,7 +73,8 @@ export class BouncePattern extends Pattern {
   private render() {
     const n = this.state.length;
     const max = n - 1;
-    const twoSigmaSq = 2 * this.sigma * this.sigma;
+    const sigmaLights = this.sigma * n;
+    const twoSigmaSq = 2 * sigmaLights * sigmaLights;
     // Reflect the bump's center about both ends so the gaussian tail folds
     // back at the walls instead of being clipped at index 0 / n-1.
     const centers = [this.position, -this.position, 2 * max - this.position];

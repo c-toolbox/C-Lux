@@ -86,6 +86,9 @@ const UNIT: NumberSpec = { min: 0, max: 1 };
 const NON_NEGATIVE: NumberSpec = { min: 0 };
 const POSITIVE: NumberSpec = { exclusiveMin: 0 };
 
+// Lengths and positions are fractions of the ring, so they span (0, 1] or [0, 1].
+const POSITIVE_UNIT: NumberSpec = { exclusiveMin: 0, max: 1 };
+
 // The flat r/g/b props carried by most patterns.
 const COLOR: Record<string, NumberSpec> = { r: BYTE, g: BYTE, b: BYTE };
 
@@ -96,27 +99,27 @@ const PATTERN_FIELDS: Record<PatternType, Record<string, FieldSpec>> = {
   StaticPattern: { ...COLOR },
   MovingGaussian: {
     ...COLOR,
-    sigma: NON_NEGATIVE,
+    sigma: UNIT,
     speed: ANY,
-    origin: NON_NEGATIVE
+    origin: UNIT
   },
   Sparkle: { ...COLOR, density: NON_NEGATIVE, decay: NON_NEGATIVE },
   Rainbow: { speed: ANY, saturation: UNIT, value: UNIT, cycles: NON_NEGATIVE },
-  SineWave: { ...COLOR, wavelength: { min: 1 }, speed: ANY, min: UNIT, max: UNIT },
+  SineWave: { ...COLOR, wavelength: POSITIVE_UNIT, speed: ANY, min: UNIT, max: UNIT },
   Comet: {
     ...COLOR,
     speed: ANY,
-    tail: NON_NEGATIVE,
+    tail: UNIT,
     direction: ANY,
-    start: NON_NEGATIVE,
-    end: NON_NEGATIVE
+    start: UNIT,
+    end: UNIT
   },
-  Bounce: { ...COLOR, sigma: NON_NEGATIVE, speed: ANY },
+  Bounce: { ...COLOR, sigma: UNIT, speed: ANY },
   Pulse: { ...COLOR, period: POSITIVE, min: UNIT, max: UNIT },
   Gradient: { ...COLOR, color2: 'color', speed: ANY },
   ColorCycle: { speed: ANY, saturation: UNIT, value: UNIT },
   Fire: { cooling: NON_NEGATIVE, sparking: UNIT },
-  TheaterChase: { ...COLOR, spacing: { min: 1 }, speed: ANY }
+  TheaterChase: { ...COLOR, spacing: POSITIVE_UNIT, speed: ANY }
 };
 
 // Validate the props of a pattern that is about to be constructed. Unlike

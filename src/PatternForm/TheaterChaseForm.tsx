@@ -17,8 +17,8 @@ export const THEATER_CHASE_DEFAULTS: TheaterChaseFormValues = {
   type: 'TheaterChase',
   name: '',
   hex: '#ffffff',
-  spacing: 3,
-  speed: 8
+  spacing: 0.02,
+  speed: 0.05
 };
 
 const num = (v: number | string) => (typeof v === 'number' ? v : Number(v) || 0);
@@ -70,15 +70,16 @@ export function TheaterChaseForm({
 
       <Group grow>
         <NumberInput
-          label={'Spacing'}
-          min={1}
-          step={1}
+          label={'Spacing (fraction)'}
+          min={0.01}
+          max={1}
+          step={0.01}
           value={values.spacing}
           onChange={(v) => setValues((prev) => ({ ...prev, spacing: v }))}
         />
         <NumberInput
-          label={'Speed'}
-          step={1}
+          label={'Speed (turns/s)'}
+          step={0.05}
           value={values.speed}
           onChange={(v) => setValues((prev) => ({ ...prev, speed: v }))}
         />

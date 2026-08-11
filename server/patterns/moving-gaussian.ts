@@ -2,6 +2,8 @@ import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
 
 export type MovingGaussianProps = PatternBaseProps &
   Color & {
+    // Fractions of the ring: sigma and origin as a share of the circumference, speed in
+    // full turns per second.
     sigma: number;
     speed: number;
     origin: number;
@@ -58,10 +60,11 @@ export class MovingGaussianPattern extends Pattern {
 
     // Gaussian bump centered on the origin index; rotation moves it around the ring.
     const n = this.state.length;
-    origin = n > 0 ? ((this.origin % n) + n) % n : 0;
-    const twoSigmaSq = 2 * this.sigma * this.sigma;
+    const sigmaLights = this.sigma * n;
+    const originLights = n > 0 ? (((this.origin * n) % n) + n) % n : 0;
+    const twoSigmaSq = 2 * sigmaLights * sigmaLights;
     for (let i = 0; i < n; i++) {
-      const diff = Math.abs(i - origin);
+      const diff = Math.abs(i - originLights);
       const d = Math.min(diff, n - diff); // circular distance from the origin
       const intensity =
         twoSigmaSq > 0 ? Math.exp(-(d * d) / twoSigmaSq) : d === 0 ? 1 : 0;
@@ -75,7 +78,7 @@ export class MovingGaussianPattern extends Pattern {
   }
 
   advance(dt: number) {
-    this.offset += this.speed * dt;
+    this.offset += this.speed * this.state.length * dt;
     const steps = Math.trunc(this.offset);
     if (steps !== 0) {
       this.offset -= steps;
