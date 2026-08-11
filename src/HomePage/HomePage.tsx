@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Button,
-  Container,
-  Group,
-  Loader,
-  Stack,
-  Text,
-  Title
-} from '@mantine/core';
+import { Button, Container, Group, Loader, Stack, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
 import { api, type StoredPatternSet } from '../lib/api';
@@ -89,7 +81,11 @@ export function HomePage() {
 
   return (
     <Container size={'sm'} py={'xl'}>
-      <Title order={1} ta={'center'} style={{ position: 'fixed', top: 16, left: 0, right: 0, zIndex: 100 }}>
+      <Title
+        order={1}
+        ta={'center'}
+        style={{ position: 'fixed', top: 16, left: 0, right: 0, zIndex: 100 }}
+      >
         C-Lux
       </Title>
       <Button

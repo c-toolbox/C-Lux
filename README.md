@@ -51,16 +51,17 @@ The Vite dev server proxies the pattern endpoints to the API, so the UI works ou
 
 ## API
 
-All endpoints are served by the Express backend and proxied through Vite in development.
+All endpoints are served by the Express backend under the `/api` prefix and proxied through
+Vite in development.
 
-| Method | Path                  | Body                        | Description                              |
-| ------ | --------------------- | --------------------------- | ---------------------------------------- |
-| GET    | `/current_patterns`   | —                           | List the active patterns' parameters     |
-| POST   | `/add_new_pattern`    | `{ type, props }`           | Add a pattern of the given type          |
-| POST   | `/update_pattern`     | `{ name, props }`           | Update an existing pattern by name       |
-| POST   | `/remove_new_pattern` | `{ name }`                  | Remove a pattern by name                 |
-| POST   | `/reorder_patterns`   | `{ order: string[] }`       | Reorder patterns (controls blend order)  |
-| GET    | `/pattern`            | —                           | The blended frame as a flat RGB array    |
+| Method | Path                      | Body                        | Description                              |
+| ------ | ------------------------- | --------------------------- | ---------------------------------------- |
+| GET    | `/api/current_patterns`   | —                           | List the active patterns' parameters     |
+| POST   | `/api/add_new_pattern`    | `{ type, props }`           | Add a pattern of the given type          |
+| POST   | `/api/update_pattern`     | `{ name, props }`           | Update an existing pattern by name       |
+| POST   | `/api/remove_new_pattern` | `{ name }`                  | Remove a pattern by name                 |
+| POST   | `/api/reorder_patterns`   | `{ order: string[] }`       | Reorder patterns (controls blend order)  |
+| GET    | `/api/pattern`            | —                           | The blended frame as a flat RGB array    |
 
 ## Configuration
 
@@ -129,16 +130,21 @@ UI and shared types pick up the new pattern automatically.
 ## Project structure
 
 ```
-config.json              Global configuration (light count)
+config.json              Global configuration (light count, tick rate, outputs)
 server/
   index.ts               Express app, routes, and the animation tick loop
+  storage.ts             Persistence for the active list and the pattern library
+  output/                DMX-512 and Art-Net streaming outputs
   patterns/
     pattern.ts           Abstract Pattern base class
     patterns.ts          Pattern registry and derived types
-    static.ts            StaticPattern
-    moving-gaussian.ts   MovingGaussianPattern
+    *.ts                 Concrete patterns (static, moving-gaussian, fire, comet, …)
 src/
-  App.tsx                Mantine UI and circular visualizer
+  main.tsx               App entry, Mantine theme, and router
+  Editor/                Pattern editor UI
+  HomePage/              Landing page with global controls
+  PatternForm/           Per-pattern parameter forms
+  PatternVisualizer/     Circular canvas that polls and renders the blended frame
   lib/api.ts             Typed client for the pattern API
 ```
 

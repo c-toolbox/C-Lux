@@ -16,6 +16,7 @@ import {
   Title
 } from '@mantine/core';
 
+import names from '../assets/names.json' with { type: 'json' };
 import {
   api,
   patternDisplayName,
@@ -23,7 +24,6 @@ import {
   type StoredPatternSet
 } from '../lib/api';
 import { patternSwatchHex } from '../lib/color';
-
 import {
   type FormValues,
   fromParameters,
@@ -32,8 +32,6 @@ import {
   toProps
 } from '../PatternForm/PatternForm';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
-
-import names from '../assets/names.json' with { type: 'json' };
 
 function randomName(): string {
   const pick = (a: string[]) => a[Math.floor(Math.random() * a.length)];
@@ -180,7 +178,11 @@ function Editor() {
 
   return (
     <Container size={'sm'} py={'xl'}>
-      <Title order={1} ta={'center'} style={{ position: 'fixed', top: 16, left: 0, right: 0, zIndex: 100 }}>
+      <Title
+        order={1}
+        ta={'center'}
+        style={{ position: 'fixed', top: 16, left: 0, right: 0, zIndex: 100 }}
+      >
         C-Lux
       </Title>
       <Button
@@ -268,7 +270,7 @@ function Editor() {
                   border:
                     dragOverIndex === i
                       ? '2px solid var(--mantine-color-blue-5)'
-                      : '1px solid var(--mantine-color-default-border)',
+                      : '1px solid var(--mantine-color-default-border)'
                 }}
               >
                 <Group>

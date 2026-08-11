@@ -6,8 +6,8 @@ import config from '../config.json' with { type: 'json' };
 
 import { Pattern } from './patterns/pattern';
 import {
-  type PatternParameters,
   patternByType,
+  type PatternParameters,
   type StoredPatternSet
 } from './patterns/patterns';
 
@@ -28,14 +28,12 @@ const libraryPath = resolve(
 // `parameters()` nests color as `{ color: { r, g, b } }`, but pattern
 // constructors expect flat `r, g, b`, so undo that nesting when rebuilding.
 function paramsToProps(params: PatternParameters): object {
-  const { type: _type, ...rest } = params as PatternParameters & {
+  const { color, ...rest } = params as PatternParameters & {
     color?: { r: number; g: number; b: number };
   };
-  if ('color' in rest && rest.color) {
-    const { color, ...others } = rest;
-    return { ...others, ...color };
-  }
-  return rest;
+  const props = { ...rest, ...color } as Record<string, unknown>;
+  delete props.type;
+  return props;
 }
 
 // Reconstruct a concrete pattern instance from its serialized parameters.

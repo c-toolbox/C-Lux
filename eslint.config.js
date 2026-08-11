@@ -34,9 +34,8 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       '@typescript-eslint/no-explicit-any': 'error', // Disallow usage of any
-      'no-duplicate-imports': 'error', // Imports should be on one line
+      'no-duplicate-imports': 'error',
       'prefer-destructuring': ['error', { object: true, array: true }],
-      'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
       'simple-import-sort/imports': [
         'error',
@@ -71,6 +70,21 @@ export default tseslint.config(
       'no-template-curly-in-string': 'error', // Catches "${}" template strings
       'default-case': ['error', { commentPattern: '^skip\\sdefault' }], // require default switch case
       'default-case-last': 'error' // enforce default switch case last
+    }
+  },
+  {
+    // Server code runs on Node, not in the browser.
+    files: ['server/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: globals.node
+    }
+  },
+  {
+    // Pattern forms intentionally co-locate their defaults and toProps helpers
+    // with the component; the fast-refresh granularity hint doesn't apply here.
+    files: ['src/PatternForm/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off'
     }
   }
 );

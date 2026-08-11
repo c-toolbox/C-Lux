@@ -1,12 +1,12 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { createTheme, MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
+import logo from './assets/C_transparent.png';
 import Editor from './Editor/Editor.tsx';
 import { HomePage } from './HomePage/HomePage.tsx';
-import logo from './assets/C_transparent.png';
 
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';

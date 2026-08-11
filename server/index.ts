@@ -47,15 +47,15 @@ function currentPatterns(_req: express.Request, res: express.Response) {
 function addNewPattern(req: express.Request, res: express.Response) {
   const { type, props } = req.body ?? {};
 
-  const { name } = props ?? '';
+  const { name } = props ?? {};
 
-  if (name === '') {
+  if (!name) {
     res.status(400).json({ error: `Missing name for new pattern` });
     return;
   }
 
   if (individualPatterns.find((p) => p.name === name)) {
-    res.status(400).json({ error: `Pattern Missing name for new pattern` });
+    res.status(400).json({ error: `A pattern named ${name} already exists` });
     return;
   }
 
@@ -156,7 +156,7 @@ function reorderPatterns(req: express.Request, res: express.Response) {
 function blendPatterns(): number[] {
   // Each layer is flat RGBA ([r, g, b, a, ...]); alpha is the compositing weight.
   const layers = individualPatterns.map((p) => p.data());
-  const nLights = (layers[0]?.length ?? 0) / 4;
+  const { nLights } = config;
   const out = new Array<number>(nLights * 3).fill(0);
 
   // Source-over alpha compositing, first pattern on the bottom, last on top
@@ -266,7 +266,9 @@ async function renameStoredPattern(req: express.Request, res: express.Response) 
   }
 
   if (trimmed !== name && library.some((e) => e.name === trimmed)) {
-    res.status(400).json({ error: `A stored pattern set named ${trimmed} already exists` });
+    res
+      .status(400)
+      .json({ error: `A stored pattern set named ${trimmed} already exists` });
     return;
   }
 
@@ -316,21 +318,24 @@ async function main() {
   app.use(cors());
   app.use(express.json());
 
-  app.get('/current_patterns', currentPatterns);
-  app.post('/add_new_pattern', addNewPattern);
-  app.post('/remove_new_pattern', removePattern);
-  app.post('/update_pattern', updatePattern);
-  app.get('/server_paused', serverPausedState);
-  app.post('/set_server_paused', setServerPaused);
-  app.get('/blackout', blackoutState);
-  app.post('/set_blackout', setBlackout);
-  app.post('/reorder_patterns', reorderPatterns);
-  app.get('/pattern', pattern);
-  app.get('/stored_patterns', storedPatterns);
-  app.post('/store_patterns', storePatterns);
-  app.post('/add_stored_patterns', addStoredPatterns);
-  app.post('/rename_stored_pattern', renameStoredPattern);
-  app.post('/remove_stored_pattern', removeStoredPattern);
+  // All endpoints live under /api so a single proxy/CORS rule covers them.
+  const routes = express.Router();
+  routes.get('/current_patterns', currentPatterns);
+  routes.post('/add_new_pattern', addNewPattern);
+  routes.post('/remove_new_pattern', removePattern);
+  routes.post('/update_pattern', updatePattern);
+  routes.get('/server_paused', serverPausedState);
+  routes.post('/set_server_paused', setServerPaused);
+  routes.get('/blackout', blackoutState);
+  routes.post('/set_blackout', setBlackout);
+  routes.post('/reorder_patterns', reorderPatterns);
+  routes.get('/pattern', pattern);
+  routes.get('/stored_patterns', storedPatterns);
+  routes.post('/store_patterns', storePatterns);
+  routes.post('/add_stored_patterns', addStoredPatterns);
+  routes.post('/rename_stored_pattern', renameStoredPattern);
+  routes.post('/remove_stored_pattern', removeStoredPattern);
+  app.use('/api', routes);
 
   // Advance every pattern at a fixed rate so animations progress over time
   let last = Date.now();
