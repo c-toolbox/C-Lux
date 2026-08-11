@@ -4,6 +4,7 @@ export type {
   PatternParameters,
   PatternProps,
   PatternType,
+  SparkleProps,
   StaticProps,
   StoredPatternSet
 } from '../../server/patterns/patterns';

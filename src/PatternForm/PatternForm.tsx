@@ -15,13 +15,22 @@ import {
   movingGaussianToProps
 } from './MovingGaussianForm';
 import {
+  SPARKLE_DEFAULTS,
+  SparkleForm,
+  type SparkleFormValues,
+  sparkleToProps
+} from './SparkleForm';
+import {
   STATIC_DEFAULTS,
   StaticPatternForm,
   type StaticFormValues,
   staticToProps
 } from './StaticPatternForm';
 
-export type FormValues = StaticFormValues | MovingGaussianFormValues;
+export type FormValues =
+  | StaticFormValues
+  | MovingGaussianFormValues
+  | SparkleFormValues;
 
 function defaultsFor(type: PatternType, name: string): FormValues {
   switch (type) {
@@ -29,6 +38,8 @@ function defaultsFor(type: PatternType, name: string): FormValues {
       return { ...STATIC_DEFAULTS, name };
     case 'MovingGaussian':
       return { ...MOVING_GAUSSIAN_DEFAULTS, name };
+    case 'Sparkle':
+      return { ...SPARKLE_DEFAULTS, name };
   }
 }
 
@@ -38,6 +49,8 @@ export function toProps(values: FormValues): PatternProps {
       return staticToProps(values);
     case 'MovingGaussian':
       return movingGaussianToProps(values);
+    case 'Sparkle':
+      return sparkleToProps(values);
   }
 }
 
@@ -53,6 +66,14 @@ export function fromParameters(p: PatternParameters): FormValues {
         sigma: p.sigma,
         speed: p.speed,
         origin: p.origin
+      };
+    case 'Sparkle':
+      return {
+        type: 'Sparkle',
+        name: p.name,
+        hex: rgbToHex(p.color),
+        density: p.density,
+        decay: p.decay
       };
   }
 }
@@ -73,6 +94,8 @@ export function PatternSubForm({ initial, ...rest }: PatternSubFormProps) {
       return <StaticPatternForm initial={initial} {...rest} />;
     case 'MovingGaussian':
       return <MovingGaussianForm initial={initial} {...rest} />;
+    case 'Sparkle':
+      return <SparkleForm initial={initial} {...rest} />;
   }
 }
 
