@@ -12,9 +12,10 @@ function drawLights(canvas: HTMLCanvasElement, data: number[]) {
 
   const dpr = window.devicePixelRatio || 1;
   const size = canvas.clientWidth;
-  if (canvas.width !== size * dpr) {
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
+  const pixelSize = Math.round(size * dpr);
+  if (canvas.width !== pixelSize || canvas.height !== pixelSize) {
+    canvas.width = pixelSize;
+    canvas.height = pixelSize;
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, size, size);
