@@ -103,7 +103,14 @@ const PATTERN_FIELDS: Record<PatternType, Record<string, FieldSpec>> = {
   Sparkle: { ...COLOR, density: NON_NEGATIVE, decay: NON_NEGATIVE },
   Rainbow: { speed: ANY, saturation: UNIT, value: UNIT, cycles: NON_NEGATIVE },
   SineWave: { ...COLOR, wavelength: { min: 1 }, speed: ANY, min: UNIT, max: UNIT },
-  Comet: { ...COLOR, speed: ANY, tail: NON_NEGATIVE, direction: ANY },
+  Comet: {
+    ...COLOR,
+    speed: ANY,
+    tail: NON_NEGATIVE,
+    direction: ANY,
+    start: NON_NEGATIVE,
+    end: NON_NEGATIVE
+  },
   Bounce: { ...COLOR, sigma: NON_NEGATIVE, speed: ANY },
   Pulse: { ...COLOR, period: POSITIVE, min: UNIT, max: UNIT },
   Gradient: { ...COLOR, color2: 'color', speed: ANY },

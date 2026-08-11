@@ -198,7 +198,9 @@ export function fromParameters(p: PatternParameters): FormValues {
         hex: rgbToHex(p.color),
         speed: p.speed,
         tail: p.tail,
-        direction: p.direction
+        direction: p.direction,
+        start: p.start,
+        end: p.end
       };
     case 'Bounce':
       return {

@@ -6,13 +6,17 @@ import {
   NativeSelect,
   NumberInput,
   Stack,
+  Text,
   TextInput
 } from '@mantine/core';
 
+import config from '../../config.json';
 import type { PatternProps } from '../lib/api';
 import { hexToRgb } from '../lib/color';
 
 import { type CommonValues, type SubFormProps } from './types';
+
+const LAST_LIGHT = config.nLights - 1;
 
 export interface CometFormValues extends CommonValues {
   type: 'Comet';
@@ -20,6 +24,8 @@ export interface CometFormValues extends CommonValues {
   speed: number | string;
   tail: number | string;
   direction: number;
+  start: number | string;
+  end: number | string;
 }
 
 export const COMET_DEFAULTS: CometFormValues = {
@@ -28,7 +34,9 @@ export const COMET_DEFAULTS: CometFormValues = {
   hex: '#ffffff',
   speed: 15,
   tail: 8,
-  direction: 1
+  direction: 1,
+  start: 0,
+  end: 0
 };
 
 const num = (v: number | string) => (typeof v === 'number' ? v : Number(v) || 0);
@@ -39,7 +47,9 @@ export function cometToProps(v: CometFormValues): PatternProps {
     ...hexToRgb(v.hex),
     speed: num(v.speed),
     tail: num(v.tail),
-    direction: v.direction
+    direction: v.direction,
+    start: num(v.start),
+    end: num(v.end)
   };
 }
 
@@ -106,6 +116,30 @@ export function CometForm({
           setValues((prev) => ({ ...prev, direction: Number(e.currentTarget.value) }))
         }
       />
+
+      <Stack gap={4}>
+        <Group grow>
+          <NumberInput
+            label={'Start'}
+            min={0}
+            max={LAST_LIGHT}
+            step={1}
+            value={values.start}
+            onChange={(v) => setValues((prev) => ({ ...prev, start: v }))}
+          />
+          <NumberInput
+            label={'End'}
+            min={0}
+            max={LAST_LIGHT}
+            step={1}
+            value={values.end}
+            onChange={(v) => setValues((prev) => ({ ...prev, end: v }))}
+          />
+        </Group>
+        <Text size={'xs'} c={'dimmed'}>
+          Same start and end loops the whole ring.
+        </Text>
+      </Stack>
 
       <Button
         onClick={() => onSubmit(values)}
