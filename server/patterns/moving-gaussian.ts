@@ -58,7 +58,7 @@ export class MovingGaussianPattern extends Pattern {
 
     // Gaussian bump centered on the origin index; rotation moves it around the ring.
     const n = this.state.length;
-    const origin = n > 0 ? ((this.origin % n) + n) % n : 0;
+    origin = n > 0 ? ((this.origin % n) + n) % n : 0;
     const twoSigmaSq = 2 * this.sigma * this.sigma;
     for (let i = 0; i < n; i++) {
       const diff = Math.abs(i - origin);
