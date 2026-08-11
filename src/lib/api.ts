@@ -79,7 +79,7 @@ export const api = {
 // function that closes the connection.
 export function subscribeFrames(onFrame: (frame: number[]) => void): () => void {
   const source = new EventSource('/api/stream');
-  source.onmessage = (event) => {
+  source.onmessage = (event: MessageEvent<string>) => {
     try {
       onFrame(JSON.parse(event.data) as number[]);
     } catch {

@@ -29,7 +29,7 @@ export function HomePage() {
   }
 
   useEffect(() => {
-    refresh().finally(() => setLoading(false));
+    void refresh().finally(() => setLoading(false));
   }, []);
 
   // Pause or resume all pattern output on the server.
@@ -100,7 +100,7 @@ export function HomePage() {
         <Group gap={'xs'}>
           <Button
             disabled={busy}
-            onClick={togglePaused}
+            onClick={() => void togglePaused()}
             variant={paused ? 'filled' : 'default'}
             color={paused ? 'orange' : undefined}
           >
@@ -108,7 +108,7 @@ export function HomePage() {
           </Button>
           <Button
             disabled={busy}
-            onClick={toggleBlackout}
+            onClick={() => void toggleBlackout()}
             variant={blackout ? 'filled' : 'default'}
             color={blackout ? 'blue' : undefined}
           >
@@ -139,7 +139,7 @@ export function HomePage() {
                 <Text fw={600}>{set.name}</Text>
 
                 <Group gap={'xs'}>
-                  <Button disabled={busy} onClick={() => select(set)}>
+                  <Button disabled={busy} onClick={() => void select(set)}>
                     Select
                   </Button>
                 </Group>

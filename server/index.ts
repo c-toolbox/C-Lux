@@ -6,11 +6,15 @@ import { fileURLToPath } from 'node:url';
 
 import config from '../config.json' with { type: 'json' };
 
+import type { PatternProps } from './patterns/patterns';
 import { PatternEngine } from './engine';
 import { HttpError } from './errors';
 import { startOutputs } from './output';
 
 const engine = new PatternEngine();
+
+// How often to send an SSE keep-alive comment so idle proxies don't close the stream.
+const SSE_HEARTBEAT_MS = 15000;
 
 //
 // Route handlers — thin adapters over the engine. Handlers throw `HttpError` on failure;
@@ -22,12 +26,15 @@ function listPatterns(_req: express.Request, res: express.Response) {
 }
 
 function addPattern(req: express.Request, res: express.Response) {
-  const { type, props } = req.body ?? {};
-  res.status(201).json(engine.addPattern(type, props ?? {}));
+  const { type, props } = (req.body ?? {}) as { type?: unknown; props?: unknown };
+  if (typeof type !== 'string') throw new HttpError(400, 'Missing pattern type');
+  res
+    .status(201)
+    .json(engine.addPattern(type, (props ?? {}) as PatternProps & { name?: string }));
 }
 
 function updatePattern(req: express.Request, res: express.Response) {
-  const { props } = req.body ?? {};
+  const { props } = (req.body ?? {}) as { props?: unknown };
   res.json(engine.updatePattern(String(req.params.name), props ?? {}));
 }
 
@@ -36,7 +43,7 @@ function removePattern(req: express.Request, res: express.Response) {
 }
 
 function reorderPatterns(req: express.Request, res: express.Response) {
-  const { order } = req.body ?? {};
+  const { order } = (req.body ?? {}) as { order?: unknown };
   res.json(engine.reorderPatterns(order));
 }
 
@@ -45,7 +52,8 @@ function getPause(_req: express.Request, res: express.Response) {
 }
 
 function setPause(req: express.Request, res: express.Response) {
-  res.json({ paused: engine.setPaused(Boolean(req.body?.paused)) });
+  const { paused } = (req.body ?? {}) as { paused?: unknown };
+  res.json({ paused: engine.setPaused(Boolean(paused)) });
 }
 
 function getBlackout(_req: express.Request, res: express.Response) {
@@ -53,7 +61,8 @@ function getBlackout(_req: express.Request, res: express.Response) {
 }
 
 function setBlackout(req: express.Request, res: express.Response) {
-  res.json({ blackout: engine.setBlackout(Boolean(req.body?.blackout)) });
+  const { blackout } = (req.body ?? {}) as { blackout?: unknown };
+  res.json({ blackout: engine.setBlackout(Boolean(blackout)) });
 }
 
 function getFrame(_req: express.Request, res: express.Response) {
@@ -65,7 +74,9 @@ function streamFrames(req: express.Request, res: express.Response) {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
-    Connection: 'keep-alive'
+    Connection: 'keep-alive',
+    // Ask reverse proxies (e.g. nginx) not to buffer the stream.
+    'X-Accel-Buffering': 'no'
   });
   res.write(`data: ${JSON.stringify(engine.blend())}\n\n`);
 
@@ -73,7 +84,13 @@ function streamFrames(req: express.Request, res: express.Response) {
     res.write(`data: ${JSON.stringify(frame)}\n\n`);
   });
 
-  req.on('close', unsubscribe);
+  // Keep idle proxies/load balancers from timing out the connection between frames.
+  const heartbeat = setInterval(() => res.write(':heartbeat\n\n'), SSE_HEARTBEAT_MS);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    unsubscribe();
+  });
 }
 
 function getLibrary(_req: express.Request, res: express.Response) {
@@ -81,7 +98,8 @@ function getLibrary(_req: express.Request, res: express.Response) {
 }
 
 async function storeCurrent(req: express.Request, res: express.Response) {
-  res.json(await engine.storeCurrent(req.body?.name));
+  const { name } = (req.body ?? {}) as { name?: unknown };
+  res.json(await engine.storeCurrent(name));
 }
 
 function applyStored(req: express.Request, res: express.Response) {
@@ -89,7 +107,8 @@ function applyStored(req: express.Request, res: express.Response) {
 }
 
 async function renameStored(req: express.Request, res: express.Response) {
-  res.json(await engine.renameStored(String(req.params.name), req.body?.newName));
+  const { newName } = (req.body ?? {}) as { newName?: unknown };
+  res.json(await engine.renameStored(String(req.params.name), newName));
 }
 
 async function removeStored(req: express.Request, res: express.Response) {

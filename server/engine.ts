@@ -10,6 +10,7 @@ import {
 } from './patterns/patterns';
 import { HttpError } from './errors';
 import { loadLibrary, loadPatterns, saveLibrary, savePatterns } from './storage';
+import { validateName, validatePatternProps } from './validation';
 
 // How long to wait after the last change before writing patterns to disk. Coalesces
 // bursts of edits (drag-reorder, slider drags) into a single write.
@@ -39,6 +40,12 @@ export class PatternEngine {
 
   private frameListeners = new Set<FrameListener>();
 
+  // Reused scratch buffers for blend() so a fresh array isn't allocated every tick; every
+  // caller consumes the result synchronously (serializes or copies it) before blend() can
+  // be called again, so sharing these buffers across calls is safe.
+  private readonly blendAccum: number[] = new Array<number>(config.nLights * 3).fill(0);
+  private readonly blendOut: number[] = new Array<number>(config.nLights * 3).fill(0);
+
   // Restore any patterns and library saved from a previous run.
   async load(): Promise<void> {
     this.patterns = await loadPatterns();
@@ -66,8 +73,7 @@ export class PatternEngine {
   }
 
   addPattern(type: string, props: PatternProps & { name?: string }): { name: string } {
-    const { name } = props ?? {};
-    if (!name) throw new HttpError(400, 'Missing name for new pattern');
+    const name = validateName(props?.name, 'pattern name');
 
     if (this.patterns.find((p) => p.name === name)) {
       throw new HttpError(400, `A pattern named ${name} already exists`);
@@ -76,7 +82,8 @@ export class PatternEngine {
     const cls = patternByType(type);
     if (!cls) throw new HttpError(400, `Unknown pattern type: ${type}`);
 
-    const instance = new cls(props);
+    const validProps = validatePatternProps(props);
+    const instance = new cls({ ...validProps, name } as PatternProps);
     this.patterns.push(instance);
     this.schedulePersist();
     return { name: instance.name };
@@ -95,7 +102,7 @@ export class PatternEngine {
     const instance = this.patterns.find((p) => p.name === name);
     if (!instance) throw new HttpError(404, `No pattern named: ${name}`);
 
-    instance.set(props);
+    instance.set(validatePatternProps(props));
     this.schedulePersist();
     return instance.parameters() as PatternParameters;
   }
@@ -108,6 +115,9 @@ export class PatternEngine {
     const byName = new Map(this.patterns.map((p) => [p.name, p]));
     const reordered: Array<Pattern> = [];
     for (const name of order) {
+      if (typeof name !== 'string') {
+        throw new HttpError(400, 'order must contain only pattern names');
+      }
       const instance = byName.get(name);
       if (!instance) {
         throw new HttpError(400, `Unknown or duplicate pattern name: ${name}`);
@@ -151,10 +161,8 @@ export class PatternEngine {
     return this.library;
   }
 
-  async storeCurrent(name: unknown): Promise<StoredPatternSet[]> {
-    if (typeof name !== 'string' || name.trim() === '') {
-      throw new HttpError(400, 'Missing name for stored pattern set');
-    }
+  async storeCurrent(rawName: unknown): Promise<StoredPatternSet[]> {
+    const name = validateName(rawName, 'stored pattern set name');
 
     const entry: StoredPatternSet = {
       name,
@@ -192,11 +200,7 @@ export class PatternEngine {
   }
 
   async renameStored(name: string, newName: unknown): Promise<StoredPatternSet[]> {
-    if (typeof newName !== 'string' || newName.trim() === '') {
-      throw new HttpError(400, 'Missing new name for stored pattern set');
-    }
-
-    const trimmed = newName.trim();
+    const trimmed = validateName(newName, 'new name for stored pattern set');
 
     const index = this.library.findIndex((e) => e.name === name);
     if (index === -1) throw new HttpError(404, `No stored pattern set named: ${name}`);
@@ -236,25 +240,30 @@ export class PatternEngine {
 
   // Blend the individual patterns into a single flat RGB array using source-over alpha
   // compositing (first pattern on the bottom, last on top), scaled by the master
-  // brightness.
+  // brightness. Returns a buffer reused across calls; consume it before calling again.
   blend(): number[] {
-    const layers = this.patterns.map((p) => p.data());
     const { nLights } = config;
-    const out = new Array<number>(nLights * 3).fill(0);
+    const accum = this.blendAccum;
+    accum.fill(0);
 
-    for (const layer of layers) {
+    for (const p of this.patterns) {
+      const layer = p.data();
       for (let i = 0; i < nLights; i++) {
         const src = i * 4;
         const dst = i * 3;
         const alpha = layer[src + 3];
 
-        out[dst] = layer[src] * alpha + out[dst] * (1 - alpha);
-        out[dst + 1] = layer[src + 1] * alpha + out[dst + 1] * (1 - alpha);
-        out[dst + 2] = layer[src + 2] * alpha + out[dst + 2] * (1 - alpha);
+        accum[dst] = layer[src] * alpha + accum[dst] * (1 - alpha);
+        accum[dst + 1] = layer[src + 1] * alpha + accum[dst + 1] * (1 - alpha);
+        accum[dst + 2] = layer[src + 2] * alpha + accum[dst + 2] * (1 - alpha);
       }
     }
 
-    return out.map((v) => Math.round(v * this.brightnessFactor));
+    const out = this.blendOut;
+    for (let i = 0; i < out.length; i++) {
+      out[i] = Math.round(accum[i] * this.brightnessFactor);
+    }
+    return out;
   }
 
   // Advance every pattern and ease the pause/brightness factors toward their targets.

@@ -66,7 +66,7 @@ function Editor() {
   }
 
   useEffect(() => {
-    refresh().finally(() => setLoading(false));
+    void refresh().finally(() => setLoading(false));
   }, []);
 
   async function run(action: () => Promise<unknown>) {
@@ -97,11 +97,11 @@ function Editor() {
   }
 
   function handleRemove(name: string) {
-    run(() => api.removePattern(name));
+    void run(() => api.removePattern(name));
   }
 
   function handleToggleServerPause() {
-    run(async () => {
+    void run(async () => {
       const next = !serverPaused;
       const res = await api.setServerPaused(next);
       setServerPaused(res.paused);
@@ -123,28 +123,28 @@ function Editor() {
   }
 
   function handleStore(name: string) {
-    run(async () => {
+    void run(async () => {
       await api.storePatterns(name);
       setStoreOpen(false);
     });
   }
 
   function handleAddStored(set: StoredPatternSet) {
-    run(async () => {
+    void run(async () => {
       await api.addStoredPatterns(set.name);
       setStoredOpen(false);
     });
   }
 
   function handleRemoveStored(name: string) {
-    run(async () => {
+    void run(async () => {
       await api.removeStoredPattern(name);
       await refreshStored();
     });
   }
 
   function handleRenameStored(name: string, newName: string) {
-    run(async () => {
+    void run(async () => {
       await api.renameStoredPattern(name, newName);
       await refreshStored();
     });
@@ -165,7 +165,7 @@ function Editor() {
     const order = patterns.map((p) => p.name);
     const [moved] = order.splice(from, 1);
     order.splice(to, 0, moved);
-    run(() => api.reorderPatterns(order));
+    void run(() => api.reorderPatterns(order));
   }
 
   function handleDrop(index: number) {
@@ -205,10 +205,10 @@ function Editor() {
             >
               {serverPaused ? 'Resume all' : 'Pause all'}
             </Button>
-            <Button variant={'default'} onClick={openStored}>
+            <Button variant={'default'} onClick={() => void openStored()}>
               Add stored
             </Button>
-            <Button variant={'default'} onClick={openManage}>
+            <Button variant={'default'} onClick={() => void openManage()}>
               Manage stored
             </Button>
             <Button
@@ -354,7 +354,7 @@ function Editor() {
           namePlaceholder={namePlaceholder}
           existingNames={existingNames}
           busy={busy}
-          onSubmit={handleAdd}
+          onSubmit={(values) => void handleAdd(values)}
         />
       </Modal>
 
@@ -371,7 +371,7 @@ function Editor() {
             namePlaceholder={editing.name}
             existingNames={existingNames}
             busy={busy}
-            onSubmit={handleEdit}
+            onSubmit={(values) => void handleEdit(values)}
           />
         )}
       </Modal>

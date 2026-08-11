@@ -38,12 +38,14 @@ export const PATTERNS = [
 
 export type PatternType = (typeof PATTERNS)[number]['Type'];
 
-export const PATTERN_TYPES = PATTERNS.map((p) => p.Type) as PatternType[];
+export const PATTERN_TYPES = PATTERNS.map((p) => p.Type);
 
 // Look up a pattern class by its `Type` tag
 export function patternByType(type: string): PatternClass | undefined {
   // The registry mixes classes with different `*Props` constructors; narrowing back to
-  // the shared `PatternClass` requires a single assertion here.
+  // the shared `PatternClass` requires a double assertion, which the type-aware linter
+  // can't verify is non-trivial here.
+
   return PATTERNS.find((p) => p.Type === type) as unknown as PatternClass | undefined;
 }
 
