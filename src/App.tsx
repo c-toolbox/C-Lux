@@ -49,6 +49,7 @@ function App() {
   const [namePlaceholder, setNamePlaceholder] = useState(randomName());
   const [editing, setEditing] = useState<PatternParameters | null>(null);
   const [storedOpen, setStoredOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
   const [stored, setStored] = useState<StoredPatternSet[]>([]);
   const [storeOpen, setStoreOpen] = useState(false);
   const [storeName, setStoreName] = useState('');
@@ -146,6 +147,23 @@ function App() {
     });
   }
 
+  function handleRenameStored(name: string, newName: string) {
+    run(async () => {
+      await api.renameStoredPattern(name, newName);
+      await refreshStored();
+    });
+  }
+
+  async function openManage() {
+    setError(null);
+    try {
+      await refreshStored();
+      setManageOpen(true);
+    } catch (e) {
+      setError(describeError(e));
+    }
+  }
+
   function move(index: number, delta: number) {
     const target = index + delta;
     if (target < 0 || target >= patterns.length) return;
@@ -182,6 +200,9 @@ function App() {
             </Button>
             <Button variant={'default'} onClick={openStored}>
               Add stored
+            </Button>
+            <Button variant={'default'} onClick={openManage}>
+              Manage stored
             </Button>
             <Button
               variant={'default'}
@@ -396,6 +417,31 @@ function App() {
       </Modal>
 
       <Modal
+        opened={manageOpen}
+        onClose={() => setManageOpen(false)}
+        title={'Manage stored patterns'}
+        centered
+      >
+        {stored.length === 0 ? (
+          <Text c={'dimmed'} ta={'center'} py={'md'}>
+            No stored patterns yet. Use “Store patterns” to save the current list.
+          </Text>
+        ) : (
+          <Stack gap={'sm'}>
+            {stored.map((set) => (
+              <ManageStoredRow
+                key={set.name}
+                set={set}
+                busy={busy}
+                onRename={handleRenameStored}
+                onRemove={handleRemoveStored}
+              />
+            ))}
+          </Stack>
+        )}
+      </Modal>
+
+      <Modal
         opened={storeOpen}
         onClose={() => setStoreOpen(false)}
         title={'Store patterns'}
@@ -416,6 +462,58 @@ function App() {
         </Stack>
       </Modal>
     </Container>
+  );
+}
+
+interface ManageStoredRowProps {
+  set: StoredPatternSet;
+  busy: boolean;
+  onRename: (name: string, newName: string) => void;
+  onRemove: (name: string) => void;
+}
+
+// A single editable row in the manage-stored modal: rename or remove a set.
+function ManageStoredRow({ set, busy, onRename, onRemove }: ManageStoredRowProps) {
+  const [name, setName] = useState(set.name);
+  const trimmed = name.trim();
+  const changed = trimmed !== '' && trimmed !== set.name;
+
+  return (
+    <Group
+      align={'flex-end'}
+      justify={'space-between'}
+      p={'sm'}
+      style={{
+        border: '1px solid var(--mantine-color-default-border)',
+        borderRadius: 8
+      }}
+    >
+      <TextInput
+        label={`${set.patterns.length} pattern(s)`}
+        value={name}
+        disabled={busy}
+        onChange={(e) => setName(e.currentTarget.value)}
+        style={{ flex: 1 }}
+      />
+      <Group gap={'xs'}>
+        <Button
+          size={'xs'}
+          disabled={busy || !changed}
+          onClick={() => onRename(set.name, trimmed)}
+        >
+          Rename
+        </Button>
+        <Button
+          size={'xs'}
+          color={'red'}
+          variant={'light'}
+          disabled={busy}
+          onClick={() => onRemove(set.name)}
+        >
+          Remove
+        </Button>
+      </Group>
+    </Group>
   );
 }
 

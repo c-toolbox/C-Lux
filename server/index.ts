@@ -246,6 +246,41 @@ function addStoredPatterns(req: express.Request, res: express.Response) {
   res.json(individualPatterns.map((p) => p.parameters()));
 }
 
+// Rename a stored set, keeping its patterns intact
+async function renameStoredPattern(req: express.Request, res: express.Response) {
+  const { name, newName } = req.body ?? {};
+
+  if (typeof newName !== 'string' || newName.trim() === '') {
+    res.status(400).json({ error: `Missing new name for stored pattern set` });
+    return;
+  }
+
+  const trimmed = newName.trim();
+
+  const index = library.findIndex((e) => e.name === name);
+  if (index === -1) {
+    res.status(404).json({ error: `No stored pattern set named: ${name}` });
+    return;
+  }
+
+  if (trimmed !== name && library.some((e) => e.name === trimmed)) {
+    res.status(400).json({ error: `A stored pattern set named ${trimmed} already exists` });
+    return;
+  }
+
+  library[index] = { ...library[index], name: trimmed };
+
+  try {
+    await saveLibrary(library);
+  } catch (err) {
+    console.error('Failed to save library:', err);
+    res.status(500).json({ error: 'Failed to rename stored pattern' });
+    return;
+  }
+
+  res.json(library);
+}
+
 // Remove a stored set from the library
 async function removeStoredPattern(req: express.Request, res: express.Response) {
   const { name } = req.body ?? {};
@@ -291,6 +326,7 @@ async function main() {
   app.get('/stored_patterns', storedPatterns);
   app.post('/store_patterns', storePatterns);
   app.post('/add_stored_patterns', addStoredPatterns);
+  app.post('/rename_stored_pattern', renameStoredPattern);
   app.post('/remove_stored_pattern', removeStoredPattern);
 
   // Advance every pattern at a fixed rate so animations progress over time

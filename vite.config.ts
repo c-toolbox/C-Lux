@@ -19,6 +19,7 @@ export default defineConfig({
       '/set_pattern_paused': 'http://localhost:8787',
       '/server_paused': 'http://localhost:8787',
       '/set_server_paused': 'http://localhost:8787',
+      '/rename_stored_pattern': 'http://localhost:8787'
     }
   }
 });

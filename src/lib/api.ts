@@ -58,6 +58,8 @@ export const api = {
     request<StoredPatternSet[]>('/store_patterns', { name }),
   addStoredPatterns: (name: string) =>
     request<PatternParameters[]>('/add_stored_patterns', { name }),
+  renameStoredPattern: (name: string, newName: string) =>
+    request<StoredPatternSet[]>('/rename_stored_pattern', { name, newName }),
   removeStoredPattern: (name: string) =>
     request<{ name: string }>('/remove_stored_pattern', { name })
 };
