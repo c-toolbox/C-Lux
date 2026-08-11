@@ -58,6 +58,9 @@ export const api = {
   blackout: () => request<{ blackout: boolean }>('/blackout'),
   setBlackout: (blackout: boolean) =>
     request<{ blackout: boolean }>('/blackout', 'PUT', { blackout }),
+  halfLight: () => request<{ halfLight: boolean }>('/half-light'),
+  setHalfLight: (halfLight: boolean) =>
+    request<{ halfLight: boolean }>('/half-light', 'PUT', { halfLight }),
   removePattern: (name: string) =>
     request<{ name: string }>(`/patterns/${seg(name)}`, 'DELETE'),
   reorderPatterns: (order: string[]) =>

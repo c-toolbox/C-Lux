@@ -4,7 +4,6 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { createTheme, MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 
-import logo from './assets/C_transparent.png';
 import Editor from './Editor/Editor.tsx';
 import { HomePage } from './HomePage/HomePage.tsx';
 
@@ -28,7 +27,6 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MantineProvider defaultColorScheme={'auto'} theme={theme}>
-      <img src={logo} alt={'C-Lux'} className={'app-logo'} />
       <Notifications />
       <RouterProvider router={router} />
     </MantineProvider>

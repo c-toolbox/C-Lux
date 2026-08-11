@@ -12,17 +12,20 @@ export function HomePage() {
   const [busy, setBusy] = useState(false);
   const [paused, setPaused] = useState(false);
   const [blackout, setBlackout] = useState(false);
+  const [halfLight, setHalfLight] = useState(false);
 
   async function refresh() {
     try {
-      const [sets, { paused }, { blackout }] = await Promise.all([
+      const [sets, { paused }, { blackout }, { halfLight }] = await Promise.all([
         api.storedPatterns(),
         api.serverPaused(),
-        api.blackout()
+        api.blackout(),
+        api.halfLight()
       ]);
       setStored(sets);
       setPaused(paused);
       setBlackout(blackout);
+      setHalfLight(halfLight);
     } catch (e) {
       showError(e);
     }
@@ -51,6 +54,19 @@ export function HomePage() {
     try {
       const { blackout: next } = await api.setBlackout(!blackout);
       setBlackout(next);
+    } catch (e) {
+      showError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Black out the top half of the ring or bring it back.
+  async function toggleHalfLight() {
+    setBusy(true);
+    try {
+      const { halfLight: next } = await api.setHalfLight(!halfLight);
+      setHalfLight(next);
     } catch (e) {
       showError(e);
     } finally {
@@ -96,13 +112,14 @@ export function HomePage() {
       >
         Open editor
       </Button>
-      <Stack gap={'lg'} mt={'xl'}>
-        <Group gap={'xs'}>
+      <Stack mt={'xl'}>
+        <Group gap={'xs'} grow>
           <Button
             disabled={busy}
             onClick={() => void togglePaused()}
             variant={paused ? 'filled' : 'default'}
             color={paused ? 'orange' : undefined}
+            px={'xs'}
           >
             {paused ? 'Resume' : 'Pause'}
           </Button>
@@ -111,8 +128,18 @@ export function HomePage() {
             onClick={() => void toggleBlackout()}
             variant={blackout ? 'filled' : 'default'}
             color={blackout ? 'blue' : undefined}
+            px={'xs'}
           >
             {blackout ? 'Restore' : 'Fade to black'}
+          </Button>
+          <Button
+            disabled={busy}
+            onClick={() => void toggleHalfLight()}
+            variant={halfLight ? 'filled' : 'default'}
+            color={halfLight ? 'grape' : undefined}
+            px={'xs'}
+          >
+            {halfLight ? 'Full lights' : 'Half light'}
           </Button>
         </Group>
 

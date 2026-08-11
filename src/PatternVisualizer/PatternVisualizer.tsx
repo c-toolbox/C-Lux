@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import config from '../../config.json';
+import logo from '../assets/C_transparent.png';
 import { subscribeFrames } from '../lib/api';
 
 const NUM_LIGHTS = config.nLights;
@@ -25,7 +26,7 @@ function drawLights(canvas: HTMLCanvasElement, data: number[]) {
   const half = Math.PI / NUM_LIGHTS;
 
   for (let i = 0; i < NUM_LIGHTS; i++) {
-    const a = (2 * Math.PI * i) / NUM_LIGHTS;
+    const a = (2 * Math.PI * i) / NUM_LIGHTS + Math.PI / 2;
     const start = -a - half;
     const end = -a + half;
     const r = data[i * 3];
@@ -53,15 +54,37 @@ export function PatternVisualizer() {
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
+    <div
       style={{
+        position: 'relative',
         width: '100%',
         maxWidth: 420,
         aspectRatio: '1 / 1',
-        margin: '0 auto',
-        display: 'block'
+        margin: '0 auto'
       }}
-    />
+    >
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'block'
+        }}
+      />
+      <img
+        src={logo}
+        alt={'C-Lux'}
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-52.5%, -50%)',
+          width: '40%',
+          height: 'auto',
+          pointerEvents: 'none',
+          filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25))'
+        }}
+      />
+    </div>
   );
 }

@@ -46,10 +46,8 @@ function Editor() {
   const [addOpen, setAddOpen] = useState(false);
   const [namePlaceholder, setNamePlaceholder] = useState(randomName());
   const [editing, setEditing] = useState<PatternParameters | null>(null);
-  const [storedOpen, setStoredOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [stored, setStored] = useState<StoredPatternSet[]>([]);
-  const [storeOpen, setStoreOpen] = useState(false);
   const [storeName, setStoreName] = useState('');
   const [serverPaused, setServerPaused] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -112,28 +110,16 @@ function Editor() {
     setStored(await api.storedPatterns());
   }
 
-  async function openStored() {
-    setError(null);
-    try {
-      await refreshStored();
-      setStoredOpen(true);
-    } catch (e) {
-      setError(describeError(e));
-    }
-  }
-
   function handleStore(name: string) {
     void run(async () => {
       await api.storePatterns(name);
-      setStoreOpen(false);
+      await refreshStored();
+      setStoreName(randomName());
     });
   }
 
   function handleAddStored(set: StoredPatternSet) {
-    void run(async () => {
-      await api.addStoredPatterns(set.name);
-      setStoredOpen(false);
-    });
+    void run(() => api.addStoredPatterns(set.name));
   }
 
   function handleRemoveStored(name: string) {
@@ -154,6 +140,7 @@ function Editor() {
     setError(null);
     try {
       await refreshStored();
+      setStoreName(randomName());
       setManageOpen(true);
     } catch (e) {
       setError(describeError(e));
@@ -193,43 +180,29 @@ function Editor() {
       >
         Home
       </Button>
-      <Stack gap={'lg'} mt={'xl'}>
-        <Group justify={'space-between'}>
-          <Text fw={500}>{patterns.length} pattern(s)</Text>
-          <Group gap={'xs'}>
-            <Button
-              variant={serverPaused ? 'filled' : 'default'}
-              color={serverPaused ? 'yellow' : undefined}
-              disabled={busy}
-              onClick={handleToggleServerPause}
-            >
-              {serverPaused ? 'Resume all' : 'Pause all'}
-            </Button>
-            <Button variant={'default'} onClick={() => void openStored()}>
-              Add stored
-            </Button>
-            <Button variant={'default'} onClick={() => void openManage()}>
-              Manage stored
-            </Button>
-            <Button
-              variant={'default'}
-              disabled={busy || patterns.length === 0}
-              onClick={() => {
-                setStoreName(randomName());
-                setStoreOpen(true);
-              }}
-            >
-              Store patterns
-            </Button>
-            <Button
-              onClick={() => {
-                setNamePlaceholder(randomName());
-                setAddOpen(true);
-              }}
-            >
-              Add pattern
-            </Button>
-          </Group>
+      <Stack mt={'xl'}>
+        <Group grow>
+          <Button
+            variant={serverPaused ? 'filled' : 'default'}
+            color={serverPaused ? 'yellow' : undefined}
+            disabled={busy}
+            onClick={handleToggleServerPause}
+            px={'xs'}
+          >
+            {serverPaused ? 'Resume all' : 'Pause all'}
+          </Button>
+          <Button variant={'default'} onClick={() => void openManage()} px={'xs'}>
+            Manage stored
+          </Button>
+          <Button
+            onClick={() => {
+              setNamePlaceholder(randomName());
+              setAddOpen(true);
+            }}
+            px={'xs'}
+          >
+            Add pattern
+          </Button>
         </Group>
 
         {error && (
@@ -377,107 +350,47 @@ function Editor() {
       </Modal>
 
       <Modal
-        opened={storedOpen}
-        onClose={() => setStoredOpen(false)}
-        title={'Stored patterns'}
-        centered
-      >
-        {stored.length === 0 ? (
-          <Text c={'dimmed'} ta={'center'} py={'md'}>
-            No stored patterns yet. Use “Store patterns” to save the current list.
-          </Text>
-        ) : (
-          <Stack gap={'sm'}>
-            {stored.map((set) => (
-              <Group
-                key={set.name}
-                justify={'space-between'}
-                p={'sm'}
-                style={{
-                  border: '1px solid var(--mantine-color-default-border)',
-                  borderRadius: 8
-                }}
-              >
-                <div>
-                  <Text fw={600}>{set.name}</Text>
-                  <Group gap={4} mt={4}>
-                    {set.patterns.map((p) => (
-                      <ColorSwatch key={p.name} color={patternSwatchHex(p)} size={16} />
-                    ))}
-                    <Badge variant={'light'} size={'sm'}>
-                      {set.patterns.length} pattern(s)
-                    </Badge>
-                  </Group>
-                </div>
-
-                <Group gap={'xs'}>
-                  <Button
-                    size={'xs'}
-                    variant={'light'}
-                    disabled={busy}
-                    onClick={() => handleAddStored(set)}
-                  >
-                    Add
-                  </Button>
-                  <Button
-                    size={'xs'}
-                    color={'red'}
-                    variant={'light'}
-                    disabled={busy}
-                    onClick={() => handleRemoveStored(set.name)}
-                  >
-                    Delete
-                  </Button>
-                </Group>
-              </Group>
-            ))}
-          </Stack>
-        )}
-      </Modal>
-
-      <Modal
         opened={manageOpen}
         onClose={() => setManageOpen(false)}
         title={'Manage stored patterns'}
         centered
       >
-        {stored.length === 0 ? (
-          <Text c={'dimmed'} ta={'center'} py={'md'}>
-            No stored patterns yet. Use “Store patterns” to save the current list.
-          </Text>
-        ) : (
-          <Stack gap={'sm'}>
-            {stored.map((set) => (
-              <ManageStoredRow
-                key={set.name}
-                set={set}
-                busy={busy}
-                onRename={handleRenameStored}
-                onRemove={handleRemoveStored}
-              />
-            ))}
-          </Stack>
-        )}
-      </Modal>
-
-      <Modal
-        opened={storeOpen}
-        onClose={() => setStoreOpen(false)}
-        title={'Store patterns'}
-        centered
-      >
         <Stack gap={'md'}>
-          <TextInput
-            label={'Name'}
-            value={storeName}
-            onChange={(e) => setStoreName(e.currentTarget.value)}
-          />
-          <Button
-            disabled={busy || storeName.trim() === ''}
-            onClick={() => handleStore(storeName.trim())}
-          >
-            Store {patterns.length} pattern(s)
-          </Button>
+          <Group align={'flex-end'} gap={'xs'}>
+            <TextInput
+              label={'Store current patterns'}
+              placeholder={'Name'}
+              value={storeName}
+              disabled={busy}
+              onChange={(e) => setStoreName(e.currentTarget.value)}
+              style={{ flex: 1 }}
+            />
+            <Button
+              disabled={busy || patterns.length === 0 || storeName.trim() === ''}
+              onClick={() => handleStore(storeName.trim())}
+            >
+              Store {patterns.length} pattern(s)
+            </Button>
+          </Group>
+
+          {stored.length === 0 ? (
+            <Text c={'dimmed'} ta={'center'} py={'md'}>
+              No stored patterns yet. Use the field above to save the current list.
+            </Text>
+          ) : (
+            <Stack gap={'sm'}>
+              {stored.map((set) => (
+                <ManageStoredRow
+                  key={set.name}
+                  set={set}
+                  busy={busy}
+                  onAdd={handleAddStored}
+                  onRename={handleRenameStored}
+                  onRemove={handleRemoveStored}
+                />
+              ))}
+            </Stack>
+          )}
         </Stack>
       </Modal>
     </Container>
@@ -487,12 +400,13 @@ function Editor() {
 interface ManageStoredRowProps {
   set: StoredPatternSet;
   busy: boolean;
+  onAdd: (set: StoredPatternSet) => void;
   onRename: (name: string, newName: string) => void;
   onRemove: (name: string) => void;
 }
 
-// A single editable row in the manage-stored modal: rename or remove a set.
-function ManageStoredRow({ set, busy, onRename, onRemove }: ManageStoredRowProps) {
+// A single editable row in the manage-stored modal: apply, rename, or remove a set.
+function ManageStoredRow({ set, busy, onAdd, onRename, onRemove }: ManageStoredRowProps) {
   const [name, setName] = useState(set.name);
   const trimmed = name.trim();
   const changed = trimmed !== '' && trimmed !== set.name;
@@ -515,6 +429,9 @@ function ManageStoredRow({ set, busy, onRename, onRemove }: ManageStoredRowProps
         style={{ flex: 1 }}
       />
       <Group gap={'xs'}>
+        <Button size={'xs'} variant={'light'} disabled={busy} onClick={() => onAdd(set)}>
+          Add
+        </Button>
         <Button
           size={'xs'}
           disabled={busy || !changed}

@@ -65,6 +65,15 @@ function setBlackout(req: express.Request, res: express.Response) {
   res.json({ blackout: engine.setBlackout(Boolean(blackout)) });
 }
 
+function getHalfLight(_req: express.Request, res: express.Response) {
+  res.json({ halfLight: engine.isHalfLight() });
+}
+
+function setHalfLight(req: express.Request, res: express.Response) {
+  const { halfLight } = (req.body ?? {}) as { halfLight?: unknown };
+  res.json({ halfLight: engine.setHalfLight(Boolean(halfLight)) });
+}
+
 function getFrame(_req: express.Request, res: express.Response) {
   res.json(engine.blend());
 }
@@ -134,6 +143,8 @@ async function main() {
   routes.put('/pause', setPause);
   routes.get('/blackout', getBlackout);
   routes.put('/blackout', setBlackout);
+  routes.get('/half-light', getHalfLight);
+  routes.put('/half-light', setHalfLight);
   routes.get('/frame', getFrame);
   routes.get('/stream', streamFrames);
   routes.get('/library', getLibrary);

@@ -34,6 +34,14 @@ export class PatternEngine {
   private blackout = false;
   private brightnessFactor = 1;
 
+  // Half-light mode. When on, the top half of the ring is blacked out. `halfLightFactor`
+  // eases between 0 (off) and 1 (fully applied) so the transition fades instead of
+  // snapping. `halfLightMask[i]` is how dark light i gets when fully applied (1 = fully
+  // dark at the top, 0 = untouched at the bottom), interpolated across the seam.
+  private halfLight = false;
+  private halfLightFactor = 0;
+  private readonly halfLightMask: number[] = buildHalfLightMask();
+
   // Debounced, serialized disk writer for the active pattern list.
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
   private saving: Promise<void> = Promise.resolve();
@@ -153,6 +161,15 @@ export class PatternEngine {
     return this.blackout;
   }
 
+  isHalfLight(): boolean {
+    return this.halfLight;
+  }
+
+  setHalfLight(halfLight: boolean): boolean {
+    this.halfLight = halfLight;
+    return this.halfLight;
+  }
+
   //
   // Library
   //
@@ -260,8 +277,16 @@ export class PatternEngine {
     }
 
     const out = this.blendOut;
-    for (let i = 0; i < out.length; i++) {
-      out[i] = Math.round(accum[i] * this.brightnessFactor);
+    for (let i = 0; i < nLights; i++) {
+      // Scale each light by the master brightness and, in half-light mode, dim the top of
+      // the ring by the eased factor. The mask feathers the seam so the dark and lit
+      // halves blend into each other instead of meeting at a hard edge.
+      const mul =
+        this.brightnessFactor * (1 - this.halfLightFactor * this.halfLightMask[i]);
+      const dst = i * 3;
+      out[dst] = Math.round(accum[dst] * mul);
+      out[dst + 1] = Math.round(accum[dst + 1] * mul);
+      out[dst + 2] = Math.round(accum[dst + 2] * mul);
     }
     return out;
   }
@@ -285,6 +310,13 @@ export class PatternEngine {
       config.server['blackout-transition']
     );
 
+    this.halfLightFactor = approach(
+      this.halfLightFactor,
+      this.halfLight ? 1 : 0,
+      dt,
+      config.server['half-light-transition']
+    );
+
     if (this.frameListeners.size > 0) {
       const frame = this.blend();
       for (const listener of this.frameListeners) listener(frame);
@@ -299,6 +331,21 @@ export class PatternEngine {
       this.frameListeners.delete(listener);
     };
   }
+}
+
+// Build the per-light darkness mask for half-light mode. Lights are arranged in a ring
+// (light 0 at the top, matching the visualizer), so vertical position is cos(2π·i/N):
+// +1 at the top, -1 at the bottom. Darkness ramps from 1 (top) to 0 (bottom), feathered
+// over a band around the horizontal midline so the dark and lit halves interpolate.
+function buildHalfLightMask(): number[] {
+  const { nLights } = config;
+  const feather = Math.max(1e-6, config.server['half-light-feather']);
+  const mask = new Array<number>(nLights);
+  for (let i = 0; i < nLights; i++) {
+    const vertical = Math.cos((2 * Math.PI * i) / nLights);
+    mask[i] = Math.min(1, Math.max(0, 0.5 + vertical / feather));
+  }
+  return mask;
 }
 
 // Move `current` toward `target` by one frame, easing over `transition` seconds. A
