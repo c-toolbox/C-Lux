@@ -22,7 +22,7 @@ import {
   type PatternParameters,
   type StoredPatternSet
 } from '../lib/api';
-import { rgbToHex } from '../lib/color';
+import { patternSwatchHex } from '../lib/color';
 
 import {
   type FormValues,
@@ -286,7 +286,7 @@ function Editor() {
                   >
                     ⠿
                   </ActionIcon>
-                  <ColorSwatch color={rgbToHex(p.color)} />
+                  <ColorSwatch color={patternSwatchHex(p)} />
                   <div>
                     <Text fw={600}>{p.name}</Text>
                     <Group gap={'xs'} mt={4}>
@@ -378,7 +378,7 @@ function Editor() {
                   <Text fw={600}>{set.name}</Text>
                   <Group gap={4} mt={4}>
                     {set.patterns.map((p) => (
-                      <ColorSwatch key={p.name} color={rgbToHex(p.color)} size={16} />
+                      <ColorSwatch key={p.name} color={patternSwatchHex(p)} size={16} />
                     ))}
                     <Badge variant={'light'} size={'sm'}>
                       {set.patterns.length} pattern(s)

@@ -6,38 +6,47 @@ import { hexToRgb } from '../lib/color';
 
 import { type CommonValues, type SubFormProps } from './types';
 
-export interface MovingGaussianFormValues extends CommonValues {
-  type: 'MovingGaussian';
+export interface SineWaveFormValues extends CommonValues {
+  type: 'SineWave';
   hex: string;
-  sigma: number;
+  wavelength: number | string;
   speed: number | string;
-  origin: number | string;
+  min: number | string;
+  max: number | string;
 }
 
-export const MOVING_GAUSSIAN_DEFAULTS: MovingGaussianFormValues = {
-  type: 'MovingGaussian',
+export const SINE_WAVE_DEFAULTS: SineWaveFormValues = {
+  type: 'SineWave',
   name: '',
   hex: '#4dabf7',
-  sigma: 5,
+  wavelength: 20,
   speed: 10,
-  origin: 0
+  min: 0,
+  max: 1
 };
 
-export function movingGaussianToProps(v: MovingGaussianFormValues): PatternProps {
-  const speed = typeof v.speed === 'number' ? v.speed : Number(v.speed) || 0;
-  const origin = typeof v.origin === 'number' ? v.origin : Number(v.origin) || 0;
-  return { name: v.name, ...hexToRgb(v.hex), sigma: v.sigma, speed, origin };
+const num = (v: number | string) => (typeof v === 'number' ? v : Number(v) || 0);
+
+export function sineWaveToProps(v: SineWaveFormValues): PatternProps {
+  return {
+    name: v.name,
+    ...hexToRgb(v.hex),
+    wavelength: num(v.wavelength),
+    speed: num(v.speed),
+    min: num(v.min),
+    max: num(v.max)
+  };
 }
 
-export function MovingGaussianForm({
+export function SineWaveForm({
   mode,
   initial,
   namePlaceholder,
   existingNames,
   busy,
   onSubmit
-}: SubFormProps<MovingGaussianFormValues>) {
-  const [values, setValues] = useState<MovingGaussianFormValues>(initial);
+}: SubFormProps<SineWaveFormValues>) {
+  const [values, setValues] = useState<SineWaveFormValues>(initial);
 
   const nameTaken = mode === 'add' && existingNames.includes(values.name.trim());
   const nameError =
@@ -67,16 +76,11 @@ export function MovingGaussianForm({
 
       <Group grow>
         <NumberInput
-          label={'Sigma'}
-          min={0}
-          step={0.5}
-          value={values.sigma}
-          onChange={(v) =>
-            setValues((prev) => ({
-              ...prev,
-              sigma: typeof v === 'number' ? v : 0
-            }))
-          }
+          label={'Wavelength'}
+          min={1}
+          step={1}
+          value={values.wavelength}
+          onChange={(v) => setValues((prev) => ({ ...prev, wavelength: v }))}
         />
         <NumberInput
           label={'Speed'}
@@ -86,13 +90,24 @@ export function MovingGaussianForm({
         />
       </Group>
 
-      <NumberInput
-        label={'Origin'}
-        min={0}
-        step={1}
-        value={values.origin}
-        onChange={(v) => setValues((prev) => ({ ...prev, origin: v }))}
-      />
+      <Group grow>
+        <NumberInput
+          label={'Min'}
+          min={0}
+          max={1}
+          step={0.05}
+          value={values.min}
+          onChange={(v) => setValues((prev) => ({ ...prev, min: v }))}
+        />
+        <NumberInput
+          label={'Max'}
+          min={0}
+          max={1}
+          step={0.05}
+          value={values.max}
+          onChange={(v) => setValues((prev) => ({ ...prev, max: v }))}
+        />
+      </Group>
 
       <Button
         onClick={() => onSubmit(values)}

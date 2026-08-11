@@ -15,6 +15,28 @@ export interface PatternBaseProps {
   name: string;
 }
 
+// Convert HSV (h in degrees, s and v in [0, 1]) to 8-bit RGB.
+export function hsvToRgb(h: number, s: number, v: number): Color {
+  h = ((h % 360) + 360) % 360;
+  const c = v * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = v - c;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  if (h < 60) [r, g] = [c, x];
+  else if (h < 120) [r, g] = [x, c];
+  else if (h < 180) [g, b] = [c, x];
+  else if (h < 240) [g, b] = [x, c];
+  else if (h < 300) [r, b] = [x, c];
+  else [r, b] = [c, x];
+  return {
+    r: Math.round((r + m) * 255),
+    g: Math.round((g + m) * 255),
+    b: Math.round((b + m) * 255)
+  };
+}
+
 // This type is a lighting pattern that is shown on the light display. The `tick` function
 // has to be called at regular intervals to update the lighting pattern. The data for the
 // pattern itself is returned through the `data` function

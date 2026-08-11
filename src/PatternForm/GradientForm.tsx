@@ -1,35 +1,46 @@
 import { useState } from 'react';
-import { Button, ColorInput, Stack, TextInput } from '@mantine/core';
+import { Button, ColorInput, NumberInput, Stack, TextInput } from '@mantine/core';
 
 import type { PatternProps } from '../lib/api';
 import { hexToRgb } from '../lib/color';
 
 import { type CommonValues, type SubFormProps } from './types';
 
-export interface StaticFormValues extends CommonValues {
-  type: 'StaticPattern';
+export interface GradientFormValues extends CommonValues {
+  type: 'Gradient';
   hex: string;
+  hex2: string;
+  speed: number | string;
 }
 
-export const STATIC_DEFAULTS: StaticFormValues = {
-  type: 'StaticPattern',
+export const GRADIENT_DEFAULTS: GradientFormValues = {
+  type: 'Gradient',
   name: '',
-  hex: '#4dabf7'
+  hex: '#4dabf7',
+  hex2: '#f74d4d',
+  speed: 0.1
 };
 
-export function staticToProps(v: StaticFormValues): PatternProps {
-  return { name: v.name, ...hexToRgb(v.hex) };
+const num = (v: number | string) => (typeof v === 'number' ? v : Number(v) || 0);
+
+export function gradientToProps(v: GradientFormValues): PatternProps {
+  return {
+    name: v.name,
+    ...hexToRgb(v.hex),
+    color2: hexToRgb(v.hex2),
+    speed: num(v.speed)
+  };
 }
 
-export function StaticPatternForm({
+export function GradientForm({
   mode,
   initial,
   namePlaceholder,
   existingNames,
   busy,
   onSubmit
-}: SubFormProps<StaticFormValues>) {
-  const [values, setValues] = useState<StaticFormValues>(initial);
+}: SubFormProps<GradientFormValues>) {
+  const [values, setValues] = useState<GradientFormValues>(initial);
 
   const nameTaken = mode === 'add' && existingNames.includes(values.name.trim());
   const nameError =
@@ -51,10 +62,24 @@ export function StaticPatternForm({
       />
 
       <ColorInput
-        label={'Color'}
+        label={'Color A'}
         format={'hex'}
         value={values.hex}
         onChange={(hex) => setValues((v) => ({ ...v, hex }))}
+      />
+
+      <ColorInput
+        label={'Color B'}
+        format={'hex'}
+        value={values.hex2}
+        onChange={(hex2) => setValues((v) => ({ ...v, hex2 }))}
+      />
+
+      <NumberInput
+        label={'Drift (cycles/s)'}
+        step={0.05}
+        value={values.speed}
+        onChange={(v) => setValues((prev) => ({ ...prev, speed: v }))}
       />
 
       <Button

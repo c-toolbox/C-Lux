@@ -1,6 +1,5 @@
 export interface CommonValues {
   name: string;
-  hex: string;
 }
 
 export interface SubFormProps<V extends CommonValues> {

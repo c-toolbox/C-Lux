@@ -17,10 +17,7 @@ export class SparklePattern extends Pattern {
   decay!: number;
 
   // Per-light brightness in [0, 1]; sparkles ignite at 1 and fade toward 0.
-  private intensities: number[] = Array.from(
-    { length: this.state.length },
-    () => 0
-  );
+  private intensities: number[] = Array.from({ length: this.state.length }, () => 0);
 
   constructor(props: SparkleProps) {
     super(props);

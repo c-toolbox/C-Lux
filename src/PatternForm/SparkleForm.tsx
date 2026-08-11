@@ -1,19 +1,14 @@
 import { useState } from 'react';
-import {
-  Button,
-  ColorInput,
-  Group,
-  NumberInput,
-  Stack,
-  TextInput
-} from '@mantine/core';
+import { Button, ColorInput, Group, NumberInput, Stack, TextInput } from '@mantine/core';
 
 import type { PatternProps } from '../lib/api';
 import { hexToRgb } from '../lib/color';
+
 import { type CommonValues, type SubFormProps } from './types';
 
 export interface SparkleFormValues extends CommonValues {
   type: 'Sparkle';
+  hex: string;
   density: number | string;
   decay: number | string;
 }
@@ -58,9 +53,7 @@ export function SparkleForm({
         value={values.name}
         error={nameError}
         disabled={mode === 'edit'}
-        onChange={(e) =>
-          setValues((v) => ({ ...v, name: e.currentTarget.value }))
-        }
+        onChange={(e) => setValues((v) => ({ ...v, name: e.currentTarget.value }))}
       />
 
       <ColorInput

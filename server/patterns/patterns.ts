@@ -1,7 +1,16 @@
+import { BouncePattern, type BounceProps } from './bounce.ts';
+import { ColorCyclePattern, type ColorCycleProps } from './color-cycle.ts';
+import { CometPattern, type CometProps } from './comet.ts';
+import { FirePattern, type FireProps } from './fire.ts';
+import { GradientPattern, type GradientProps } from './gradient.ts';
 import { MovingGaussianPattern, type MovingGaussianProps } from './moving-gaussian.ts';
 import { type Color, Pattern } from './pattern.ts';
+import { PulsePattern, type PulseProps } from './pulse.ts';
+import { RainbowPattern, type RainbowProps } from './rainbow.ts';
+import { SineWavePattern, type SineWaveProps } from './sine-wave.ts';
 import { SparklePattern, type SparkleProps } from './sparkle.ts';
 import { StaticPattern, type StaticProps } from './static.ts';
+import { TheaterChasePattern, type TheaterChaseProps } from './theater-chase.ts';
 
 // A concrete pattern class: constructable and tagged with a static `Type` and a
 // user-facing `DisplayName`.
@@ -12,7 +21,20 @@ export type PatternClass = (new (props: any) => Pattern) & {
 };
 
 // The list of all available patterns. Register a new pattern by adding its class here
-export const PATTERNS = [StaticPattern, MovingGaussianPattern, SparklePattern] as const;
+export const PATTERNS = [
+  StaticPattern,
+  MovingGaussianPattern,
+  SparklePattern,
+  RainbowPattern,
+  SineWavePattern,
+  CometPattern,
+  BouncePattern,
+  PulsePattern,
+  GradientPattern,
+  ColorCyclePattern,
+  FirePattern,
+  TheaterChasePattern
+] as const;
 
 export type PatternType = (typeof PATTERNS)[number]['Type'];
 
@@ -28,8 +50,34 @@ export function patternDisplayName(type: string): string {
   return patternByType(type)?.DisplayName ?? type;
 }
 
-export type { Color, MovingGaussianProps, SparkleProps, StaticProps };
-export type PatternProps = StaticProps | MovingGaussianProps | SparkleProps;
+export type {
+  BounceProps,
+  Color,
+  ColorCycleProps,
+  CometProps,
+  FireProps,
+  GradientProps,
+  MovingGaussianProps,
+  PulseProps,
+  RainbowProps,
+  SineWaveProps,
+  SparkleProps,
+  StaticProps,
+  TheaterChaseProps
+};
+export type PatternProps =
+  | StaticProps
+  | MovingGaussianProps
+  | SparkleProps
+  | RainbowProps
+  | SineWaveProps
+  | CometProps
+  | BounceProps
+  | PulseProps
+  | GradientProps
+  | ColorCycleProps
+  | FireProps
+  | TheaterChaseProps;
 
 // Union of every pattern's `parameters()` shape, derived from the registry.
 export type PatternParameters = ReturnType<
