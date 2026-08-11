@@ -52,10 +52,12 @@ function App() {
   const [stored, setStored] = useState<StoredPatternSet[]>([]);
   const [storeOpen, setStoreOpen] = useState(false);
   const [storeName, setStoreName] = useState('');
+  const [serverPaused, setServerPaused] = useState(false);
 
   async function refresh() {
     try {
       setPatterns(await api.listPatterns());
+      setServerPaused((await api.serverPaused()).paused);
       setError(null);
     } catch (e) {
       setError(describeError(e));
@@ -95,6 +97,18 @@ function App() {
 
   function handleRemove(name: string) {
     run(() => api.removePattern(name));
+  }
+
+  function handleTogglePause(p: PatternParameters) {
+    run(() => api.setPatternPaused(p.name, !p.paused));
+  }
+
+  function handleToggleServerPause() {
+    run(async () => {
+      const next = !serverPaused;
+      const res = await api.setServerPaused(next);
+      setServerPaused(res.paused);
+    });
   }
 
   async function refreshStored() {
@@ -158,6 +172,14 @@ function App() {
         <Group justify={'space-between'}>
           <Text fw={500}>{patterns.length} pattern(s)</Text>
           <Group gap={'xs'}>
+            <Button
+              variant={serverPaused ? 'filled' : 'default'}
+              color={serverPaused ? 'yellow' : undefined}
+              disabled={busy}
+              onClick={handleToggleServerPause}
+            >
+              {serverPaused ? 'Resume all' : 'Pause all'}
+            </Button>
             <Button variant={'default'} onClick={openStored}>
               Add stored
             </Button>
@@ -217,9 +239,16 @@ function App() {
                   <ColorSwatch color={rgbToHex(p.color)} />
                   <div>
                     <Text fw={600}>{p.name}</Text>
-                    <Badge variant={'light'} size={'sm'}>
-                      {p.type}
-                    </Badge>
+                    <Group gap={'xs'} mt={4}>
+                      <Badge variant={'light'} size={'sm'}>
+                        {p.type}
+                      </Badge>
+                      {p.paused && (
+                        <Badge variant={'light'} size={'sm'} color={'yellow'}>
+                          Paused
+                        </Badge>
+                      )}
+                    </Group>
                   </div>
                 </Group>
 
@@ -242,6 +271,14 @@ function App() {
                       ↓
                     </ActionIcon>
                   </Tooltip>
+                  <Button
+                    size={'xs'}
+                    variant={'light'}
+                    disabled={busy}
+                    onClick={() => handleTogglePause(p)}
+                  >
+                    {p.paused ? 'Resume' : 'Pause'}
+                  </Button>
                   <Button size={'xs'} variant={'light'} onClick={() => setEditing(p)}>
                     Edit
                   </Button>

@@ -43,6 +43,11 @@ export const api = {
     request<{ name: string }>('/add_new_pattern', { type, props }),
   updatePattern: (name: string, props: Partial<PatternProps>) =>
     request<PatternParameters>('/update_pattern', { name, props }),
+  setPatternPaused: (name: string, paused: boolean) =>
+    request<PatternParameters>('/set_pattern_paused', { name, paused }),
+  serverPaused: () => request<{ paused: boolean }>('/server_paused'),
+  setServerPaused: (paused: boolean) =>
+    request<{ paused: boolean }>('/set_server_paused', { paused }),
   removePattern: (name: string) =>
     request<{ name: string }>('/remove_new_pattern', { name }),
   reorderPatterns: (order: string[]) => request<string[]>('/reorder_patterns', { order }),

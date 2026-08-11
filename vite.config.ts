@@ -15,7 +15,10 @@ export default defineConfig({
       '/stored_patterns': 'http://localhost:8787',
       '/store_patterns': 'http://localhost:8787',
       '/add_stored_patterns': 'http://localhost:8787',
-      '/remove_stored_pattern': 'http://localhost:8787'
+      '/remove_stored_pattern': 'http://localhost:8787',
+      '/set_pattern_paused': 'http://localhost:8787',
+      '/server_paused': 'http://localhost:8787',
+      '/set_server_paused': 'http://localhost:8787',
     }
   }
 });

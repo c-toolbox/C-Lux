@@ -21,6 +21,11 @@ import {
 let individualPatterns: Array<Pattern> = [];
 let library: Array<StoredPatternSet> = [];
 
+// Global pause for the whole server. `pauseFactor` scales the tick dt and is
+// interpolated between 1 (running) and 0 (paused) so animations ease in and out.
+let serverPaused = false;
+let pauseFactor = 1;
+
 // Persist the current patterns to disk, logging any failure without crashing.
 function persist() {
   savePatterns(individualPatterns).catch((err) => {
@@ -91,6 +96,33 @@ function updatePattern(req: express.Request, res: express.Response) {
   instance.set(props);
   persist();
   res.json(instance.parameters());
+}
+
+// Pause or resume an existing pattern
+function setPatternPaused(req: express.Request, res: express.Response) {
+  const { name, paused } = req.body ?? {};
+
+  const instance = individualPatterns.find((p) => p.name === name);
+  if (!instance) {
+    res.status(404).json({ error: `No pattern named: ${name}` });
+    return;
+  }
+
+  instance.paused = Boolean(paused);
+  persist();
+  res.json(instance.parameters());
+}
+
+// Report whether the whole server is paused
+function serverPausedState(_req: express.Request, res: express.Response) {
+  res.json({ paused: serverPaused });
+}
+
+// Pause or resume every pattern at once via the global tick scale
+function setServerPaused(req: express.Request, res: express.Response) {
+  const { paused } = req.body ?? {};
+  serverPaused = Boolean(paused);
+  res.json({ paused: serverPaused });
 }
 
 function reorderPatterns(req: express.Request, res: express.Response) {
@@ -249,6 +281,9 @@ async function main() {
   app.post('/add_new_pattern', addNewPattern);
   app.post('/remove_new_pattern', removePattern);
   app.post('/update_pattern', updatePattern);
+  app.post('/set_pattern_paused', setPatternPaused);
+  app.get('/server_paused', serverPausedState);
+  app.post('/set_server_paused', setServerPaused);
   app.post('/reorder_patterns', reorderPatterns);
   app.get('/pattern', pattern);
   app.get('/stored_patterns', storedPatterns);
@@ -262,8 +297,18 @@ async function main() {
     const now = Date.now();
     const dt = (now - last) / 1000;
     last = now;
+
+    // Ease the global pause scale toward its target so pausing and resuming
+    // ramp the animation speed instead of snapping it.
+    const target = serverPaused ? 0 : 1;
+    const transition = config.server['pause-transition'];
+    const step = transition > 0 ? dt / transition : 1;
+    if (pauseFactor < target) pauseFactor = Math.min(target, pauseFactor + step);
+    else if (pauseFactor > target) pauseFactor = Math.max(target, pauseFactor - step);
+
+    const scaledDt = dt * pauseFactor;
     for (const p of individualPatterns) {
-      p.tick(dt);
+      p.tick(scaledDt);
     }
   }, 1000 / config.server['tick-rate']);
 

@@ -8,6 +8,7 @@ export interface Color {
 
 export interface PatternBaseProps {
   name: string;
+  paused?: boolean;
 }
 
 // This type is a lighting pattern that is shown on the light display. The `tick` function
@@ -15,13 +16,15 @@ export interface PatternBaseProps {
 // pattern itself is returned through the `data` function
 export abstract class Pattern {
   name: string;
+  paused: boolean;
   state: Array<Color>;
 
   previous_time: number = 0;
   current_time: number = 0;
 
-  constructor({ name }: PatternBaseProps) {
+  constructor({ name, paused }: PatternBaseProps) {
     this.name = name;
+    this.paused = paused ?? false;
     this.state = Array.from({ length: config.nLights }, () => ({ r: 0, g: 0, b: 0 }));
   }
 
@@ -37,12 +40,24 @@ export abstract class Pattern {
   abstract set(values: object): void;
 
   /**
-   * Perform a single tick to support animations.
+   * Perform a single tick to support animations. Paused patterns hold their current
+   * frame and skip advancing.
    *
    * @param dt The frame time, so how much time has passed (in seconds) since the previous
    *           update
    */
-  abstract tick(dt: number): void;
+  tick(dt: number): void {
+    if (this.paused) return;
+    this.advance(dt);
+  }
+
+  /**
+   * Advance the animation by one frame. Subclasses implement their motion here.
+   *
+   * @param dt The frame time, so how much time has passed (in seconds) since the previous
+   *           update
+   */
+  protected abstract advance(dt: number): void;
 
   data(): Array<number> {
     const res: Array<number> = [];

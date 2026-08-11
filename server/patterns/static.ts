@@ -14,10 +14,16 @@ export class StaticPattern extends Pattern {
     this.set(props);
   }
 
-  parameters(): { name: string; type: typeof StaticPattern.Type; color: Color } {
+  parameters(): {
+    name: string;
+    type: typeof StaticPattern.Type;
+    paused: boolean;
+    color: Color;
+  } {
     return {
       name: this.name,
       type: StaticPattern.Type,
+      paused: this.paused,
       color: {
         r: this.r,
         g: this.g,
@@ -26,10 +32,11 @@ export class StaticPattern extends Pattern {
     };
   }
 
-  set({ r, g, b }: Partial<StaticProps>) {
+  set({ r, g, b, paused }: Partial<StaticProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.paused = paused ?? this.paused;
 
     for (const state of this.state) {
       state.r = this.r;
@@ -39,7 +46,7 @@ export class StaticPattern extends Pattern {
   }
 
   /* eslint-disable  @typescript-eslint/no-unused-vars */
-  tick(_dt: number) {
+  advance(_dt: number) {
     // noop
   }
 }

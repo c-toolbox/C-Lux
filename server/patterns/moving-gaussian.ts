@@ -28,6 +28,7 @@ export class MovingGaussianPattern extends Pattern {
   parameters(): {
     name: string;
     type: typeof MovingGaussianPattern.Type;
+    paused: boolean;
     color: Color;
     sigma: number;
     speed: number;
@@ -36,6 +37,7 @@ export class MovingGaussianPattern extends Pattern {
     return {
       name: this.name,
       type: MovingGaussianPattern.Type,
+      paused: this.paused,
       color: {
         r: this.r,
         g: this.g,
@@ -47,13 +49,14 @@ export class MovingGaussianPattern extends Pattern {
     };
   }
 
-  set({ r, g, b, sigma, speed, origin }: Partial<MovingGaussianProps>) {
+  set({ r, g, b, sigma, speed, origin, paused }: Partial<MovingGaussianProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
     this.sigma = sigma ?? this.sigma;
     this.speed = speed ?? this.speed;
     this.origin = origin ?? this.origin;
+    this.paused = paused ?? this.paused;
 
     // Gaussian bump centered on the origin index; rotation moves it around the ring.
     const n = this.state.length;
@@ -71,7 +74,7 @@ export class MovingGaussianPattern extends Pattern {
     }
   }
 
-  tick(dt: number) {
+  advance(dt: number) {
     this.offset += this.speed * dt;
     const steps = Math.trunc(this.offset);
     if (steps !== 0) {
