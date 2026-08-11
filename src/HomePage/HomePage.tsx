@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Alert,
   Badge,
   Button,
   ColorSwatch,
@@ -13,6 +12,7 @@ import {
   Text,
   Title
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 
 import { api, type StoredPatternSet } from '../lib/api';
 import { rgbToHex } from '../lib/color';
@@ -23,15 +23,13 @@ export function HomePage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<StoredPatternSet | null>(null);
 
   async function refresh() {
     try {
       setStored(await api.storedPatterns());
-      setError(null);
     } catch (e) {
-      setError(describeError(e));
+      showError(e);
     }
   }
 
@@ -42,7 +40,6 @@ export function HomePage() {
   // Replace the active patterns with the chosen stored set.
   async function select(set: StoredPatternSet) {
     setBusy(true);
-    setError(null);
     try {
       const current = await api.listPatterns();
       for (const p of current) {
@@ -50,8 +47,13 @@ export function HomePage() {
       }
       await api.addStoredPatterns(set.name);
       setSelected(set.name);
+      notifications.show({
+        color: 'green',
+        title: 'Pattern selected',
+        message: `Now showing “${set.name}”.`
+      });
     } catch (e) {
-      setError(describeError(e));
+      showError(e);
     } finally {
       setBusy(false);
     }
@@ -60,13 +62,12 @@ export function HomePage() {
   // Delete a stored set from the library.
   async function remove(set: StoredPatternSet) {
     setBusy(true);
-    setError(null);
     try {
       await api.removeStoredPattern(set.name);
       if (selected === set.name) setSelected(null);
       await refresh();
     } catch (e) {
-      setError(describeError(e));
+      showError(e);
     } finally {
       setBusy(false);
       setConfirmRemove(null);
@@ -85,28 +86,6 @@ export function HomePage() {
             Open editor
           </Button>
         </Group>
-
-        {error && (
-          <Alert
-            color={'red'}
-            title={'Error'}
-            withCloseButton
-            onClose={() => setError(null)}
-          >
-            {error}
-          </Alert>
-        )}
-
-        {selected && (
-          <Alert
-            color={'green'}
-            title={'Pattern selected'}
-            withCloseButton
-            onClose={() => setSelected(null)}
-          >
-            Now showing “{selected}”.
-          </Alert>
-        )}
 
         {loading ? (
           <Group justify={'center'} py={'xl'}>
@@ -196,4 +175,12 @@ export function HomePage() {
 
 function describeError(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
+}
+
+function showError(e: unknown): void {
+  notifications.show({
+    color: 'red',
+    title: 'Error',
+    message: describeError(e)
+  });
 }
