@@ -44,7 +44,6 @@ export class StaticPattern extends Pattern {
     }
   }
 
-  /* eslint-disable  @typescript-eslint/no-unused-vars */
   advance(_dt: number) {
     // noop
   }

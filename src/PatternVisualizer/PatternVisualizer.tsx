@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import config from '../../config.json';
-import { api } from '../lib/api';
+import { subscribeFrames } from '../lib/api';
 
 const NUM_LIGHTS = config.nLights;
 
@@ -45,31 +45,11 @@ export function PatternVisualizer() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    let active = true;
-    let timer: number;
-
-    const BASE_MS = 100;
-    const MAX_MS = 5000;
-    let delay = BASE_MS;
-
-    async function poll() {
-      try {
-        const data = await api.getPattern();
-        if (!active) return;
-        if (canvasRef.current) drawLights(canvasRef.current, data);
-        delay = BASE_MS;
-      } catch {
-        // Back off while the backend is unreachable to avoid spamming requests
-        delay = Math.min(delay * 2, MAX_MS);
-      }
-      if (active) timer = window.setTimeout(poll, delay);
-    }
-
-    poll();
-    return () => {
-      active = false;
-      window.clearTimeout(timer);
-    };
+    // Draw each blended frame pushed by the server; EventSource reconnects on its own if
+    // the backend drops, so no manual polling or back-off is needed.
+    return subscribeFrames((data) => {
+      if (canvasRef.current) drawLights(canvasRef.current, data);
+    });
   }, []);
 
   return (

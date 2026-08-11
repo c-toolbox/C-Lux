@@ -18,9 +18,13 @@ import type {
   StoredPatternSet
 } from '../../server/patterns/patterns';
 
-async function request<T>(url: string, body?: unknown): Promise<T> {
+async function request<T>(
+  url: string,
+  method: string = 'GET',
+  body?: unknown
+): Promise<T> {
   const res = await fetch(`/api${url}`, {
-    method: body === undefined ? 'GET' : 'POST',
+    method,
     headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body)
   });
@@ -39,29 +43,48 @@ async function request<T>(url: string, body?: unknown): Promise<T> {
   return (await res.json()) as T;
 }
 
+// Encode a pattern/set name for safe use in a URL path segment.
+const seg = (name: string) => encodeURIComponent(name);
+
 export const api = {
-  listPatterns: () => request<PatternParameters[]>('/current_patterns'),
+  listPatterns: () => request<PatternParameters[]>('/patterns'),
   addPattern: (type: PatternType, props: PatternProps) =>
-    request<{ name: string }>('/add_new_pattern', { type, props }),
+    request<{ name: string }>('/patterns', 'POST', { type, props }),
   updatePattern: (name: string, props: Partial<PatternProps>) =>
-    request<PatternParameters>('/update_pattern', { name, props }),
-  serverPaused: () => request<{ paused: boolean }>('/server_paused'),
+    request<PatternParameters>(`/patterns/${seg(name)}`, 'PATCH', { props }),
+  serverPaused: () => request<{ paused: boolean }>('/pause'),
   setServerPaused: (paused: boolean) =>
-    request<{ paused: boolean }>('/set_server_paused', { paused }),
+    request<{ paused: boolean }>('/pause', 'PUT', { paused }),
   blackout: () => request<{ blackout: boolean }>('/blackout'),
   setBlackout: (blackout: boolean) =>
-    request<{ blackout: boolean }>('/set_blackout', { blackout }),
+    request<{ blackout: boolean }>('/blackout', 'PUT', { blackout }),
   removePattern: (name: string) =>
-    request<{ name: string }>('/remove_new_pattern', { name }),
-  reorderPatterns: (order: string[]) => request<string[]>('/reorder_patterns', { order }),
-  getPattern: () => request<number[]>('/pattern'),
-  storedPatterns: () => request<StoredPatternSet[]>('/stored_patterns'),
+    request<{ name: string }>(`/patterns/${seg(name)}`, 'DELETE'),
+  reorderPatterns: (order: string[]) =>
+    request<string[]>('/patterns/reorder', 'POST', { order }),
+  getPattern: () => request<number[]>('/frame'),
+  storedPatterns: () => request<StoredPatternSet[]>('/library'),
   storePatterns: (name: string) =>
-    request<StoredPatternSet[]>('/store_patterns', { name }),
+    request<StoredPatternSet[]>('/library', 'POST', { name }),
   addStoredPatterns: (name: string) =>
-    request<PatternParameters[]>('/add_stored_patterns', { name }),
+    request<PatternParameters[]>(`/library/${seg(name)}/apply`, 'POST'),
   renameStoredPattern: (name: string, newName: string) =>
-    request<StoredPatternSet[]>('/rename_stored_pattern', { name, newName }),
+    request<StoredPatternSet[]>(`/library/${seg(name)}`, 'PATCH', { newName }),
   removeStoredPattern: (name: string) =>
-    request<{ name: string }>('/remove_stored_pattern', { name })
+    request<{ name: string }>(`/library/${seg(name)}`, 'DELETE')
 };
+
+// Subscribe to the live blended frame over Server-Sent Events. Calls `onFrame` with each
+// frame; the browser reconnects automatically if the stream drops. Returns a cleanup
+// function that closes the connection.
+export function subscribeFrames(onFrame: (frame: number[]) => void): () => void {
+  const source = new EventSource('/api/stream');
+  source.onmessage = (event) => {
+    try {
+      onFrame(JSON.parse(event.data) as number[]);
+    } catch {
+      // Ignore malformed frames.
+    }
+  };
+  return () => source.close();
+}

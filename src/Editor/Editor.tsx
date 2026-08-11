@@ -288,6 +288,28 @@ function Editor() {
                   >
                     ⠿
                   </ActionIcon>
+                  <Stack gap={2}>
+                    <ActionIcon
+                      variant={'subtle'}
+                      color={'gray'}
+                      size={'sm'}
+                      disabled={busy || i === 0}
+                      onClick={() => move(i, i - 1)}
+                      aria-label={'Move pattern up'}
+                    >
+                      ▲
+                    </ActionIcon>
+                    <ActionIcon
+                      variant={'subtle'}
+                      color={'gray'}
+                      size={'sm'}
+                      disabled={busy || i === patterns.length - 1}
+                      onClick={() => move(i, i + 1)}
+                      aria-label={'Move pattern down'}
+                    >
+                      ▼
+                    </ActionIcon>
+                  </Stack>
                   <ColorSwatch color={patternSwatchHex(p)} />
                   <div>
                     <Text fw={600}>{p.name}</Text>

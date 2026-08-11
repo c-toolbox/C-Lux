@@ -12,7 +12,8 @@ advances animations on a fixed tick, and serves the composited frame.
 - **Live blend** — the server alpha-composites all patterns (first is the bottom layer, last
   on top) and exposes the result as a flat RGB array.
 - **Circular visualizer** — a canvas renders all lights counterclockwise around a ring and
-  polls the server, backing off automatically when the backend is unreachable.
+  receives frames over a Server-Sent Events stream, reconnecting automatically if the
+  backend drops.
 - **Server-driven animation** — a fixed-rate tick advances every pattern so moving patterns
   animate over time.
 - **Registry-based patterns** — patterns are defined once and registered in a single list;
@@ -46,22 +47,41 @@ The Vite dev server proxies the pattern endpoints to the API, so the UI works ou
 | `npm run dev`     | Start only the Vite dev server                     |
 | `npm run server`  | Start only the Express API (watch mode)            |
 | `npm run build`   | Type-check and build the frontend                  |
+| `npm start`       | Run the API in production (serves the built SPA)   |
 | `npm run preview` | Preview the production build                       |
 | `npm run lint`    | Check formatting and lint                          |
+
+For a production run, build first and then start the server, which serves the built SPA
+from `dist/` on the same origin:
+
+```powershell
+npm run build
+npm start
+```
 
 ## API
 
 All endpoints are served by the Express backend under the `/api` prefix and proxied through
 Vite in development.
 
-| Method | Path                      | Body                        | Description                              |
-| ------ | ------------------------- | --------------------------- | ---------------------------------------- |
-| GET    | `/api/current_patterns`   | —                           | List the active patterns' parameters     |
-| POST   | `/api/add_new_pattern`    | `{ type, props }`           | Add a pattern of the given type          |
-| POST   | `/api/update_pattern`     | `{ name, props }`           | Update an existing pattern by name       |
-| POST   | `/api/remove_new_pattern` | `{ name }`                  | Remove a pattern by name                 |
-| POST   | `/api/reorder_patterns`   | `{ order: string[] }`       | Reorder patterns (controls blend order)  |
-| GET    | `/api/pattern`            | —                           | The blended frame as a flat RGB array    |
+| Method | Path                          | Body                    | Description                             |
+| ------ | ----------------------------- | ----------------------- | --------------------------------------- |
+| GET    | `/api/patterns`               | —                       | List the active patterns' parameters    |
+| POST   | `/api/patterns`               | `{ type, props }`       | Add a pattern of the given type         |
+| PATCH  | `/api/patterns/:name`         | `{ props }`             | Update an existing pattern by name      |
+| DELETE | `/api/patterns/:name`         | —                       | Remove a pattern by name                |
+| POST   | `/api/patterns/reorder`       | `{ order: string[] }`   | Reorder patterns (controls blend order) |
+| GET    | `/api/pause`                  | —                       | Whether the server is paused            |
+| PUT    | `/api/pause`                  | `{ paused }`            | Pause or resume all patterns            |
+| GET    | `/api/blackout`               | —                       | Whether the master blackout is engaged  |
+| PUT    | `/api/blackout`               | `{ blackout }`          | Fade output to black or restore it      |
+| GET    | `/api/frame`                  | —                       | The blended frame as a flat RGB array   |
+| GET    | `/api/stream`                 | —                       | Server-Sent Events stream of frames     |
+| GET    | `/api/library`                | —                       | List the stored pattern sets            |
+| POST   | `/api/library`                | `{ name }`              | Store the active list as a named set    |
+| POST   | `/api/library/:name/apply`    | —                       | Add a stored set's patterns to the list |
+| PATCH  | `/api/library/:name`          | `{ newName }`           | Rename a stored set                     |
+| DELETE | `/api/library/:name`          | —                       | Remove a stored set                     |
 
 ## Configuration
 
@@ -132,7 +152,9 @@ UI and shared types pick up the new pattern automatically.
 ```
 config.json              Global configuration (light count, tick rate, outputs)
 server/
-  index.ts               Express app, routes, and the animation tick loop
+  index.ts               Express app, REST routes, SSE stream, and the tick loop
+  engine.ts              PatternEngine: state, blending, ticking, and persistence
+  errors.ts              HttpError used by handlers and the error middleware
   storage.ts             Persistence for the active list and the pattern library
   output/                DMX-512 and Art-Net streaming outputs
   patterns/
@@ -144,7 +166,7 @@ src/
   Editor/                Pattern editor UI
   HomePage/              Landing page with global controls
   PatternForm/           Per-pattern parameter forms
-  PatternVisualizer/     Circular canvas that polls and renders the blended frame
+  PatternVisualizer/     Circular canvas that renders the streamed blended frame
   lib/api.ts             Typed client for the pattern API
 ```
 

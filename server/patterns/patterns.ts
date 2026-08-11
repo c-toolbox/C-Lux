@@ -13,9 +13,9 @@ import { StaticPattern, type StaticProps } from './static.ts';
 import { TheaterChasePattern, type TheaterChaseProps } from './theater-chase.ts';
 
 // A concrete pattern class: constructable and tagged with a static `Type` and a
-// user-facing `DisplayName`.
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-export type PatternClass = (new (props: any) => Pattern) & {
+// user-facing `DisplayName`. Constructor signatures are bivariant, so every concrete
+// pattern (each taking its own `*Props`) is assignable to this shared type.
+export type PatternClass = (new (props: PatternProps) => Pattern) & {
   Type: string;
   DisplayName: string;
 };
@@ -42,7 +42,17 @@ export const PATTERN_TYPES = PATTERNS.map((p) => p.Type) as PatternType[];
 
 // Look up a pattern class by its `Type` tag
 export function patternByType(type: string): PatternClass | undefined {
-  return PATTERNS.find((p) => p.Type === type);
+  // The registry mixes classes with different `*Props` constructors; narrowing back to
+  // the shared `PatternClass` requires a single assertion here.
+  return PATTERNS.find((p) => p.Type === type) as unknown as PatternClass | undefined;
+}
+
+// Reconstruct a concrete pattern instance from its serialized `parameters()` shape,
+// the inverse of calling `pattern.parameters()`.
+export function patternFromParameters(params: PatternParameters): Pattern | undefined {
+  const cls = patternByType(params.type);
+  if (!cls) return undefined;
+  return new cls(Pattern.propsFromParameters(params) as PatternProps);
 }
 
 // The user-facing name for a pattern `Type`, falling back to the raw type.

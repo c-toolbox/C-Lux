@@ -69,6 +69,20 @@ export abstract class Pattern {
   abstract set(values: object): void;
 
   /**
+   * Inverse of `parameters()`: flatten a serialized parameter object back into the flat
+   * props a pattern constructor expects. `parameters()` nests color as `{ color: { r, g,
+   * b } }`, so undo that nesting and drop the `type` tag.
+   */
+  static propsFromParameters(params: object): object {
+    const { type, color, ...rest } = params as {
+      type?: string;
+      color?: Color;
+    } & Record<string, unknown>;
+    void type;
+    return { ...rest, ...color };
+  }
+
+  /**
    * Perform a single tick to support animations.
    *
    * @param dt The frame time, so how much time has passed (in seconds) since the previous
