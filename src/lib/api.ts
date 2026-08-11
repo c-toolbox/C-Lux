@@ -66,11 +66,16 @@ export const api = {
   reorderPatterns: (order: string[]) =>
     request<string[]>('/patterns/reorder', 'POST', { order }),
   getPattern: () => request<number[]>('/frame'),
+  // Force the server's debounced save and surface a disk failure as a rejected promise.
+  persistPatterns: () => request<{ ok: boolean; pending: boolean }>('/persist', 'POST'),
   storedPatterns: () => request<StoredPatternSet[]>('/library'),
   storePatterns: (name: string) =>
     request<StoredPatternSet[]>('/library', 'POST', { name }),
   addStoredPatterns: (name: string) =>
     request<PatternParameters[]>(`/library/${seg(name)}/apply`, 'POST'),
+  // Swap the active patterns for a stored set in a single, all-or-nothing request.
+  replaceWithStoredPatterns: (name: string) =>
+    request<PatternParameters[]>(`/library/${seg(name)}/replace`, 'POST'),
   renameStoredPattern: (name: string, newName: string) =>
     request<StoredPatternSet[]>(`/library/${seg(name)}`, 'PATCH', { newName }),
   removeStoredPattern: (name: string) =>

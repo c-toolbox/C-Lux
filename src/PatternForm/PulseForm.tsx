@@ -73,7 +73,7 @@ export function PulseForm({
 
       <NumberInput
         label={'Period (s)'}
-        min={0}
+        min={0.1}
         step={0.5}
         value={values.period}
         onChange={(v) => setValues((prev) => ({ ...prev, period: v }))}

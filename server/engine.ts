@@ -10,13 +10,25 @@ import {
 } from './patterns/patterns';
 import { HttpError } from './errors';
 import { loadLibrary, loadPatterns, saveLibrary, savePatterns } from './storage';
-import { validateName, validatePatternProps } from './validation';
+import {
+  validateName,
+  validateNewPatternProps,
+  validateUpdatedPatternProps
+} from './validation';
 
 // How long to wait after the last change before writing patterns to disk. Coalesces
 // bursts of edits (drag-reorder, slider drags) into a single write.
 const SAVE_DEBOUNCE_MS = 250;
 
 type FrameListener = (frame: number[]) => void;
+
+// Durability of the active pattern list on disk.
+export interface PersistenceStatus {
+  ok: boolean; // the last write attempt succeeded
+  pending: boolean; // changes not yet written to disk
+  error: string | null; // message from the last failed write
+  lastSavedAt: string | null;
+}
 
 // Owns all mutable server state (patterns, library, pause/blackout) and the logic that
 // ticks animations, blends layers, persists to disk, and broadcasts frames.
@@ -46,6 +58,18 @@ export class PatternEngine {
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
   private saving: Promise<void> = Promise.resolve();
 
+  // Durability bookkeeping: `changeCount` bumps on every mutation and `savedCount`
+  // catches up once a write lands, so unsaved changes and the last failure can be
+  // reported instead of only logged.
+  private changeCount = 0;
+  private savedCount = 0;
+  private persistError: string | null = null;
+  private lastPersistedAt: string | null = null;
+
+  // Serialized disk writer for the library; library edits are rare, so they're written
+  // immediately instead of debounced.
+  private savingLibrary: Promise<void> = Promise.resolve();
+
   private frameListeners = new Set<FrameListener>();
 
   // Reused scratch buffers for blend() so a fresh array isn't allocated every tick; every
@@ -63,13 +87,52 @@ export class PatternEngine {
   // Schedule a debounced write, capturing the latest state at flush time and keeping at
   // most one write in flight so concurrent writes can't interleave.
   private schedulePersist(): void {
+    this.changeCount++;
     clearTimeout(this.saveTimer);
-    this.saveTimer = setTimeout(() => {
-      const snapshot = this.patterns.slice();
-      this.saving = this.saving
-        .then(() => savePatterns(snapshot))
-        .catch((err) => console.error('Failed to save patterns:', err));
-    }, SAVE_DEBOUNCE_MS);
+    this.saveTimer = setTimeout(() => void this.persistNow(), SAVE_DEBOUNCE_MS);
+  }
+
+  // Queue a write behind any write already in flight and record its outcome. Never
+  // rejects; failures are kept in `persistError` for `persistenceStatus()` to report.
+  private persistNow(): Promise<void> {
+    clearTimeout(this.saveTimer);
+    const snapshot = this.patterns.slice();
+    const version = this.changeCount;
+    this.saving = this.saving.then(async () => {
+      try {
+        await savePatterns(snapshot);
+        this.savedCount = Math.max(this.savedCount, version);
+        this.persistError = null;
+        this.lastPersistedAt = new Date().toISOString();
+      } catch (err) {
+        this.persistError = err instanceof Error ? err.message : String(err);
+        console.error('Failed to save patterns:', err);
+      }
+    });
+    return this.saving;
+  }
+
+  persistenceStatus(): PersistenceStatus {
+    return {
+      ok: this.persistError === null,
+      pending: this.savedCount !== this.changeCount,
+      error: this.persistError,
+      lastSavedAt: this.lastPersistedAt
+    };
+  }
+
+  // Write any pending changes immediately and fail loudly if they didn't reach the disk,
+  // so a caller can confirm its mutation is durable rather than assume the debounced
+  // write succeeded.
+  async flushPersist(): Promise<PersistenceStatus> {
+    if (this.savedCount !== this.changeCount) await this.persistNow();
+    else await this.saving;
+
+    const status = this.persistenceStatus();
+    if (!status.ok) {
+      throw new HttpError(500, `Changes applied but not saved to disk: ${status.error}`);
+    }
+    return status;
   }
 
   //
@@ -90,7 +153,7 @@ export class PatternEngine {
     const cls = patternByType(type);
     if (!cls) throw new HttpError(400, `Unknown pattern type: ${type}`);
 
-    const validProps = validatePatternProps(props);
+    const validProps = validateNewPatternProps(type, props);
     const instance = new cls({ ...validProps, name } as PatternProps);
     this.patterns.push(instance);
     this.schedulePersist();
@@ -110,7 +173,8 @@ export class PatternEngine {
     const instance = this.patterns.find((p) => p.name === name);
     if (!instance) throw new HttpError(404, `No pattern named: ${name}`);
 
-    instance.set(validatePatternProps(props));
+    const { type } = instance.parameters() as PatternParameters;
+    instance.set(validateUpdatedPatternProps(type, props));
     this.schedulePersist();
     return instance.parameters() as PatternParameters;
   }
@@ -216,6 +280,30 @@ export class PatternEngine {
     return this.listPatterns();
   }
 
+  // Swap the active list for a stored set. Every pattern is built before anything is
+  // discarded, so a missing set or an unusable entry leaves the current list untouched
+  // instead of half-cleared.
+  replaceWithStored(name: string): PatternParameters[] {
+    const entry = this.library.find((e) => e.name === name);
+    if (!entry) throw new HttpError(404, `No stored pattern set named: ${name}`);
+
+    const replacement: Array<Pattern> = [];
+    for (const params of entry.patterns) {
+      const instance = patternFromParameters(params);
+      if (!instance) {
+        throw new HttpError(
+          500,
+          `Stored pattern set ${name} uses an unknown pattern type: ${params.type}`
+        );
+      }
+      replacement.push(instance);
+    }
+
+    this.patterns = replacement;
+    this.schedulePersist();
+    return this.listPatterns();
+  }
+
   async renameStored(name: string, newName: unknown): Promise<StoredPatternSet[]> {
     const trimmed = validateName(newName, 'new name for stored pattern set');
 
@@ -242,13 +330,21 @@ export class PatternEngine {
     return { name };
   }
 
-  private async persistLibrary(action: string): Promise<void> {
-    try {
-      await saveLibrary(this.library);
-    } catch (err) {
+  // Queue a library write behind any write already in flight, persisting the snapshot
+  // taken when the caller mutated the library so concurrent requests can't interleave or
+  // land out of order.
+  private persistLibrary(action: string): Promise<void> {
+    const snapshot = this.library.slice();
+    const write = this.savingLibrary.then(() => saveLibrary(snapshot));
+
+    // Swallow the failure on the queue itself so one bad write doesn't reject every
+    // later one; the caller still sees it through the returned promise.
+    this.savingLibrary = write.catch(() => undefined);
+
+    return write.catch((err: unknown) => {
       console.error('Failed to save library:', err);
       throw new HttpError(500, `Failed to ${action} stored pattern`);
-    }
+    });
   }
 
   //

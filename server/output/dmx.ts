@@ -16,6 +16,7 @@ const BAUD_RATE = 250000;
 // Minimal SerialPort surface used here, so the native module stays a dynamic import.
 interface SerialLike {
   write(data: Buffer): boolean;
+  once(event: 'drain', listener: () => void): void;
   close(cb?: (err?: Error | null) => void): void;
 }
 
@@ -25,6 +26,9 @@ interface SerialLike {
 export class DmxSender {
   private port: SerialLike | null = null;
   private ready = false;
+
+  // Set while the serial buffer is full; frames are dropped until the port drains.
+  private backpressured = false;
 
   constructor(private readonly config: DmxConfig) {}
 
@@ -54,6 +58,10 @@ export class DmxSender {
   send(channels: number[]): void {
     if (!this.ready || !this.port) return;
 
+    // Every message is a complete universe, so a frame the widget can't keep up with is
+    // worth dropping: queueing it would only grow the backlog and show stale data.
+    if (this.backpressured) return;
+
     const offset = Math.max(0, this.config.startChannel - 1);
     const frame = Buffer.alloc(UNIVERSE_SIZE + 1);
     frame[0] = DMX_START_CODE;
@@ -69,11 +77,17 @@ export class DmxSender {
     ]);
     const message = Buffer.concat([header, frame, Buffer.from([END_OF_MESSAGE])]);
 
-    this.port.write(message);
+    if (!this.port.write(message)) {
+      this.backpressured = true;
+      this.port.once('drain', () => {
+        this.backpressured = false;
+      });
+    }
   }
 
   close(): void {
     this.ready = false;
+    this.backpressured = false;
     this.port?.close();
     this.port = null;
   }

@@ -22,7 +22,8 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
-    "serialport": "^13.0.0"
+    "serialport": "^13.0.0",
+    "tsx": "^4.23.10"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
@@ -43,7 +44,6 @@
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
     "prettier": "^3.5.1",
-    "tsx": "^4.23.10",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.0.1",
     "vite": "^8.2.0"

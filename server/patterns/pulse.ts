@@ -7,6 +7,10 @@ export type PulseProps = PatternBaseProps &
     max: number;
   };
 
+// Substituted for a non-positive period (only reachable from hand-edited storage) so the
+// stored value always matches the one the animation runs on.
+const FALLBACK_PERIOD = 1;
+
 export class PulsePattern extends Pattern {
   static readonly Type = 'Pulse';
   static readonly DisplayName = 'Pulse';
@@ -48,7 +52,8 @@ export class PulsePattern extends Pattern {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
-    this.period = period ?? this.period;
+    const nextPeriod = period ?? this.period;
+    this.period = nextPeriod > 0 ? nextPeriod : FALLBACK_PERIOD;
     this.min = min ?? this.min;
     this.max = max ?? this.max;
     this.render();
@@ -60,8 +65,7 @@ export class PulsePattern extends Pattern {
   }
 
   private render() {
-    const p = this.period > 0 ? this.period : 1;
-    const wave = 0.5 - 0.5 * Math.cos((2 * Math.PI * this.phase) / p);
+    const wave = 0.5 - 0.5 * Math.cos((2 * Math.PI * this.phase) / this.period);
     const a = this.min + (this.max - this.min) * wave;
     for (let i = 0; i < this.state.length; i++) {
       this.state[i] = { r: this.r, g: this.g, b: this.b, a };

@@ -78,11 +78,7 @@ export function HomePage() {
   async function select(set: StoredPatternSet) {
     setBusy(true);
     try {
-      const current = await api.listPatterns();
-      for (const p of current) {
-        await api.removePattern(p.name);
-      }
-      await api.addStoredPatterns(set.name);
+      await api.replaceWithStoredPatterns(set.name);
       notifications.show({
         color: 'green',
         title: 'Pattern selected',

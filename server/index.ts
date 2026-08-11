@@ -10,6 +10,7 @@ import type { PatternProps } from './patterns/patterns';
 import { PatternEngine } from './engine';
 import { HttpError } from './errors';
 import { startOutputs } from './output';
+import { validateBoolean } from './validation';
 
 const engine = new PatternEngine();
 
@@ -53,7 +54,7 @@ function getPause(_req: express.Request, res: express.Response) {
 
 function setPause(req: express.Request, res: express.Response) {
   const { paused } = (req.body ?? {}) as { paused?: unknown };
-  res.json({ paused: engine.setPaused(Boolean(paused)) });
+  res.json({ paused: engine.setPaused(validateBoolean(paused, 'paused')) });
 }
 
 function getBlackout(_req: express.Request, res: express.Response) {
@@ -62,7 +63,7 @@ function getBlackout(_req: express.Request, res: express.Response) {
 
 function setBlackout(req: express.Request, res: express.Response) {
   const { blackout } = (req.body ?? {}) as { blackout?: unknown };
-  res.json({ blackout: engine.setBlackout(Boolean(blackout)) });
+  res.json({ blackout: engine.setBlackout(validateBoolean(blackout, 'blackout')) });
 }
 
 function getHalfLight(_req: express.Request, res: express.Response) {
@@ -71,11 +72,24 @@ function getHalfLight(_req: express.Request, res: express.Response) {
 
 function setHalfLight(req: express.Request, res: express.Response) {
   const { halfLight } = (req.body ?? {}) as { halfLight?: unknown };
-  res.json({ halfLight: engine.setHalfLight(Boolean(halfLight)) });
+  res.json({ halfLight: engine.setHalfLight(validateBoolean(halfLight, 'halfLight')) });
 }
 
 function getFrame(_req: express.Request, res: express.Response) {
   res.json(engine.blend());
+}
+
+// Durability of the pattern list on disk. Pattern mutations answer before the debounced
+// write runs, so this is how a client or monitor learns a save is failing.
+function getHealth(_req: express.Request, res: express.Response) {
+  const persistence = engine.persistenceStatus();
+  res.status(persistence.ok ? 200 : 503).json({ ok: persistence.ok, persistence });
+}
+
+// Force the pending write and answer 500 if it fails, so a caller can confirm its
+// changes actually reached the disk.
+async function persistPatterns(_req: express.Request, res: express.Response) {
+  res.json(await engine.flushPersist());
 }
 
 // Stream the blended frame to the client on every tick via Server-Sent Events.
@@ -115,6 +129,10 @@ function applyStored(req: express.Request, res: express.Response) {
   res.json(engine.addStored(String(req.params.name)));
 }
 
+function replaceWithStored(req: express.Request, res: express.Response) {
+  res.json(engine.replaceWithStored(String(req.params.name)));
+}
+
 async function renameStored(req: express.Request, res: express.Response) {
   const { newName } = (req.body ?? {}) as { newName?: unknown };
   res.json(await engine.renameStored(String(req.params.name), newName));
@@ -147,9 +165,12 @@ async function main() {
   routes.put('/half-light', setHalfLight);
   routes.get('/frame', getFrame);
   routes.get('/stream', streamFrames);
+  routes.get('/health', getHealth);
+  routes.post('/persist', persistPatterns);
   routes.get('/library', getLibrary);
   routes.post('/library', storeCurrent);
   routes.post('/library/:name/apply', applyStored);
+  routes.post('/library/:name/replace', replaceWithStored);
   routes.patch('/library/:name', renameStored);
   routes.delete('/library/:name', removeStored);
   app.use('/api', routes);

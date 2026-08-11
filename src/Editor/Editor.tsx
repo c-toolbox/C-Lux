@@ -51,14 +51,16 @@ function Editor() {
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
     setError(null);
+    let failure: string | null = null;
     try {
       await action();
-      await refresh();
+      await api.persistPatterns();
     } catch (e) {
-      setError(describeError(e));
-    } finally {
-      setBusy(false);
+      failure = describeError(e);
     }
+    await refresh();
+    if (failure) setError(failure);
+    setBusy(false);
   }
 
   async function handleAdd(values: FormValues) {
