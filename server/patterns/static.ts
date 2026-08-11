@@ -42,6 +42,7 @@ export class StaticPattern extends Pattern {
       state.r = this.r;
       state.g = this.g;
       state.b = this.b;
+      state.a = 1;
     }
   }
 

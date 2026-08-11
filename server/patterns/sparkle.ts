@@ -85,9 +85,10 @@ export class SparklePattern extends Pattern {
     for (let i = 0; i < this.state.length; i++) {
       const intensity = this.intensities[i] ?? 0;
       this.state[i] = {
-        r: Math.round(this.r * intensity),
-        g: Math.round(this.g * intensity),
-        b: Math.round(this.b * intensity)
+        r: this.r,
+        g: this.g,
+        b: this.b,
+        a: intensity
       };
     }
   }

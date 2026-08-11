@@ -67,9 +67,10 @@ export class MovingGaussianPattern extends Pattern {
       const intensity =
         twoSigmaSq > 0 ? Math.exp(-(d * d) / twoSigmaSq) : d === 0 ? 1 : 0;
       this.state[i] = {
-        r: Math.round(this.r * intensity),
-        g: Math.round(this.g * intensity),
-        b: Math.round(this.b * intensity)
+        r: this.r,
+        g: this.g,
+        b: this.b,
+        a: intensity
       };
     }
   }

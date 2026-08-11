@@ -6,6 +6,11 @@ export interface Color {
   b: number;
 }
 
+// Internal per-light color carrying an alpha channel in [0, 1] used for blending.
+export interface ColorAlpha extends Color {
+  a: number;
+}
+
 export interface PatternBaseProps {
   name: string;
   paused?: boolean;
@@ -17,7 +22,7 @@ export interface PatternBaseProps {
 export abstract class Pattern {
   name: string;
   paused: boolean;
-  state: Array<Color>;
+  state: Array<ColorAlpha>;
 
   previous_time: number = 0;
   current_time: number = 0;
@@ -25,7 +30,12 @@ export abstract class Pattern {
   constructor({ name, paused }: PatternBaseProps) {
     this.name = name;
     this.paused = paused ?? false;
-    this.state = Array.from({ length: config.nLights }, () => ({ r: 0, g: 0, b: 0 }));
+    this.state = Array.from({ length: config.nLights }, () => ({
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 0
+    }));
   }
 
   /**
@@ -59,12 +69,14 @@ export abstract class Pattern {
    */
   protected abstract advance(dt: number): void;
 
+  // Flat per-light values as [r, g, b, a, ...]; alpha lets the server blend layers.
   data(): Array<number> {
     const res: Array<number> = [];
     for (const c of this.state) {
       res.push(c.r);
       res.push(c.g);
       res.push(c.b);
+      res.push(c.a);
     }
     return res;
   }

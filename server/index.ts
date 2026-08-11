@@ -152,22 +152,24 @@ function reorderPatterns(req: express.Request, res: express.Response) {
 
 // Blend the existing individual patterns into a single flat RGB array
 function blendPatterns(): number[] {
+  // Each layer is flat RGBA ([r, g, b, a, ...]); alpha is the compositing weight.
   const layers = individualPatterns.map((p) => p.data());
-  const length = layers[0]?.length ?? 0;
-  const out = new Array<number>(length).fill(0);
+  const nLights = (layers[0]?.length ?? 0) / 4;
+  const out = new Array<number>(nLights * 3).fill(0);
 
   // Source-over alpha compositing, first pattern on the bottom, last on top
   for (const layer of layers) {
-    for (let i = 0; i < length; i += 3) {
-      const sr = layer[i];
-      const sg = layer[i + 1];
-      const sb = layer[i + 2];
+    for (let i = 0; i < nLights; i++) {
+      const src = i * 4;
+      const dst = i * 3;
+      const sr = layer[src];
+      const sg = layer[src + 1];
+      const sb = layer[src + 2];
+      const alpha = layer[src + 3];
 
-      // No dedicated alpha channel, so derive it from pixel brightness
-      const alpha = Math.max(sr, sg, sb) / 255;
-      out[i] = sr * alpha + out[i] * (1 - alpha);
-      out[i + 1] = sg * alpha + out[i + 1] * (1 - alpha);
-      out[i + 2] = sb * alpha + out[i + 2] * (1 - alpha);
+      out[dst] = sr * alpha + out[dst] * (1 - alpha);
+      out[dst + 1] = sg * alpha + out[dst + 1] * (1 - alpha);
+      out[dst + 2] = sb * alpha + out[dst + 2] * (1 - alpha);
     }
   }
 
