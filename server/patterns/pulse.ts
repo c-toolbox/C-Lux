@@ -1,4 +1,11 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  type Color,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema,
+  POSITIVE,
+  UNIT
+} from './pattern.ts';
 
 export type PulseProps = PatternBaseProps &
   Color & {
@@ -14,6 +21,12 @@ const FALLBACK_PERIOD = 1;
 export class PulsePattern extends Pattern {
   static readonly Type = 'Pulse';
   static readonly DisplayName = 'Pulse';
+  static readonly Fields = {
+    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    period: { kind: 'number', label: 'Period (s)', default: 3, step: 0.5, ...POSITIVE },
+    min: { kind: 'number', label: 'Min', default: 0, step: 0.05, row: 0, ...UNIT },
+    max: { kind: 'number', label: 'Max', default: 1, step: 0.05, row: 0, ...UNIT }
+  } satisfies PatternSchema;
 
   r!: number;
   g!: number;

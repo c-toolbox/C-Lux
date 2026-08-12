@@ -1,4 +1,12 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  ANY,
+  type Color,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema,
+  POSITIVE,
+  UNIT
+} from './pattern.ts';
 
 export type AuroraProps = PatternBaseProps &
   Color & {
@@ -14,6 +22,34 @@ const TAU = 2 * Math.PI;
 export class AuroraPattern extends Pattern {
   static readonly Type = 'Aurora';
   static readonly DisplayName = 'Aurora';
+  static readonly Fields = {
+    color: { kind: 'color', label: 'Color A', default: { r: 43, g: 212, b: 125 } },
+    color2: { kind: 'color', label: 'Color B', default: { r: 112, g: 72, b: 232 } },
+    speed: {
+      kind: 'number',
+      label: 'Drift (turns/s)',
+      default: 0.05,
+      step: 0.01,
+      row: 0,
+      ...ANY
+    },
+    scale: {
+      kind: 'number',
+      label: 'Curtains',
+      default: 2,
+      step: 0.5,
+      row: 0,
+      ...POSITIVE
+    },
+    intensity: {
+      kind: 'number',
+      label: 'Intensity',
+      default: 1,
+      step: 0.05,
+      row: 0,
+      ...UNIT
+    }
+  } satisfies PatternSchema;
 
   r!: number;
   g!: number;

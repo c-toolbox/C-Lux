@@ -1,4 +1,5 @@
-import type { PatternType } from './patterns/patterns';
+import type { NumberRange } from './patterns/pattern';
+import { patternByType } from './patterns/patterns';
 import { HttpError } from './errors';
 
 // Keeps stored names reasonable and out of any control-character weirdness; pattern and
@@ -73,63 +74,9 @@ export function validatePatternProps(
 
 // Constraint for a single pattern prop: an optional numeric range, or `'color'` for a
 // nested `{ r, g, b }` object.
-interface NumberSpec {
-  min?: number;
-  max?: number;
-  exclusiveMin?: number;
-}
-type FieldSpec = NumberSpec | 'color';
+const BYTE: NumberRange = { min: 0, max: 255 };
 
-const ANY: NumberSpec = {};
-const BYTE: NumberSpec = { min: 0, max: 255 };
-const UNIT: NumberSpec = { min: 0, max: 1 };
-const NON_NEGATIVE: NumberSpec = { min: 0 };
-const POSITIVE: NumberSpec = { exclusiveMin: 0 };
-
-// Lengths and positions are fractions of the ring, so they span (0, 1] or [0, 1].
-const POSITIVE_UNIT: NumberSpec = { exclusiveMin: 0, max: 1 };
-
-// The flat r/g/b props carried by most patterns.
-const COLOR: Record<string, NumberSpec> = { r: BYTE, g: BYTE, b: BYTE };
-
-// Every prop each pattern type needs to be fully initialized, with its allowed range.
-// Typing the record by `PatternType` means a newly registered pattern won't compile until
-// its fields are listed here.
-const PATTERN_FIELDS: Record<PatternType, Record<string, FieldSpec>> = {
-  StaticPattern: { ...COLOR },
-  MovingGaussian: {
-    ...COLOR,
-    sigma: UNIT,
-    speed: ANY,
-    origin: UNIT
-  },
-  Sparkle: { ...COLOR, density: NON_NEGATIVE, decay: NON_NEGATIVE },
-  Rainbow: { speed: ANY, saturation: UNIT, value: UNIT, cycles: NON_NEGATIVE },
-  SineWave: { ...COLOR, wavelength: POSITIVE_UNIT, speed: ANY, min: UNIT, max: UNIT },
-  Comet: {
-    ...COLOR,
-    speed: ANY,
-    tail: UNIT,
-    direction: ANY,
-    start: UNIT,
-    end: UNIT
-  },
-  Bounce: { ...COLOR, sigma: UNIT, speed: ANY },
-  Pulse: { ...COLOR, period: POSITIVE, min: UNIT, max: UNIT },
-  Gradient: { ...COLOR, color2: 'color', speed: ANY },
-  ColorCycle: { speed: ANY, saturation: UNIT, value: UNIT },
-  Fire: { cooling: NON_NEGATIVE, sparking: UNIT },
-  TheaterChase: { ...COLOR, spacing: POSITIVE_UNIT, speed: ANY },
-  Aurora: { ...COLOR, color2: 'color', speed: ANY, scale: POSITIVE, intensity: UNIT },
-  Ripple: {
-    ...COLOR,
-    speed: POSITIVE,
-    width: POSITIVE_UNIT,
-    decay: NON_NEGATIVE,
-    interval: POSITIVE,
-    origin: UNIT
-  }
-};
+const COLOR_CHANNELS = ['r', 'g', 'b'] as const;
 
 // Validate the props of a pattern that is about to be constructed. Unlike
 // `validatePatternProps`, which only checks the keys that are present (enough for a
@@ -151,6 +98,8 @@ export function validateUpdatedPatternProps(
   return validateAgainstSpec(type, props, false);
 }
 
+// Check the props against the pattern class's own `Fields` schema, the same description
+// the browser builds its form from, so ranges can never drift between the two.
 function validateAgainstSpec(
   type: string,
   props: unknown,
@@ -158,21 +107,37 @@ function validateAgainstSpec(
 ): Record<string, unknown> {
   const validated = validatePatternProps(props);
 
-  const fields = PATTERN_FIELDS[type as PatternType] as
-    Record<string, FieldSpec> | undefined;
+  const fields = patternByType(type)?.Fields;
   if (!fields) throw new HttpError(400, `Unknown pattern type: ${type}`);
 
-  for (const [key, spec] of Object.entries(fields)) {
-    const value = validated[key];
-    if (!requireAll && value === undefined) continue;
+  const missing = (value: unknown) => !requireAll && value === undefined;
 
-    if (spec === 'color') {
+  for (const [key, spec] of Object.entries(fields)) {
+    // The primary color reaches the constructor flattened into r/g/b; any further color
+    // (`color2`) stays a nested object, matching `Pattern.propsFromParameters`.
+    if (spec.kind === 'color' && key === 'color') {
+      for (const channel of COLOR_CHANNELS) {
+        if (missing(validated[channel])) continue;
+        requireNumberInRange(validated[channel], BYTE, `props.${channel}`);
+      }
+      continue;
+    }
+
+    const value = validated[key];
+    if (missing(value)) continue;
+
+    if (spec.kind === 'color') {
       if (typeof value !== 'object' || value === null || Array.isArray(value)) {
         throw new HttpError(400, `props.${key} must be an object with r, g and b`);
       }
       const color = value as Record<string, unknown>;
-      for (const [channel, channelSpec] of Object.entries(COLOR)) {
-        requireNumberInRange(color[channel], channelSpec, `props.${key}.${channel}`);
+      for (const channel of COLOR_CHANNELS) {
+        requireNumberInRange(color[channel], BYTE, `props.${key}.${channel}`);
+      }
+    } else if (spec.kind === 'select') {
+      if (!spec.options.some((option) => option.value === value)) {
+        const allowed = spec.options.map((option) => option.value).join(', ');
+        throw new HttpError(400, `props.${key} must be one of ${allowed}`);
       }
     } else {
       requireNumberInRange(value, spec, `props.${key}`);
@@ -184,7 +149,7 @@ function validateAgainstSpec(
 
 // Require a present, in-range number. Finiteness is already guaranteed by
 // `validatePatternProps`, so a non-number here means the field is missing.
-function requireNumberInRange(value: unknown, spec: NumberSpec, path: string): void {
+function requireNumberInRange(value: unknown, spec: NumberRange, path: string): void {
   if (typeof value !== 'number') throw new HttpError(400, `Missing ${path}`);
   if (spec.min !== undefined && value < spec.min) {
     throw new HttpError(400, `${path} must be at least ${spec.min}`);

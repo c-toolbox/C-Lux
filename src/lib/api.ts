@@ -1,15 +1,17 @@
 export type {
   Color,
+  FieldSpec,
   MovingGaussianProps,
   PatternParameters,
   PatternProps,
+  PatternSchema,
   PatternType,
   SparkleProps,
   StaticProps,
   StoredPatternSet
 } from '../../server/patterns/patterns';
 export { PATTERN_TYPES } from '../../server/patterns/patterns';
-export { patternDisplayName } from '../../server/patterns/patterns';
+export { patternByType, patternDisplayName } from '../../server/patterns/patterns';
 
 import type {
   PatternParameters,

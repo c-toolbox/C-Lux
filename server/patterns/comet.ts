@@ -1,4 +1,11 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  ANY,
+  type Color,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema,
+  UNIT
+} from './pattern.ts';
 
 export type CometProps = PatternBaseProps &
   Color & {
@@ -14,6 +21,51 @@ export type CometProps = PatternBaseProps &
 export class CometPattern extends Pattern {
   static readonly Type = 'Comet';
   static readonly DisplayName = 'Comet';
+  static readonly Fields = {
+    color: { kind: 'color', label: 'Color', default: { r: 255, g: 255, b: 255 } },
+    speed: {
+      kind: 'number',
+      label: 'Speed (turns/s)',
+      default: 0.1,
+      step: 0.05,
+      row: 0,
+      ...ANY
+    },
+    tail: {
+      kind: 'number',
+      label: 'Tail (fraction)',
+      default: 0.06,
+      step: 0.01,
+      row: 0,
+      ...UNIT
+    },
+    direction: {
+      kind: 'select',
+      label: 'Direction',
+      default: 1,
+      options: [
+        { value: 1, label: 'Forward' },
+        { value: -1, label: 'Backward' }
+      ]
+    },
+    start: {
+      kind: 'number',
+      label: 'Start (fraction)',
+      default: 0,
+      step: 0.01,
+      row: 1,
+      ...UNIT
+    },
+    end: {
+      kind: 'number',
+      label: 'End (fraction)',
+      default: 0,
+      step: 0.01,
+      row: 1,
+      hint: 'Same start and end loops the whole ring.',
+      ...UNIT
+    }
+  } satisfies PatternSchema;
 
   r!: number;
   g!: number;

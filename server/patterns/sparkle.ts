@@ -1,4 +1,10 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  type Color,
+  NON_NEGATIVE,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema
+} from './pattern.ts';
 
 export type SparkleProps = PatternBaseProps &
   Color & {
@@ -10,6 +16,25 @@ export type SparkleProps = PatternBaseProps &
 export class SparklePattern extends Pattern {
   static readonly Type = 'Sparkle';
   static readonly DisplayName = 'Sparkle';
+  static readonly Fields = {
+    color: { kind: 'color', label: 'Color', default: { r: 255, g: 255, b: 255 } },
+    density: {
+      kind: 'number',
+      label: 'Density (ring/s)',
+      default: 0.14,
+      step: 0.01,
+      row: 0,
+      ...NON_NEGATIVE
+    },
+    decay: {
+      kind: 'number',
+      label: 'Decay',
+      default: 3,
+      step: 0.5,
+      row: 0,
+      ...NON_NEGATIVE
+    }
+  } satisfies PatternSchema;
 
   r!: number;
   g!: number;

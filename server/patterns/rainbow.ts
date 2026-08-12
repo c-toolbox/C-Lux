@@ -1,4 +1,12 @@
-import { hsvToRgb, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  ANY,
+  hsvToRgb,
+  NON_NEGATIVE,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema,
+  UNIT
+} from './pattern.ts';
 
 export type RainbowProps = PatternBaseProps & {
   speed: number;
@@ -10,6 +18,26 @@ export type RainbowProps = PatternBaseProps & {
 export class RainbowPattern extends Pattern {
   static readonly Type = 'Rainbow';
   static readonly DisplayName = 'Rainbow';
+  static readonly Fields = {
+    speed: { kind: 'number', label: 'Speed (°/s)', default: 60, step: 5, row: 0, ...ANY },
+    cycles: {
+      kind: 'number',
+      label: 'Cycles',
+      default: 1,
+      step: 1,
+      row: 0,
+      ...NON_NEGATIVE
+    },
+    saturation: {
+      kind: 'number',
+      label: 'Saturation',
+      default: 1,
+      step: 0.05,
+      row: 1,
+      ...UNIT
+    },
+    value: { kind: 'number', label: 'Value', default: 1, step: 0.05, row: 1, ...UNIT }
+  } satisfies PatternSchema;
 
   speed!: number;
   saturation!: number;

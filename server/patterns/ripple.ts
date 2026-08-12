@@ -1,4 +1,13 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  type Color,
+  NON_NEGATIVE,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema,
+  POSITIVE,
+  POSITIVE_UNIT,
+  UNIT
+} from './pattern.ts';
 
 export type RippleProps = PatternBaseProps &
   Color & {
@@ -21,6 +30,42 @@ interface Wave {
 export class RipplePattern extends Pattern {
   static readonly Type = 'Ripple';
   static readonly DisplayName = 'Ripple';
+  static readonly Fields = {
+    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    speed: {
+      kind: 'number',
+      label: 'Speed (turns/s)',
+      default: 0.25,
+      step: 0.05,
+      row: 0,
+      ...POSITIVE
+    },
+    width: {
+      kind: 'number',
+      label: 'Width (ring share)',
+      default: 0.04,
+      step: 0.01,
+      row: 0,
+      ...POSITIVE_UNIT
+    },
+    decay: {
+      kind: 'number',
+      label: 'Decay',
+      default: 0.5,
+      step: 0.1,
+      row: 1,
+      ...NON_NEGATIVE
+    },
+    interval: {
+      kind: 'number',
+      label: 'Interval (s)',
+      default: 2,
+      step: 0.5,
+      row: 1,
+      ...POSITIVE
+    },
+    origin: { kind: 'number', label: 'Origin', default: 0.5, step: 0.05, row: 1, ...UNIT }
+  } satisfies PatternSchema;
 
   r!: number;
   g!: number;

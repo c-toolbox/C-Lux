@@ -1,4 +1,11 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  type Color,
+  NON_NEGATIVE,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema,
+  UNIT
+} from './pattern.ts';
 
 export type FireProps = PatternBaseProps & {
   cooling: number;
@@ -11,6 +18,24 @@ const STEP = 1 / 30;
 export class FirePattern extends Pattern {
   static readonly Type = 'Fire';
   static readonly DisplayName = 'Fire';
+  static readonly Fields = {
+    cooling: {
+      kind: 'number',
+      label: 'Cooling',
+      default: 55,
+      step: 5,
+      row: 0,
+      ...NON_NEGATIVE
+    },
+    sparking: {
+      kind: 'number',
+      label: 'Sparking',
+      default: 0.6,
+      step: 0.05,
+      row: 0,
+      ...UNIT
+    }
+  } satisfies PatternSchema;
 
   cooling!: number;
   sparking!: number;

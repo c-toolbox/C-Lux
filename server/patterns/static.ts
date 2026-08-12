@@ -1,10 +1,18 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  type Color,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema
+} from './pattern.ts';
 
 export type StaticProps = PatternBaseProps & Color;
 
 export class StaticPattern extends Pattern {
   static readonly Type = 'StaticPattern';
   static readonly DisplayName = 'Static';
+  static readonly Fields = {
+    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } }
+  } satisfies PatternSchema;
 
   r!: number;
   g!: number;

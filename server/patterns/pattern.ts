@@ -15,6 +15,42 @@ export interface PatternBaseProps {
   name: string;
 }
 
+export interface NumberRange {
+  min?: number;
+  max?: number;
+  exclusiveMin?: number;
+}
+
+interface FieldBase {
+  label: string;
+  // Fields sharing a row number are rendered side by side; omitting it spans the width.
+  row?: number;
+  hint?: string;
+}
+
+// A single configurable parameter of a pattern, carrying enough metadata to both
+// validate an incoming value on the server and render an input for it in the browser.
+export type FieldSpec =
+  | (FieldBase & NumberRange & { kind: 'number'; default: number; step?: number })
+  | (FieldBase & { kind: 'color'; default: Color })
+  | (FieldBase & {
+      kind: 'select';
+      default: number;
+      options: ReadonlyArray<{ value: number; label: string }>;
+    });
+
+// Every configurable parameter of a pattern, keyed by the name it has in `parameters()`
+// (so `color` / `color2` rather than the flat r/g/b constructor props).
+export type PatternSchema = Record<string, FieldSpec>;
+
+export const ANY: NumberRange = {};
+export const UNIT: NumberRange = { min: 0, max: 1 };
+export const NON_NEGATIVE: NumberRange = { min: 0 };
+export const POSITIVE: NumberRange = { exclusiveMin: 0 };
+
+// Lengths and positions are fractions of the ring, so they span (0, 1].
+export const POSITIVE_UNIT: NumberRange = { exclusiveMin: 0, max: 1 };
+
 // Convert HSV (h in degrees, s and v in [0, 1]) to 8-bit RGB.
 export function hsvToRgb(h: number, s: number, v: number): Color {
   h = ((h % 360) + 360) % 360;

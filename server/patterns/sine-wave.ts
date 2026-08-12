@@ -1,4 +1,12 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  ANY,
+  type Color,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema,
+  POSITIVE_UNIT,
+  UNIT
+} from './pattern.ts';
 
 export type SineWaveProps = PatternBaseProps &
   Color & {
@@ -12,6 +20,27 @@ export type SineWaveProps = PatternBaseProps &
 export class SineWavePattern extends Pattern {
   static readonly Type = 'SineWave';
   static readonly DisplayName = 'Sine Wave';
+  static readonly Fields = {
+    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    wavelength: {
+      kind: 'number',
+      label: 'Wavelength (fraction)',
+      default: 0.14,
+      step: 0.01,
+      row: 0,
+      ...POSITIVE_UNIT
+    },
+    speed: {
+      kind: 'number',
+      label: 'Speed (turns/s)',
+      default: 0.07,
+      step: 0.05,
+      row: 0,
+      ...ANY
+    },
+    min: { kind: 'number', label: 'Min', default: 0, step: 0.05, row: 1, ...UNIT },
+    max: { kind: 'number', label: 'Max', default: 1, step: 0.05, row: 1, ...UNIT }
+  } satisfies PatternSchema;
 
   r!: number;
   g!: number;

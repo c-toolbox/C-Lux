@@ -5,7 +5,7 @@ import { CometPattern, type CometProps } from './comet.ts';
 import { FirePattern, type FireProps } from './fire.ts';
 import { GradientPattern, type GradientProps } from './gradient.ts';
 import { MovingGaussianPattern, type MovingGaussianProps } from './moving-gaussian.ts';
-import { type Color, Pattern } from './pattern.ts';
+import { type Color, type FieldSpec, Pattern, type PatternSchema } from './pattern.ts';
 import { PulsePattern, type PulseProps } from './pulse.ts';
 import { RainbowPattern, type RainbowProps } from './rainbow.ts';
 import { RipplePattern, type RippleProps } from './ripple.ts';
@@ -14,13 +14,16 @@ import { SparklePattern, type SparkleProps } from './sparkle.ts';
 import { StaticPattern, type StaticProps } from './static.ts';
 import { TheaterChasePattern, type TheaterChaseProps } from './theater-chase.ts';
 
-// A concrete pattern class: constructable and tagged with a static `Type` and a
-// user-facing `DisplayName`. Constructor signatures are bivariant, so every concrete
-// pattern (each taking its own `*Props`) is assignable to this shared type.
-export type PatternClass = (new (props: PatternProps) => Pattern) & {
+// The static metadata every pattern class carries: its `Type` tag, a user-facing
+// `DisplayName` and the `Fields` describing its configurable parameters.
+export interface PatternStatics {
   Type: string;
   DisplayName: string;
-};
+  Fields: PatternSchema;
+}
+
+// A concrete pattern class: constructable and tagged with the static metadata above.
+export type PatternClass = (new (props: PatternProps) => Pattern) & PatternStatics;
 
 // The list of all available patterns. Register a new pattern by adding its class here
 export const PATTERNS = [
@@ -38,7 +41,7 @@ export const PATTERNS = [
   TheaterChasePattern,
   AuroraPattern,
   RipplePattern
-] as const;
+] as const satisfies readonly PatternStatics[];
 
 export type PatternType = (typeof PATTERNS)[number]['Type'];
 
@@ -72,9 +75,11 @@ export type {
   Color,
   ColorCycleProps,
   CometProps,
+  FieldSpec,
   FireProps,
   GradientProps,
   MovingGaussianProps,
+  PatternSchema,
   PulseProps,
   RainbowProps,
   RippleProps,

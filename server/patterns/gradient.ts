@@ -1,4 +1,10 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  ANY,
+  type Color,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema
+} from './pattern.ts';
 
 export type GradientProps = PatternBaseProps &
   Color & {
@@ -9,6 +15,11 @@ export type GradientProps = PatternBaseProps &
 export class GradientPattern extends Pattern {
   static readonly Type = 'Gradient';
   static readonly DisplayName = 'Gradient';
+  static readonly Fields = {
+    color: { kind: 'color', label: 'Color A', default: { r: 77, g: 171, b: 247 } },
+    color2: { kind: 'color', label: 'Color B', default: { r: 247, g: 77, b: 77 } },
+    speed: { kind: 'number', label: 'Drift (cycles/s)', default: 0.1, step: 0.05, ...ANY }
+  } satisfies PatternSchema;
 
   r!: number;
   g!: number;

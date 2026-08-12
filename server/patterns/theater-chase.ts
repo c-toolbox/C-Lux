@@ -1,4 +1,11 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  ANY,
+  type Color,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema,
+  POSITIVE_UNIT
+} from './pattern.ts';
 
 export type TheaterChaseProps = PatternBaseProps &
   Color & {
@@ -10,6 +17,25 @@ export type TheaterChaseProps = PatternBaseProps &
 export class TheaterChasePattern extends Pattern {
   static readonly Type = 'TheaterChase';
   static readonly DisplayName = 'Theater Chase';
+  static readonly Fields = {
+    color: { kind: 'color', label: 'Color', default: { r: 255, g: 255, b: 255 } },
+    spacing: {
+      kind: 'number',
+      label: 'Spacing (fraction)',
+      default: 0.02,
+      step: 0.01,
+      row: 0,
+      ...POSITIVE_UNIT
+    },
+    speed: {
+      kind: 'number',
+      label: 'Speed (turns/s)',
+      default: 0.05,
+      step: 0.05,
+      row: 0,
+      ...ANY
+    }
+  } satisfies PatternSchema;
 
   r!: number;
   g!: number;

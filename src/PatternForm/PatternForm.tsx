@@ -1,300 +1,136 @@
 import { useState } from 'react';
-import { NativeSelect, Stack } from '@mantine/core';
+import {
+  Button,
+  ColorInput,
+  Group,
+  NativeSelect,
+  NumberInput,
+  Stack,
+  TextInput
+} from '@mantine/core';
 
 import {
+  type Color,
+  type FieldSpec,
   PATTERN_TYPES,
+  patternByType,
+  patternDisplayName,
   type PatternParameters,
   type PatternProps,
+  type PatternSchema,
   type PatternType
 } from '../lib/api';
-import { rgbToHex } from '../lib/color';
+import { hexToRgb, rgbToHex } from '../lib/color';
 
-import {
-  AURORA_DEFAULTS,
-  AuroraForm,
-  type AuroraFormValues,
-  auroraToProps
-} from './AuroraForm';
-import {
-  BOUNCE_DEFAULTS,
-  BounceForm,
-  type BounceFormValues,
-  bounceToProps
-} from './BounceForm';
-import {
-  COLOR_CYCLE_DEFAULTS,
-  ColorCycleForm,
-  type ColorCycleFormValues,
-  colorCycleToProps
-} from './ColorCycleForm';
-import {
-  COMET_DEFAULTS,
-  CometForm,
-  type CometFormValues,
-  cometToProps
-} from './CometForm';
-import { FIRE_DEFAULTS, FireForm, type FireFormValues, fireToProps } from './FireForm';
-import {
-  GRADIENT_DEFAULTS,
-  GradientForm,
-  type GradientFormValues,
-  gradientToProps
-} from './GradientForm';
-import {
-  MOVING_GAUSSIAN_DEFAULTS,
-  MovingGaussianForm,
-  type MovingGaussianFormValues,
-  movingGaussianToProps
-} from './MovingGaussianForm';
-import {
-  PULSE_DEFAULTS,
-  PulseForm,
-  type PulseFormValues,
-  pulseToProps
-} from './PulseForm';
-import {
-  RAINBOW_DEFAULTS,
-  RainbowForm,
-  type RainbowFormValues,
-  rainbowToProps
-} from './RainbowForm';
-import {
-  RIPPLE_DEFAULTS,
-  RippleForm,
-  type RippleFormValues,
-  rippleToProps
-} from './RippleForm';
-import {
-  SINE_WAVE_DEFAULTS,
-  SineWaveForm,
-  type SineWaveFormValues,
-  sineWaveToProps
-} from './SineWaveForm';
-import {
-  SPARKLE_DEFAULTS,
-  SparkleForm,
-  type SparkleFormValues,
-  sparkleToProps
-} from './SparkleForm';
-import {
-  STATIC_DEFAULTS,
-  type StaticFormValues,
-  StaticPatternForm,
-  staticToProps
-} from './StaticPatternForm';
-import {
-  THEATER_CHASE_DEFAULTS,
-  TheaterChaseForm,
-  type TheaterChaseFormValues,
-  theaterChaseToProps
-} from './TheaterChaseForm';
+export interface FormValues {
+  type: PatternType;
+  name: string;
+  // Keyed by the pattern's schema fields: hex strings for colors, numbers otherwise.
+  values: Record<string, number | string>;
+}
 
-export type FormValues =
-  | StaticFormValues
-  | MovingGaussianFormValues
-  | SparkleFormValues
-  | RainbowFormValues
-  | SineWaveFormValues
-  | CometFormValues
-  | BounceFormValues
-  | PulseFormValues
-  | GradientFormValues
-  | ColorCycleFormValues
-  | FireFormValues
-  | TheaterChaseFormValues
-  | AuroraFormValues
-  | RippleFormValues;
+function schemaFor(type: PatternType): PatternSchema {
+  return patternByType(type)?.Fields ?? {};
+}
+
+const num = (v: number | string) => (typeof v === 'number' ? v : Number(v) || 0);
 
 function defaultsFor(type: PatternType, name: string): FormValues {
-  switch (type) {
-    case 'StaticPattern':
-      return { ...STATIC_DEFAULTS, name };
-    case 'MovingGaussian':
-      return { ...MOVING_GAUSSIAN_DEFAULTS, name };
-    case 'Sparkle':
-      return { ...SPARKLE_DEFAULTS, name };
-    case 'Rainbow':
-      return { ...RAINBOW_DEFAULTS, name };
-    case 'SineWave':
-      return { ...SINE_WAVE_DEFAULTS, name };
-    case 'Comet':
-      return { ...COMET_DEFAULTS, name };
-    case 'Bounce':
-      return { ...BOUNCE_DEFAULTS, name };
-    case 'Pulse':
-      return { ...PULSE_DEFAULTS, name };
-    case 'Gradient':
-      return { ...GRADIENT_DEFAULTS, name };
-    case 'ColorCycle':
-      return { ...COLOR_CYCLE_DEFAULTS, name };
-    case 'Fire':
-      return { ...FIRE_DEFAULTS, name };
-    case 'TheaterChase':
-      return { ...THEATER_CHASE_DEFAULTS, name };
-    case 'Aurora':
-      return { ...AURORA_DEFAULTS, name };
-    case 'Ripple':
-      return { ...RIPPLE_DEFAULTS, name };
-    // skip default: exhaustive over PatternType
+  const values: Record<string, number | string> = {};
+  for (const [key, spec] of Object.entries(schemaFor(type))) {
+    values[key] = spec.kind === 'color' ? rgbToHex(spec.default) : spec.default;
   }
+  return { type, name, values };
 }
 
 export function toProps(values: FormValues): PatternProps {
-  switch (values.type) {
-    case 'StaticPattern':
-      return staticToProps(values);
-    case 'MovingGaussian':
-      return movingGaussianToProps(values);
-    case 'Sparkle':
-      return sparkleToProps(values);
-    case 'Rainbow':
-      return rainbowToProps(values);
-    case 'SineWave':
-      return sineWaveToProps(values);
-    case 'Comet':
-      return cometToProps(values);
-    case 'Bounce':
-      return bounceToProps(values);
-    case 'Pulse':
-      return pulseToProps(values);
-    case 'Gradient':
-      return gradientToProps(values);
-    case 'ColorCycle':
-      return colorCycleToProps(values);
-    case 'Fire':
-      return fireToProps(values);
-    case 'TheaterChase':
-      return theaterChaseToProps(values);
-    case 'Aurora':
-      return auroraToProps(values);
-    case 'Ripple':
-      return rippleToProps(values);
-    // skip default: exhaustive over FormValues
+  const props: Record<string, unknown> = { name: values.name };
+  for (const [key, spec] of Object.entries(schemaFor(values.type))) {
+    const value = values.values[key];
+    if (spec.kind !== 'color') {
+      props[key] = num(value);
+    } else if (key === 'color') {
+      // The primary color is flattened into r/g/b, the shape pattern constructors take.
+      Object.assign(props, hexToRgb(String(value)));
+    } else {
+      props[key] = hexToRgb(String(value));
+    }
   }
+  return props as unknown as PatternProps;
 }
 
 export function fromParameters(p: PatternParameters): FormValues {
-  switch (p.type) {
-    case 'StaticPattern':
-      return { type: 'StaticPattern', name: p.name, hex: rgbToHex(p.color) };
-    case 'MovingGaussian':
-      return {
-        type: 'MovingGaussian',
-        name: p.name,
-        hex: rgbToHex(p.color),
-        sigma: p.sigma,
-        speed: p.speed,
-        origin: p.origin
-      };
-    case 'Sparkle':
-      return {
-        type: 'Sparkle',
-        name: p.name,
-        hex: rgbToHex(p.color),
-        density: p.density,
-        decay: p.decay
-      };
-    case 'Rainbow':
-      return {
-        type: 'Rainbow',
-        name: p.name,
-        speed: p.speed,
-        saturation: p.saturation,
-        value: p.value,
-        cycles: p.cycles
-      };
-    case 'SineWave':
-      return {
-        type: 'SineWave',
-        name: p.name,
-        hex: rgbToHex(p.color),
-        wavelength: p.wavelength,
-        speed: p.speed,
-        min: p.min,
-        max: p.max
-      };
-    case 'Comet':
-      return {
-        type: 'Comet',
-        name: p.name,
-        hex: rgbToHex(p.color),
-        speed: p.speed,
-        tail: p.tail,
-        direction: p.direction,
-        start: p.start,
-        end: p.end
-      };
-    case 'Bounce':
-      return {
-        type: 'Bounce',
-        name: p.name,
-        hex: rgbToHex(p.color),
-        sigma: p.sigma,
-        speed: p.speed
-      };
-    case 'Pulse':
-      return {
-        type: 'Pulse',
-        name: p.name,
-        hex: rgbToHex(p.color),
-        period: p.period,
-        min: p.min,
-        max: p.max
-      };
-    case 'Gradient':
-      return {
-        type: 'Gradient',
-        name: p.name,
-        hex: rgbToHex(p.color),
-        hex2: rgbToHex(p.color2),
-        speed: p.speed
-      };
-    case 'ColorCycle':
-      return {
-        type: 'ColorCycle',
-        name: p.name,
-        speed: p.speed,
-        saturation: p.saturation,
-        value: p.value
-      };
-    case 'Fire':
-      return {
-        type: 'Fire',
-        name: p.name,
-        cooling: p.cooling,
-        sparking: p.sparking
-      };
-    case 'TheaterChase':
-      return {
-        type: 'TheaterChase',
-        name: p.name,
-        hex: rgbToHex(p.color),
-        spacing: p.spacing,
-        speed: p.speed
-      };
-    case 'Aurora':
-      return {
-        type: 'Aurora',
-        name: p.name,
-        hex: rgbToHex(p.color),
-        hex2: rgbToHex(p.color2),
-        speed: p.speed,
-        scale: p.scale,
-        intensity: p.intensity
-      };
-    case 'Ripple':
-      return {
-        type: 'Ripple',
-        name: p.name,
-        hex: rgbToHex(p.color),
-        speed: p.speed,
-        width: p.width,
-        decay: p.decay,
-        interval: p.interval,
-        origin: p.origin
-      };
-    // skip default: exhaustive over PatternParameters
+  const stored = p as unknown as Record<string, unknown>;
+  const values: Record<string, number | string> = {};
+  for (const [key, spec] of Object.entries(schemaFor(p.type))) {
+    const value = stored[key];
+    if (spec.kind === 'color') {
+      values[key] = rgbToHex((value ?? spec.default) as Color);
+    } else {
+      values[key] = typeof value === 'number' ? value : spec.default;
+    }
   }
+  return { type: p.type, name: p.name, values };
+}
+
+type Entry = [string, FieldSpec];
+
+// Group consecutive fields that share a row number so they render side by side.
+function rows(schema: PatternSchema): Entry[][] {
+  const grouped: Entry[][] = [];
+  for (const entry of Object.entries(schema)) {
+    const previous = grouped[grouped.length - 1];
+    if (entry[1].row !== undefined && previous?.[0][1].row === entry[1].row) {
+      previous.push(entry);
+    } else {
+      grouped.push([entry]);
+    }
+  }
+  return grouped;
+}
+
+interface FieldProps {
+  spec: FieldSpec;
+  value: number | string;
+  onChange: (value: number | string) => void;
+}
+
+function Field({ spec, value, onChange }: FieldProps) {
+  if (spec.kind === 'color') {
+    return (
+      <ColorInput
+        label={spec.label}
+        description={spec.hint}
+        format={'hex'}
+        value={String(value)}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (spec.kind === 'select') {
+    return (
+      <NativeSelect
+        label={spec.label}
+        description={spec.hint}
+        value={String(value)}
+        data={spec.options.map((o) => ({ value: String(o.value), label: o.label }))}
+        onChange={(e) => onChange(Number(e.currentTarget.value))}
+      />
+    );
+  }
+
+  return (
+    <NumberInput
+      label={spec.label}
+      description={spec.hint}
+      min={spec.min ?? spec.exclusiveMin}
+      max={spec.max}
+      step={spec.step}
+      value={value}
+      onChange={onChange}
+    />
+  );
 }
 
 interface PatternSubFormProps {
@@ -306,39 +142,65 @@ interface PatternSubFormProps {
   onSubmit: (values: FormValues) => void;
 }
 
-// Renders exactly one concrete pattern form based on the value type.
-export function PatternSubForm({ initial, ...rest }: PatternSubFormProps) {
-  switch (initial.type) {
-    case 'StaticPattern':
-      return <StaticPatternForm initial={initial} {...rest} />;
-    case 'MovingGaussian':
-      return <MovingGaussianForm initial={initial} {...rest} />;
-    case 'Sparkle':
-      return <SparkleForm initial={initial} {...rest} />;
-    case 'Rainbow':
-      return <RainbowForm initial={initial} {...rest} />;
-    case 'SineWave':
-      return <SineWaveForm initial={initial} {...rest} />;
-    case 'Comet':
-      return <CometForm initial={initial} {...rest} />;
-    case 'Bounce':
-      return <BounceForm initial={initial} {...rest} />;
-    case 'Pulse':
-      return <PulseForm initial={initial} {...rest} />;
-    case 'Gradient':
-      return <GradientForm initial={initial} {...rest} />;
-    case 'ColorCycle':
-      return <ColorCycleForm initial={initial} {...rest} />;
-    case 'Fire':
-      return <FireForm initial={initial} {...rest} />;
-    case 'TheaterChase':
-      return <TheaterChaseForm initial={initial} {...rest} />;
-    case 'Aurora':
-      return <AuroraForm initial={initial} {...rest} />;
-    case 'Ripple':
-      return <RippleForm initial={initial} {...rest} />;
-    // skip default: exhaustive over FormValues
-  }
+// Renders the inputs for a pattern's parameters straight from its `Fields` schema.
+export function PatternSubForm({
+  mode,
+  initial,
+  namePlaceholder,
+  existingNames,
+  busy,
+  onSubmit
+}: PatternSubFormProps) {
+  const [values, setValues] = useState<FormValues>(initial);
+
+  const nameTaken = mode === 'add' && existingNames.includes(values.name.trim());
+  const nameError =
+    values.name.trim() === ''
+      ? 'Name is required'
+      : nameTaken
+        ? 'A pattern with this name already exists'
+        : null;
+
+  const setField = (key: string, value: number | string) =>
+    setValues((v) => ({ ...v, values: { ...v.values, [key]: value } }));
+
+  return (
+    <Stack gap={'md'}>
+      <TextInput
+        label={'Name'}
+        placeholder={namePlaceholder}
+        value={values.name}
+        error={nameError}
+        disabled={mode === 'edit'}
+        onChange={(e) => setValues((v) => ({ ...v, name: e.currentTarget.value }))}
+      />
+
+      {rows(schemaFor(values.type)).map((row) => {
+        const fields = row.map(([key, spec]) => (
+          <Field
+            key={key}
+            spec={spec}
+            value={values.values[key]}
+            onChange={(value) => setField(key, value)}
+          />
+        ));
+        if (fields.length === 1) return fields[0];
+        return (
+          <Group grow key={row[0][0]}>
+            {fields}
+          </Group>
+        );
+      })}
+
+      <Button
+        onClick={() => onSubmit(values)}
+        loading={busy}
+        disabled={nameError !== null}
+      >
+        {mode === 'add' ? 'Add pattern' : 'Save changes'}
+      </Button>
+    </Stack>
+  );
 }
 
 interface PatternFormProps {
@@ -348,7 +210,7 @@ interface PatternFormProps {
   onSubmit: (values: FormValues) => void;
 }
 
-// Add form: a type selector that swaps in the matching concrete sub form.
+// Add form: a type selector over the pattern registry plus that type's generated inputs.
 export function PatternForm({
   namePlaceholder,
   existingNames,
@@ -362,7 +224,7 @@ export function PatternForm({
       <NativeSelect
         label={'Type'}
         value={type}
-        data={PATTERN_TYPES.map((t) => ({ value: t, label: t }))}
+        data={PATTERN_TYPES.map((t) => ({ value: t, label: patternDisplayName(t) }))}
         onChange={(e) => setType(e.currentTarget.value as PatternType)}
       />
 

@@ -1,4 +1,11 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  ANY,
+  type Color,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema,
+  UNIT
+} from './pattern.ts';
 
 export type BounceProps = PatternBaseProps &
   Color & {
@@ -10,6 +17,25 @@ export type BounceProps = PatternBaseProps &
 export class BouncePattern extends Pattern {
   static readonly Type = 'Bounce';
   static readonly DisplayName = 'Bounce';
+  static readonly Fields = {
+    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    sigma: {
+      kind: 'number',
+      label: 'Sigma (fraction)',
+      default: 0.04,
+      step: 0.01,
+      row: 0,
+      ...UNIT
+    },
+    speed: {
+      kind: 'number',
+      label: 'Speed (turns/s)',
+      default: 0.1,
+      step: 0.05,
+      row: 0,
+      ...ANY
+    }
+  } satisfies PatternSchema;
 
   r!: number;
   g!: number;

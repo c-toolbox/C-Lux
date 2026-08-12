@@ -1,4 +1,11 @@
-import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+import {
+  ANY,
+  type Color,
+  Pattern,
+  type PatternBaseProps,
+  type PatternSchema,
+  UNIT
+} from './pattern.ts';
 
 export type MovingGaussianProps = PatternBaseProps &
   Color & {
@@ -12,6 +19,32 @@ export type MovingGaussianProps = PatternBaseProps &
 export class MovingGaussianPattern extends Pattern {
   static readonly Type = 'MovingGaussian';
   static readonly DisplayName = 'Moving Gaussian';
+  static readonly Fields = {
+    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    sigma: {
+      kind: 'number',
+      label: 'Sigma (fraction)',
+      default: 0.04,
+      step: 0.01,
+      row: 0,
+      ...UNIT
+    },
+    speed: {
+      kind: 'number',
+      label: 'Speed (turns/s)',
+      default: 0.07,
+      step: 0.05,
+      row: 0,
+      ...ANY
+    },
+    origin: {
+      kind: 'number',
+      label: 'Origin (fraction)',
+      default: 0,
+      step: 0.01,
+      ...UNIT
+    }
+  } satisfies PatternSchema;
 
   r!: number;
   g!: number;

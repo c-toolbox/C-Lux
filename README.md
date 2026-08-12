@@ -146,12 +146,15 @@ second.
 ## Adding a pattern
 
 1. Create a class under `server/patterns/` that extends `Pattern`, with a static `Type`
-   tag and a `parameters()` method describing its shape.
+   tag, a static `Fields` schema describing its configurable parameters, and a
+   `parameters()` method describing its shape.
 2. Register it in the `PATTERNS` array in
    [`server/patterns/patterns.ts`](server/patterns/patterns.ts).
 
 The available pattern types and their parameter shapes are derived from that list, so the
-UI and shared types pick up the new pattern automatically.
+UI and shared types pick up the new pattern automatically. `Fields` is the single source
+of truth for each parameter's label, default and allowed range: the server validates
+incoming props against it and the browser generates the edit form from it.
 
 ## Project structure
 
@@ -171,7 +174,7 @@ src/
   main.tsx               App entry, Mantine theme, and router
   Editor/                Pattern editor UI
   HomePage/              Landing page with global controls
-  PatternForm/           Per-pattern parameter forms
+  PatternForm/           Parameter form generated from a pattern's `Fields` schema
   PatternVisualizer/     Circular canvas that renders the streamed blended frame
   lib/api.ts             Typed client for the pattern API
 ```
