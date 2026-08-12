@@ -1,0 +1,105 @@
+import { type Color, Pattern, type PatternBaseProps } from './pattern.ts';
+
+export type AuroraProps = PatternBaseProps &
+  Color & {
+    color2: Color;
+    // Drift in full turns per second and the number of curtains across the ring.
+    speed: number;
+    scale: number;
+    intensity: number;
+  };
+
+const TAU = 2 * Math.PI;
+
+export class AuroraPattern extends Pattern {
+  static readonly Type = 'Aurora';
+  static readonly DisplayName = 'Aurora';
+
+  r!: number;
+  g!: number;
+  b!: number;
+  color2!: Color;
+  speed!: number;
+  scale!: number;
+  intensity!: number;
+
+  private time = 0;
+
+  constructor(props: AuroraProps) {
+    super(props);
+    this.set(props);
+  }
+
+  parameters(): {
+    name: string;
+    type: typeof AuroraPattern.Type;
+    color: Color;
+    color2: Color;
+    speed: number;
+    scale: number;
+    intensity: number;
+  } {
+    return {
+      name: this.name,
+      type: AuroraPattern.Type,
+      color: { r: this.r, g: this.g, b: this.b },
+      color2: this.color2,
+      speed: this.speed,
+      scale: this.scale,
+      intensity: this.intensity
+    };
+  }
+
+  set({ r, g, b, color2, speed, scale, intensity }: Partial<AuroraProps>) {
+    this.r = r ?? this.r;
+    this.g = g ?? this.g;
+    this.b = b ?? this.b;
+    this.color2 = color2 ?? this.color2;
+    this.speed = speed ?? this.speed;
+    this.scale = scale ?? this.scale;
+    this.intensity = intensity ?? this.intensity;
+    this.render();
+  }
+
+  advance(dt: number) {
+    this.time += dt;
+    this.render();
+  }
+
+  private render() {
+    const n = this.state.length;
+    for (let i = 0; i < n; i++) {
+      const x = i / n;
+      const curtain = field(x, this.time, this.scale, this.speed, 0);
+      // A slower, wider field shifts the hue independently of the curtain brightness.
+      const mix = field(x, this.time, this.scale * 0.6, this.speed * 0.45, 2.1);
+      this.state[i] = {
+        r: lerp(this.r, this.color2.r, mix),
+        g: lerp(this.g, this.color2.g, mix),
+        b: lerp(this.b, this.color2.b, mix),
+        // Squaring sharpens the bright bands and darkens the gaps between them.
+        a: this.intensity * curtain * curtain
+      };
+    }
+  }
+}
+
+// Three sines with incommensurable frequencies, so the bands never repeat exactly and
+// drift at different rates. Returns a value in [0, 1].
+function field(
+  x: number,
+  t: number,
+  scale: number,
+  speed: number,
+  phase: number
+): number {
+  const w =
+    0.5 * Math.sin(TAU * (scale * x + speed * t) + phase) +
+    0.3 * Math.sin(TAU * (1.7 * scale * x - 0.6 * speed * t) + phase + 1.3) +
+    0.2 * Math.sin(TAU * (2.9 * scale * x + 0.35 * speed * t) + phase + 2.7);
+  return 0.5 + 0.5 * w;
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return Math.round(a + (b - a) * t);
+}

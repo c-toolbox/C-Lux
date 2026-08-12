@@ -119,7 +119,16 @@ const PATTERN_FIELDS: Record<PatternType, Record<string, FieldSpec>> = {
   Gradient: { ...COLOR, color2: 'color', speed: ANY },
   ColorCycle: { speed: ANY, saturation: UNIT, value: UNIT },
   Fire: { cooling: NON_NEGATIVE, sparking: UNIT },
-  TheaterChase: { ...COLOR, spacing: POSITIVE_UNIT, speed: ANY }
+  TheaterChase: { ...COLOR, spacing: POSITIVE_UNIT, speed: ANY },
+  Aurora: { ...COLOR, color2: 'color', speed: ANY, scale: POSITIVE, intensity: UNIT },
+  Ripple: {
+    ...COLOR,
+    speed: POSITIVE,
+    width: POSITIVE_UNIT,
+    decay: NON_NEGATIVE,
+    interval: POSITIVE,
+    origin: UNIT
+  }
 };
 
 // Validate the props of a pattern that is about to be constructed. Unlike

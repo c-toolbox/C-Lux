@@ -10,6 +10,12 @@ import {
 import { rgbToHex } from '../lib/color';
 
 import {
+  AURORA_DEFAULTS,
+  AuroraForm,
+  type AuroraFormValues,
+  auroraToProps
+} from './AuroraForm';
+import {
   BOUNCE_DEFAULTS,
   BounceForm,
   type BounceFormValues,
@@ -53,6 +59,12 @@ import {
   rainbowToProps
 } from './RainbowForm';
 import {
+  RIPPLE_DEFAULTS,
+  RippleForm,
+  type RippleFormValues,
+  rippleToProps
+} from './RippleForm';
+import {
   SINE_WAVE_DEFAULTS,
   SineWaveForm,
   type SineWaveFormValues,
@@ -89,7 +101,9 @@ export type FormValues =
   | GradientFormValues
   | ColorCycleFormValues
   | FireFormValues
-  | TheaterChaseFormValues;
+  | TheaterChaseFormValues
+  | AuroraFormValues
+  | RippleFormValues;
 
 function defaultsFor(type: PatternType, name: string): FormValues {
   switch (type) {
@@ -117,6 +131,10 @@ function defaultsFor(type: PatternType, name: string): FormValues {
       return { ...FIRE_DEFAULTS, name };
     case 'TheaterChase':
       return { ...THEATER_CHASE_DEFAULTS, name };
+    case 'Aurora':
+      return { ...AURORA_DEFAULTS, name };
+    case 'Ripple':
+      return { ...RIPPLE_DEFAULTS, name };
     // skip default: exhaustive over PatternType
   }
 }
@@ -147,6 +165,10 @@ export function toProps(values: FormValues): PatternProps {
       return fireToProps(values);
     case 'TheaterChase':
       return theaterChaseToProps(values);
+    case 'Aurora':
+      return auroraToProps(values);
+    case 'Ripple':
+      return rippleToProps(values);
     // skip default: exhaustive over FormValues
   }
 }
@@ -250,6 +272,27 @@ export function fromParameters(p: PatternParameters): FormValues {
         spacing: p.spacing,
         speed: p.speed
       };
+    case 'Aurora':
+      return {
+        type: 'Aurora',
+        name: p.name,
+        hex: rgbToHex(p.color),
+        hex2: rgbToHex(p.color2),
+        speed: p.speed,
+        scale: p.scale,
+        intensity: p.intensity
+      };
+    case 'Ripple':
+      return {
+        type: 'Ripple',
+        name: p.name,
+        hex: rgbToHex(p.color),
+        speed: p.speed,
+        width: p.width,
+        decay: p.decay,
+        interval: p.interval,
+        origin: p.origin
+      };
     // skip default: exhaustive over PatternParameters
   }
 }
@@ -290,6 +333,10 @@ export function PatternSubForm({ initial, ...rest }: PatternSubFormProps) {
       return <FireForm initial={initial} {...rest} />;
     case 'TheaterChase':
       return <TheaterChaseForm initial={initial} {...rest} />;
+    case 'Aurora':
+      return <AuroraForm initial={initial} {...rest} />;
+    case 'Ripple':
+      return <RippleForm initial={initial} {...rest} />;
     // skip default: exhaustive over FormValues
   }
 }

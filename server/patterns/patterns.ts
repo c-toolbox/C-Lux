@@ -1,3 +1,4 @@
+import { AuroraPattern, type AuroraProps } from './aurora.ts';
 import { BouncePattern, type BounceProps } from './bounce.ts';
 import { ColorCyclePattern, type ColorCycleProps } from './color-cycle.ts';
 import { CometPattern, type CometProps } from './comet.ts';
@@ -7,6 +8,7 @@ import { MovingGaussianPattern, type MovingGaussianProps } from './moving-gaussi
 import { type Color, Pattern } from './pattern.ts';
 import { PulsePattern, type PulseProps } from './pulse.ts';
 import { RainbowPattern, type RainbowProps } from './rainbow.ts';
+import { RipplePattern, type RippleProps } from './ripple.ts';
 import { SineWavePattern, type SineWaveProps } from './sine-wave.ts';
 import { SparklePattern, type SparkleProps } from './sparkle.ts';
 import { StaticPattern, type StaticProps } from './static.ts';
@@ -33,7 +35,9 @@ export const PATTERNS = [
   GradientPattern,
   ColorCyclePattern,
   FirePattern,
-  TheaterChasePattern
+  TheaterChasePattern,
+  AuroraPattern,
+  RipplePattern
 ] as const;
 
 export type PatternType = (typeof PATTERNS)[number]['Type'];
@@ -63,6 +67,7 @@ export function patternDisplayName(type: string): string {
 }
 
 export type {
+  AuroraProps,
   BounceProps,
   Color,
   ColorCycleProps,
@@ -72,6 +77,7 @@ export type {
   MovingGaussianProps,
   PulseProps,
   RainbowProps,
+  RippleProps,
   SineWaveProps,
   SparkleProps,
   StaticProps,
@@ -89,7 +95,9 @@ export type PatternProps =
   | GradientProps
   | ColorCycleProps
   | FireProps
-  | TheaterChaseProps;
+  | TheaterChaseProps
+  | AuroraProps
+  | RippleProps;
 
 // Union of every pattern's `parameters()` shape, derived from the registry.
 export type PatternParameters = ReturnType<
