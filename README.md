@@ -136,7 +136,12 @@ second.
   universe (512 channels) is sent.
 - **`output.artnet`** — Art-Net over the network. Point `host` at a node's IP or a broadcast
   address, and set the `net`/`subnet`/`universe` addressing. Frames longer than 512 channels
-  are split across consecutive universes automatically.
+  are split across consecutive universes automatically. The node's DMX output port must be
+  set to the same universe, or it ignores the frames.
+
+  `npm run artnet` prints the channel levels of the ArtDmx traffic on the network, i.e. the
+  current state of the lights (`--watch` to keep printing, `--poll` to make nodes identify
+  themselves and report their universes, `--help` for the options).
 
 > Enabling `output.dmx` loads the native `serialport` binding. If your package manager blocked
 > its install scripts, allow them (e.g. `npm install-scripts approve @serialport/bindings-cpp`)
@@ -177,5 +182,7 @@ src/
   PatternForm/           Parameter form generated from a pattern's `Fields` schema
   PatternVisualizer/     Circular canvas that renders the streamed blended frame
   lib/api.ts             Typed client for the pattern API
+scripts/
+  artnet-monitor.ts      Prints Art-Net nodes and the DMX levels seen on the network
 ```
 
