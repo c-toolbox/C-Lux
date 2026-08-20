@@ -29,6 +29,7 @@ const updatePatternBody = z.object({
   props: z.record(z.string(), z.unknown()).optional()
 });
 const orderBody = z.object({ order: z.array(z.string()) });
+const enabledBody = z.object({ enabled: z.boolean('must be true or false') });
 const pausedBody = z.object({ paused: z.boolean('must be true or false') });
 const blackoutBody = z.object({
   blackout: z.boolean('must be true or false')
@@ -62,6 +63,11 @@ function updatePattern(req: express.Request, res: express.Response) {
 
 function removePattern(req: express.Request, res: express.Response) {
   res.json(engine.removePattern(String(req.params.name)));
+}
+
+function setPatternEnabled(req: express.Request, res: express.Response) {
+  const { enabled } = parseBody(enabledBody, req.body);
+  res.json(engine.setPatternEnabled(String(req.params.name), enabled));
 }
 
 function reorderPatterns(req: express.Request, res: express.Response) {
@@ -198,6 +204,7 @@ async function main() {
   routes.post('/patterns', addPattern);
   routes.post('/patterns/reorder', reorderPatterns);
   routes.patch('/patterns/:name', updatePattern);
+  routes.put('/patterns/:name/enabled', setPatternEnabled);
   routes.delete('/patterns/:name', removePattern);
   routes.get('/pause', getPause);
   routes.put('/pause', setPause);

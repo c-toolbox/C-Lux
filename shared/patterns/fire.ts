@@ -41,8 +41,9 @@ export class FirePattern extends Pattern {
   sparking!: number;
 
   // Per-light heat in [0, 255]; higher is hotter and brighter. Only half the strip is
-  // simulated: index 0 is the flame base at the center and higher indices reach outward
-  // to the ends. Both halves are mirrored from this array when rendering.
+  // simulated: index 0 is the flame base at the front of the dome (light 0) and higher
+  // indices reach around the ring toward the back. Both halves are mirrored from this
+  // array when rendering.
   private heat: number[] = Array.from(
     { length: Math.ceil(this.state.length / 2) },
     () => 0
@@ -110,8 +111,8 @@ export class FirePattern extends Pattern {
     const n = this.state.length;
     const mid = Math.floor(n / 2);
     for (let i = 0; i < n; i++) {
-      // Distance from the center maps onto the simulated half-strip.
-      const h = i >= mid ? i - mid : mid - 1 - i;
+      // Distance from light 0, measured around the ring, maps onto the simulated half.
+      const h = i < mid ? i : n - 1 - i;
       this.state[i] = { ...heatColor(this.heat[h] ?? 0), a: 1 };
     }
   }

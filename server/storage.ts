@@ -50,7 +50,7 @@ export async function loadPatterns(): Promise<Array<Pattern>> {
 
 // Persist the current patterns to disk as JSON.
 export async function savePatterns(patterns: Array<Pattern>): Promise<void> {
-  const data = patterns.map((p) => p.parameters());
+  const data = patterns.map((p) => p.serialize());
   await mkdir(dirname(storagePath), { recursive: true });
   await writeFile(storagePath, JSON.stringify(data, null, 2), 'utf8');
 }

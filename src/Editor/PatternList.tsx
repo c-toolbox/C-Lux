@@ -6,6 +6,7 @@ import {
   ColorSwatch,
   Group,
   Stack,
+  Switch,
   Text
 } from '@mantine/core';
 
@@ -17,6 +18,7 @@ interface PatternListProps {
   busy: boolean;
   onMove: (from: number, to: number) => void;
   onEdit: (pattern: PatternParameters) => void;
+  onToggleEnabled: (name: string, enabled: boolean) => void;
   onRemove: (name: string) => void;
 }
 
@@ -25,6 +27,7 @@ export function PatternList({
   busy,
   onMove,
   onEdit,
+  onToggleEnabled,
   onRemove
 }: PatternListProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -95,18 +98,30 @@ export function PatternList({
                 ▼
               </ActionIcon>
             </Stack>
-            <ColorSwatch color={patternSwatchHex(p)} />
-            <div>
+            <ColorSwatch color={patternSwatchHex(p)} opacity={p.enabled ? 1 : 0.4} />
+            <div style={{ opacity: p.enabled ? 1 : 0.5 }}>
               <Text fw={600}>{p.name}</Text>
               <Group gap={'xs'} mt={4}>
                 <Badge variant={'light'} size={'sm'}>
                   {patternDisplayName(p.type)}
                 </Badge>
+                {!p.enabled && (
+                  <Badge variant={'light'} color={'gray'} size={'sm'}>
+                    Disabled
+                  </Badge>
+                )}
               </Group>
             </div>
           </Group>
 
           <Group gap={'xs'}>
+            <Switch
+              size={'sm'}
+              checked={p.enabled}
+              disabled={busy}
+              onChange={(e) => onToggleEnabled(p.name, e.currentTarget.checked)}
+              aria-label={p.enabled ? 'Disable pattern' : 'Enable pattern'}
+            />
             <Button size={'xs'} variant={'light'} onClick={() => onEdit(p)}>
               Edit
             </Button>

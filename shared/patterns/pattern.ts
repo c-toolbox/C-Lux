@@ -13,6 +13,8 @@ export interface ColorAlpha extends Color {
 
 export interface PatternBaseProps {
   name: string;
+  // Disabled patterns stay in the list but are skipped when blending. Defaults to true.
+  enabled?: boolean;
 }
 
 export interface NumberRange {
@@ -78,13 +80,15 @@ export function hsvToRgb(h: number, s: number, v: number): Color {
 // pattern itself is returned through the `data` function
 export abstract class Pattern {
   name: string;
+  enabled: boolean;
   state: Array<ColorAlpha>;
 
   previous_time: number = 0;
   current_time: number = 0;
 
-  constructor({ name }: PatternBaseProps) {
+  constructor({ name, enabled }: PatternBaseProps) {
     this.name = name;
+    this.enabled = enabled ?? true;
     this.state = Array.from({ length: config.nLights }, () => ({
       r: 0,
       g: 0,
@@ -103,6 +107,14 @@ export abstract class Pattern {
    * in the provided object, the subclass keeps the current value.
    */
   abstract set(values: object): void;
+
+  /**
+   * The full serialized form of the pattern: the subclass's own parameters plus the
+   * shared state the base class owns.
+   */
+  serialize(): object {
+    return { ...this.parameters(), enabled: this.enabled };
+  }
 
   /**
    * Inverse of `parameters()`: flatten a serialized parameter object back into the flat

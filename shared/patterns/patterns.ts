@@ -108,10 +108,11 @@ export type PatternProps =
   | RippleProps
   | AudioProps;
 
-// Union of every pattern's `parameters()` shape, derived from the registry.
+// Union of every pattern's `parameters()` shape, derived from the registry, plus the
+// shared state `Pattern.serialize()` adds on top.
 export type PatternParameters = ReturnType<
   InstanceType<(typeof PATTERNS)[number]>['parameters']
->;
+> & { enabled: boolean };
 
 // A named, reusable combination of patterns.
 export interface Scene {

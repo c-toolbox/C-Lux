@@ -82,6 +82,10 @@ function Editor() {
     void run(() => api.removePattern(name));
   }
 
+  function handleToggleEnabled(name: string, enabled: boolean) {
+    void run(() => api.setPatternEnabled(name, enabled));
+  }
+
   function handleToggleServerPause() {
     void run(async () => {
       const next = !serverPaused;
@@ -218,11 +222,12 @@ function Editor() {
             busy={busy}
             onMove={move}
             onEdit={setEditing}
+            onToggleEnabled={handleToggleEnabled}
             onRemove={handleRemove}
           />
         )}
 
-        {patterns.some((p) => p.type === AUDIO_TYPE) && <AudioCapture />}
+        {patterns.some((p) => p.type === AUDIO_TYPE && p.enabled) && <AudioCapture />}
       </Stack>
 
       <PatternVisualizer />

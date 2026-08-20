@@ -140,7 +140,7 @@ export class Engine {
   //
 
   listPatterns(): PatternParameters[] {
-    return this.patterns.map((p) => p.parameters() as PatternParameters);
+    return this.patterns.map((p) => p.serialize() as PatternParameters);
   }
 
   // Props arrive as an untyped record from the HTTP boundary; `validateName` and
@@ -178,7 +178,18 @@ export class Engine {
     const { type } = instance.parameters() as PatternParameters;
     instance.set(validateUpdatedPatternProps(type, props));
     this.schedulePersist();
-    return instance.parameters() as PatternParameters;
+    return instance.serialize() as PatternParameters;
+  }
+
+  // Disabled patterns stay in the list (and keep their place in the stack) but are
+  // skipped when ticking and blending.
+  setPatternEnabled(name: string, enabled: boolean): PatternParameters {
+    const instance = this.patterns.find((p) => p.name === name);
+    if (!instance) throw new HttpError(404, `No pattern named: ${name}`);
+
+    instance.enabled = enabled;
+    this.schedulePersist();
+    return instance.serialize() as PatternParameters;
   }
 
   reorderPatterns(order: unknown): string[] {
@@ -249,7 +260,7 @@ export class Engine {
 
     const scene: Scene = {
       name,
-      patterns: this.patterns.map((p) => p.parameters() as PatternParameters)
+      patterns: this.patterns.map((p) => p.serialize() as PatternParameters)
     };
 
     const index = this.scenes.findIndex((s) => s.name === name);
@@ -423,6 +434,7 @@ export class Engine {
     accum.fill(0);
 
     for (const p of this.patterns) {
+      if (!p.enabled) continue;
       const layer = p.data();
       for (let i = 0; i < nLights; i++) {
         const src = i * 4;
@@ -460,7 +472,7 @@ export class Engine {
     );
 
     const scaledDt = dt * this.pauseFactor;
-    for (const p of this.patterns) p.tick(scaledDt);
+    for (const p of this.patterns) if (p.enabled) p.tick(scaledDt);
 
     this.brightnessFactor = approach(
       this.brightnessFactor,
