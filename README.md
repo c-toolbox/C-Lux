@@ -104,6 +104,7 @@ visualizer:
     "half-light-feather": 0.5
   },
   "output": {
+    "rotation": 180,
     "dmx": {
       "enabled": false,
       "device": "COM3",
@@ -131,6 +132,12 @@ The blended frame can be streamed live to lighting hardware. Each output is inde
 disabled by default; set `enabled` to `true` to turn one on. RGB values map to consecutive
 DMX channels starting at `startChannel`, and `refreshRate` is the send rate in frames per
 second.
+
+- **`output.rotation`** — how far, in degrees, the frame is rotated around the ring before
+  it is sent to the hardware. Patterns and the visualizer always treat light 0 as the top of
+  the ring; this compensates for where light 0 physically sits. For example, if light 0 is at
+  the back of a dome, `180` puts the pattern's 0 point at the front. Only the outputs are
+  affected, the visualizer is not.
 
 - **`output.dmx`** — physical DMX-512 through an Enttec-compatible USB widget (e.g. DMX USB
   Pro). Set `device` to the serial port (`COM3` on Windows, `/dev/ttyUSB0` on Linux). One

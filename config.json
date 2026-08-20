@@ -11,6 +11,7 @@
     "half-light-feather": 0.5
   },
   "output": {
+    "rotation": 180,
     "dmx": {
       "enabled": false,
       "device": "COM3",
