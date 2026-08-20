@@ -11,19 +11,14 @@ import {
   Title
 } from '@mantine/core';
 
-import {
-  api,
-  AUDIO_TYPE,
-  type PatternParameters,
-  type StoredPatternSet
-} from '../lib/api';
+import { api, AUDIO_TYPE, type PatternParameters, type Scene } from '../lib/api';
 import { type FormValues, toProps } from '../PatternForm/PatternForm';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
 import { AddPatternModal } from './AddPatternModal';
 import { AudioCapture } from './AudioCapture';
 import { EditPatternModal } from './EditPatternModal';
-import { ManageStoredModal } from './ManageStoredModal';
+import { ManageScenesModal } from './ManageScenesModal';
 import { PatternList } from './PatternList';
 import { describeError, randomName } from './utils';
 
@@ -36,8 +31,8 @@ function Editor() {
   const [namePlaceholder, setNamePlaceholder] = useState(randomName());
   const [editing, setEditing] = useState<PatternParameters | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
-  const [stored, setStored] = useState<StoredPatternSet[]>([]);
-  const [storeName, setStoreName] = useState('');
+  const [scenes, setScenes] = useState<Scene[]>([]);
+  const [newSceneName, setNewSceneName] = useState('');
   const [serverPaused, setServerPaused] = useState(false);
 
   async function refresh() {
@@ -95,51 +90,51 @@ function Editor() {
     });
   }
 
-  async function refreshStored() {
-    setStored(await api.storedPatterns());
+  async function refreshScenes() {
+    setScenes(await api.listScenes());
   }
 
-  function handleStore(name: string) {
+  function handleSaveScene(name: string) {
     void run(async () => {
-      await api.storePatterns(name);
-      await refreshStored();
-      setStoreName(randomName());
+      await api.saveScene(name);
+      await refreshScenes();
+      setNewSceneName(randomName());
     });
   }
 
-  function handleAddStored(set: StoredPatternSet) {
-    void run(() => api.addStoredPatterns(set.name));
+  function handleApplyScene(scene: Scene) {
+    void run(() => api.applyScene(scene.name));
   }
 
-  function handleRemoveStored(name: string) {
+  function handleDeleteScene(name: string) {
     void run(async () => {
-      await api.removeStoredPattern(name);
-      await refreshStored();
+      await api.deleteScene(name);
+      await refreshScenes();
     });
   }
 
-  function handleRenameStored(name: string, newName: string) {
+  function handleRenameScene(name: string, newName: string) {
     void run(async () => {
-      await api.renameStoredPattern(name, newName);
-      await refreshStored();
+      await api.renameScene(name, newName);
+      await refreshScenes();
     });
   }
 
-  function moveStored(from: number, to: number) {
-    if (from === to || to < 0 || to >= stored.length) return;
-    const order = stored.map((s) => s.name);
+  function moveScene(from: number, to: number) {
+    if (from === to || to < 0 || to >= scenes.length) return;
+    const order = scenes.map((s) => s.name);
     const [moved] = order.splice(from, 1);
     order.splice(to, 0, moved);
     void run(async () => {
-      setStored(await api.reorderStoredPatterns(order));
+      setScenes(await api.reorderScenes(order));
     });
   }
 
   async function openManage() {
     setError(null);
     try {
-      await refreshStored();
-      setStoreName(randomName());
+      await refreshScenes();
+      setNewSceneName(randomName());
       setManageOpen(true);
     } catch (e) {
       setError(describeError(e));
@@ -160,8 +155,8 @@ function Editor() {
     <Container size={'sm'} w={'100%'} py={'xl'}>
       <Title
         order={1}
-        ta={'center'}
-        style={{ position: 'fixed', top: 16, left: 0, right: 0, zIndex: 100 }}
+        ta={'left'}
+        style={{ position: 'fixed', top: 16, left: 16, right: 0, zIndex: 100 }}
       >
         C-Lux
       </Title>
@@ -185,7 +180,7 @@ function Editor() {
             {serverPaused ? 'Resume all' : 'Pause all'}
           </Button>
           <Button variant={'default'} onClick={() => void openManage()} px={'xs'}>
-            Manage stored
+            Manage scenes
           </Button>
           <Button
             onClick={() => {
@@ -249,19 +244,19 @@ function Editor() {
         onSubmit={(values) => void handleEdit(values)}
       />
 
-      <ManageStoredModal
+      <ManageScenesModal
         opened={manageOpen}
         onClose={() => setManageOpen(false)}
-        stored={stored}
+        scenes={scenes}
         patternCount={patterns.length}
         busy={busy}
-        storeName={storeName}
-        onStoreNameChange={setStoreName}
-        onStore={handleStore}
-        onAdd={handleAddStored}
-        onRename={handleRenameStored}
-        onMove={moveStored}
-        onRemove={handleRemoveStored}
+        newSceneName={newSceneName}
+        onNewSceneNameChange={setNewSceneName}
+        onSave={handleSaveScene}
+        onApply={handleApplyScene}
+        onRename={handleRenameScene}
+        onMove={moveScene}
+        onDelete={handleDeleteScene}
       />
     </Container>
   );

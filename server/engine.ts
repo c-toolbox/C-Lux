@@ -6,10 +6,10 @@ import {
   patternFromParameters,
   type PatternParameters,
   type PatternProps,
-  type StoredPatternSet
+  type Scene
 } from './patterns/patterns';
 import { HttpError } from './errors';
-import { loadLibrary, loadPatterns, saveLibrary, savePatterns } from './storage';
+import { loadPatterns, loadScenes, savePatterns, saveScenes } from './storage';
 import {
   validateName,
   validateNewPatternProps,
@@ -30,11 +30,11 @@ export interface PersistenceStatus {
   lastSavedAt: string | null;
 }
 
-// Owns all mutable server state (patterns, library, pause/blackout) and the logic that
+// Owns all mutable server state (patterns, scenes, pause/blackout) and the logic that
 // ticks animations, blends layers, persists to disk, and broadcasts frames.
 export class PatternEngine {
   private patterns: Array<Pattern> = [];
-  private library: Array<StoredPatternSet> = [];
+  private scenes: Array<Scene> = [];
 
   // Global pause. `pauseFactor` scales the tick dt and eases between 1 (running) and 0
   // (paused) so animations ramp in and out instead of snapping.
@@ -66,9 +66,9 @@ export class PatternEngine {
   private persistError: string | null = null;
   private lastPersistedAt: string | null = null;
 
-  // Serialized disk writer for the library; library edits are rare, so they're written
+  // Serialized disk writer for the scenes; scene edits are rare, so they're written
   // immediately instead of debounced.
-  private savingLibrary: Promise<void> = Promise.resolve();
+  private savingScenes: Promise<void> = Promise.resolve();
 
   private frameListeners = new Set<FrameListener>();
 
@@ -78,10 +78,10 @@ export class PatternEngine {
   private readonly blendAccum: number[] = new Array<number>(config.nLights * 3).fill(0);
   private readonly blendOut: number[] = new Array<number>(config.nLights * 3).fill(0);
 
-  // Restore any patterns and library saved from a previous run.
+  // Restore any patterns and scenes saved from a previous run.
   async load(): Promise<void> {
     this.patterns = await loadPatterns();
-    this.library = await loadLibrary();
+    this.scenes = await loadScenes();
   }
 
   // Schedule a debounced write, capturing the latest state at flush time and keeping at
@@ -235,40 +235,40 @@ export class PatternEngine {
   }
 
   //
-  // Library
+  // Scenes
   //
 
-  getLibrary(): StoredPatternSet[] {
-    return this.library;
+  listScenes(): Scene[] {
+    return this.scenes;
   }
 
-  async storeCurrent(rawName: unknown): Promise<StoredPatternSet[]> {
-    const name = validateName(rawName, 'stored pattern set name');
+  async saveScene(rawName: unknown): Promise<Scene[]> {
+    const name = validateName(rawName, 'scene name');
 
-    const entry: StoredPatternSet = {
+    const scene: Scene = {
       name,
       patterns: this.patterns.map((p) => p.parameters() as PatternParameters)
     };
 
-    const index = this.library.findIndex((e) => e.name === name);
-    if (index === -1) this.library.push(entry);
-    else this.library[index] = entry;
+    const index = this.scenes.findIndex((s) => s.name === name);
+    if (index === -1) this.scenes.push(scene);
+    else this.scenes[index] = scene;
 
-    await this.persistLibrary('store');
-    return this.library;
+    await this.persistScenes('save');
+    return this.scenes;
   }
 
-  addStored(name: string): PatternParameters[] {
-    const entry = this.library.find((e) => e.name === name);
-    if (!entry) throw new HttpError(404, `No stored pattern set named: ${name}`);
+  applyScene(name: string): PatternParameters[] {
+    const scene = this.scenes.find((s) => s.name === name);
+    if (!scene) throw new HttpError(404, `No scene named: ${name}`);
 
     const existing = new Set(this.patterns.map((p) => p.name));
-    for (const params of entry.patterns) {
+    for (const params of scene.patterns) {
       if (existing.has(params.name)) continue;
 
       const instance = patternFromParameters(params);
       if (!instance) {
-        console.warn(`Skipping unknown stored pattern type: ${params.type}`);
+        console.warn(`Skipping unknown pattern type: ${params.type}`);
         continue;
       }
 
@@ -276,22 +276,22 @@ export class PatternEngine {
       existing.add(instance.name);
     }
 
-    this.sortByLibraryOrder();
+    this.sortBySceneOrder();
     this.schedulePersist();
     return this.listPatterns();
   }
 
-  // Composite enabled sets in the order they appear in the library rather than the order
-  // they were enabled. Patterns belonging to no stored set keep their order, on top.
-  private sortByLibraryOrder(): void {
+  // Composite applied scenes in the order they appear in the scene list rather than the
+  // order they were applied. Patterns belonging to no scene keep their order, on top.
+  private sortBySceneOrder(): void {
     const rank = new Map<string, number>();
-    this.library.forEach((entry, index) => {
-      for (const params of entry.patterns) {
+    this.scenes.forEach((scene, index) => {
+      for (const params of scene.patterns) {
         if (!rank.has(params.name)) rank.set(params.name, index);
       }
     });
 
-    const unranked = this.library.length;
+    const unranked = this.scenes.length;
     const rankOf = (name: string) => rank.get(name) ?? unranked;
 
     this.patterns = this.patterns
@@ -302,12 +302,12 @@ export class PatternEngine {
       .map((e) => e.pattern);
   }
 
-  // Drop the patterns belonging to a stored set, leaving any other active pattern running.
-  removeStoredFromActive(name: string): PatternParameters[] {
-    const entry = this.library.find((e) => e.name === name);
-    if (!entry) throw new HttpError(404, `No stored pattern set named: ${name}`);
+  // Drop the patterns belonging to a scene, leaving any other active pattern running.
+  unapplyScene(name: string): PatternParameters[] {
+    const scene = this.scenes.find((s) => s.name === name);
+    if (!scene) throw new HttpError(404, `No scene named: ${name}`);
 
-    const names = new Set(entry.patterns.map((p) => p.name));
+    const names = new Set(scene.patterns.map((p) => p.name));
     const remaining = this.patterns.filter((p) => !names.has(p.name));
     if (remaining.length !== this.patterns.length) {
       this.patterns = remaining;
@@ -317,20 +317,20 @@ export class PatternEngine {
     return this.listPatterns();
   }
 
-  // Swap the active list for a stored set. Every pattern is built before anything is
-  // discarded, so a missing set or an unusable entry leaves the current list untouched
+  // Swap the active list for a scene. Every pattern is built before anything is
+  // discarded, so a missing scene or an unusable entry leaves the current list untouched
   // instead of half-cleared.
-  replaceWithStored(name: string): PatternParameters[] {
-    const entry = this.library.find((e) => e.name === name);
-    if (!entry) throw new HttpError(404, `No stored pattern set named: ${name}`);
+  replaceWithScene(name: string): PatternParameters[] {
+    const scene = this.scenes.find((s) => s.name === name);
+    if (!scene) throw new HttpError(404, `No scene named: ${name}`);
 
     const replacement: Array<Pattern> = [];
-    for (const params of entry.patterns) {
+    for (const params of scene.patterns) {
       const instance = patternFromParameters(params);
       if (!instance) {
         throw new HttpError(
           500,
-          `Stored pattern set ${name} uses an unknown pattern type: ${params.type}`
+          `Scene ${name} uses an unknown pattern type: ${params.type}`
         );
       }
       replacement.push(instance);
@@ -341,70 +341,70 @@ export class PatternEngine {
     return this.listPatterns();
   }
 
-  async reorderLibrary(order: unknown): Promise<StoredPatternSet[]> {
-    if (!Array.isArray(order) || order.length !== this.library.length) {
-      throw new HttpError(400, 'order must list every stored pattern set name once');
+  async reorderScenes(order: unknown): Promise<Scene[]> {
+    if (!Array.isArray(order) || order.length !== this.scenes.length) {
+      throw new HttpError(400, 'order must list every existing scene name once');
     }
 
-    const byName = new Map(this.library.map((e) => [e.name, e]));
-    const reordered: StoredPatternSet[] = [];
+    const byName = new Map(this.scenes.map((s) => [s.name, s]));
+    const reordered: Scene[] = [];
     for (const name of order) {
       if (typeof name !== 'string') {
-        throw new HttpError(400, 'order must contain only stored pattern set names');
+        throw new HttpError(400, 'order must contain only scene names');
       }
-      const entry = byName.get(name);
-      if (!entry) {
-        throw new HttpError(400, `Unknown or duplicate stored pattern set name: ${name}`);
+      const scene = byName.get(name);
+      if (!scene) {
+        throw new HttpError(400, `Unknown or duplicate scene name: ${name}`);
       }
       byName.delete(name);
-      reordered.push(entry);
+      reordered.push(scene);
     }
 
-    this.library = reordered;
-    await this.persistLibrary('reorder');
-    return this.library;
+    this.scenes = reordered;
+    await this.persistScenes('reorder');
+    return this.scenes;
   }
 
-  async renameStored(name: string, newName: unknown): Promise<StoredPatternSet[]> {
-    const trimmed = validateName(newName, 'new name for stored pattern set');
+  async renameScene(name: string, newName: unknown): Promise<Scene[]> {
+    const trimmed = validateName(newName, 'new name for scene');
 
-    const index = this.library.findIndex((e) => e.name === name);
-    if (index === -1) throw new HttpError(404, `No stored pattern set named: ${name}`);
+    const index = this.scenes.findIndex((s) => s.name === name);
+    if (index === -1) throw new HttpError(404, `No scene named: ${name}`);
 
-    if (trimmed !== name && this.library.some((e) => e.name === trimmed)) {
-      throw new HttpError(400, `A stored pattern set named ${trimmed} already exists`);
+    if (trimmed !== name && this.scenes.some((s) => s.name === trimmed)) {
+      throw new HttpError(400, `A scene named ${trimmed} already exists`);
     }
 
-    this.library[index] = { ...this.library[index], name: trimmed };
+    this.scenes[index] = { ...this.scenes[index], name: trimmed };
 
-    await this.persistLibrary('rename');
-    return this.library;
+    await this.persistScenes('rename');
+    return this.scenes;
   }
 
-  async removeStored(name: string): Promise<{ name: string }> {
-    const index = this.library.findIndex((e) => e.name === name);
-    if (index === -1) throw new HttpError(404, `No stored pattern set named: ${name}`);
+  async deleteScene(name: string): Promise<{ name: string }> {
+    const index = this.scenes.findIndex((s) => s.name === name);
+    if (index === -1) throw new HttpError(404, `No scene named: ${name}`);
 
-    this.library.splice(index, 1);
+    this.scenes.splice(index, 1);
 
-    await this.persistLibrary('remove');
+    await this.persistScenes('delete');
     return { name };
   }
 
-  // Queue a library write behind any write already in flight, persisting the snapshot
-  // taken when the caller mutated the library so concurrent requests can't interleave or
+  // Queue a scene write behind any write already in flight, persisting the snapshot
+  // taken when the caller mutated the scenes so concurrent requests can't interleave or
   // land out of order.
-  private persistLibrary(action: string): Promise<void> {
-    const snapshot = this.library.slice();
-    const write = this.savingLibrary.then(() => saveLibrary(snapshot));
+  private persistScenes(action: string): Promise<void> {
+    const snapshot = this.scenes.slice();
+    const write = this.savingScenes.then(() => saveScenes(snapshot));
 
     // Swallow the failure on the queue itself so one bad write doesn't reject every
     // later one; the caller still sees it through the returned promise.
-    this.savingLibrary = write.catch(() => undefined);
+    this.savingScenes = write.catch(() => undefined);
 
     return write.catch((err: unknown) => {
-      console.error('Failed to save library:', err);
-      throw new HttpError(500, `Failed to ${action} stored pattern`);
+      console.error('Failed to save scenes:', err);
+      throw new HttpError(500, `Failed to ${action} scene`);
     });
   }
 

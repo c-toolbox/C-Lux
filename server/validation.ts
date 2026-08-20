@@ -2,12 +2,12 @@ import type { NumberRange } from './patterns/pattern';
 import { patternByType } from './patterns/patterns';
 import { HttpError } from './errors';
 
-// Keeps stored names reasonable and out of any control-character weirdness; pattern and
-// library set names are persisted to disk and used as map keys.
+// Keeps saved names reasonable and out of any control-character weirdness; pattern and
+// scene names are persisted to disk and used as map keys.
 const NAME_MAX_LENGTH = 60;
 const NAME_PATTERN = /^[\p{L}\p{N} _.'-]+$/u;
 
-// Validate a user-supplied name (pattern name, library set name, …), trimming and
+// Validate a user-supplied name (pattern name, scene name, …), trimming and
 // rejecting empty, oversized, or oddly-charactered values.
 export function validateName(value: unknown, label: string): string {
   if (typeof value !== 'string') throw new HttpError(400, `${label} must be a string`);

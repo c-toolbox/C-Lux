@@ -113,8 +113,8 @@ export type PatternParameters = ReturnType<
   InstanceType<(typeof PATTERNS)[number]>['parameters']
 >;
 
-// A named snapshot of a full pattern list, storable in the library.
-export interface StoredPatternSet {
+// A named, reusable combination of patterns.
+export interface Scene {
   name: string;
   patterns: PatternParameters[];
 }

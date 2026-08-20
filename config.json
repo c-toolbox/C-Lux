@@ -4,7 +4,7 @@
     "tick-rate": 30,
     "port": 8787,
     "storage": "patterns.json",
-    "library": "library.json",
+    "scenes": "scenes.json",
     "pause-transition": 1.0,
     "blackout-transition": 1.0,
     "half-light-transition": 1.0,

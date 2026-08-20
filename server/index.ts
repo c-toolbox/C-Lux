@@ -129,39 +129,39 @@ function streamFrames(req: express.Request, res: express.Response) {
   });
 }
 
-function getLibrary(_req: express.Request, res: express.Response) {
-  res.json(engine.getLibrary());
+function listScenes(_req: express.Request, res: express.Response) {
+  res.json(engine.listScenes());
 }
 
-async function storeCurrent(req: express.Request, res: express.Response) {
+async function saveScene(req: express.Request, res: express.Response) {
   const { name } = (req.body ?? {}) as { name?: unknown };
-  res.json(await engine.storeCurrent(name));
+  res.json(await engine.saveScene(name));
 }
 
-async function reorderLibrary(req: express.Request, res: express.Response) {
+async function reorderScenes(req: express.Request, res: express.Response) {
   const { order } = (req.body ?? {}) as { order?: unknown };
-  res.json(await engine.reorderLibrary(order));
+  res.json(await engine.reorderScenes(order));
 }
 
-function applyStored(req: express.Request, res: express.Response) {
-  res.json(engine.addStored(String(req.params.name)));
+function applyScene(req: express.Request, res: express.Response) {
+  res.json(engine.applyScene(String(req.params.name)));
 }
 
-function unapplyStored(req: express.Request, res: express.Response) {
-  res.json(engine.removeStoredFromActive(String(req.params.name)));
+function unapplyScene(req: express.Request, res: express.Response) {
+  res.json(engine.unapplyScene(String(req.params.name)));
 }
 
-function replaceWithStored(req: express.Request, res: express.Response) {
-  res.json(engine.replaceWithStored(String(req.params.name)));
+function replaceWithScene(req: express.Request, res: express.Response) {
+  res.json(engine.replaceWithScene(String(req.params.name)));
 }
 
-async function renameStored(req: express.Request, res: express.Response) {
+async function renameScene(req: express.Request, res: express.Response) {
   const { newName } = (req.body ?? {}) as { newName?: unknown };
-  res.json(await engine.renameStored(String(req.params.name), newName));
+  res.json(await engine.renameScene(String(req.params.name), newName));
 }
 
-async function removeStored(req: express.Request, res: express.Response) {
-  res.json(await engine.removeStored(String(req.params.name)));
+async function deleteScene(req: express.Request, res: express.Response) {
+  res.json(await engine.deleteScene(String(req.params.name)));
 }
 
 async function main() {
@@ -191,14 +191,14 @@ async function main() {
   routes.get('/stream', streamFrames);
   routes.get('/health', getHealth);
   routes.post('/persist', persistPatterns);
-  routes.get('/library', getLibrary);
-  routes.post('/library', storeCurrent);
-  routes.post('/library/reorder', reorderLibrary);
-  routes.post('/library/:name/apply', applyStored);
-  routes.post('/library/:name/unapply', unapplyStored);
-  routes.post('/library/:name/replace', replaceWithStored);
-  routes.patch('/library/:name', renameStored);
-  routes.delete('/library/:name', removeStored);
+  routes.get('/scenes', listScenes);
+  routes.post('/scenes', saveScene);
+  routes.post('/scenes/reorder', reorderScenes);
+  routes.post('/scenes/:name/apply', applyScene);
+  routes.post('/scenes/:name/unapply', unapplyScene);
+  routes.post('/scenes/:name/replace', replaceWithScene);
+  routes.patch('/scenes/:name', renameScene);
+  routes.delete('/scenes/:name', deleteScene);
   app.use('/api', routes);
 
   // Unknown API routes get a JSON 404 instead of falling through to the SPA.

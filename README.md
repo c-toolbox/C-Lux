@@ -79,11 +79,14 @@ Vite in development.
 | PUT    | `/api/half-light`             | `{ halfLight }`         | Fade the top half out or restore it     |
 | GET    | `/api/frame`                  | —                       | The blended frame as a flat RGB array   |
 | GET    | `/api/stream`                 | —                       | Server-Sent Events stream of frames     |
-| GET    | `/api/library`                | —                       | List the stored pattern sets            |
-| POST   | `/api/library`                | `{ name }`              | Store the active list as a named set    |
-| POST   | `/api/library/:name/apply`    | —                       | Add a stored set's patterns to the list |
-| PATCH  | `/api/library/:name`          | `{ newName }`           | Rename a stored set                     |
-| DELETE | `/api/library/:name`          | —                       | Remove a stored set                     |
+| GET    | `/api/scenes`                 | —                       | List the saved scenes                   |
+| POST   | `/api/scenes`                 | `{ name }`              | Save the active patterns as a scene     |
+| POST   | `/api/scenes/:name/apply`     | —                       | Add a scene's patterns to the list      |
+| POST   | `/api/scenes/:name/unapply`   | —                       | Remove a scene's patterns from the list |
+| POST   | `/api/scenes/:name/replace`   | —                       | Replace the active patterns with a scene|
+| POST   | `/api/scenes/reorder`         | `{ order: string[] }`   | Reorder scenes (controls blend order)   |
+| PATCH  | `/api/scenes/:name`           | `{ newName }`           | Rename a scene                          |
+| DELETE | `/api/scenes/:name`           | —                       | Delete a scene                          |
 
 ## Configuration
 
@@ -97,7 +100,7 @@ visualizer:
     "tick-rate": 30,
     "port": 8787,
     "storage": "patterns.json",
-    "library": "library.json",
+    "scenes": "scenes.json",
     "pause-transition": 1.0,
     "blackout-transition": 1.0,
     "half-light-transition": 1.0,
@@ -179,7 +182,7 @@ server/
   index.ts               Express app, REST routes, SSE stream, and the tick loop
   engine.ts              PatternEngine: state, blending, ticking, and persistence
   errors.ts              HttpError used by handlers and the error middleware
-  storage.ts             Persistence for the active list and the pattern library
+  storage.ts             Persistence for the active pattern list and the saved scenes
   output/                DMX-512 and Art-Net streaming outputs
   patterns/
     pattern.ts           Abstract Pattern base class

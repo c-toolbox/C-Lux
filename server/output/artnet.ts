@@ -44,7 +44,7 @@ export class ArtNetSender {
     const offset = Math.max(0, this.config.startChannel - 1);
     let frame = new Array<number>(offset).fill(0).concat(channels);
 
-    const {endChannel} = this.config;
+    const { endChannel } = this.config;
     if (endChannel > 0) {
       if (endChannel <= offset) return;
       frame = frame.slice(0, endChannel);

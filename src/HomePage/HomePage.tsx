@@ -12,11 +12,11 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
-import { api, type PatternParameters, type StoredPatternSet } from '../lib/api';
+import { api, type PatternParameters, type Scene } from '../lib/api';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
 export function HomePage() {
-  const [stored, setStored] = useState<StoredPatternSet[]>([]);
+  const [scenes, setScenes] = useState<Scene[]>([]);
   const [active, setActive] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -26,22 +26,21 @@ export function HomePage() {
 
   const activeNames = new Set(active);
 
-  // A set counts as enabled once every pattern it holds is running.
-  const isEnabled = (set: StoredPatternSet) =>
-    set.patterns.length > 0 && set.patterns.every((p) => activeNames.has(p.name));
+  // A scene counts as applied once every pattern it holds is running.
+  const isApplied = (scene: Scene) =>
+    scene.patterns.length > 0 && scene.patterns.every((p) => activeNames.has(p.name));
 
   async function refresh() {
     try {
-      const [sets, patterns, { paused }, { blackout }, { halfLight }] = await Promise.all(
-        [
-          api.storedPatterns(),
+      const [sceneList, patterns, { paused }, { blackout }, { halfLight }] =
+        await Promise.all([
+          api.listScenes(),
           api.listPatterns(),
           api.serverPaused(),
           api.blackout(),
           api.halfLight()
-        ]
-      );
-      setStored(sets);
+        ]);
+      setScenes(sceneList);
       setActive(patterns.map((p) => p.name));
       setPaused(paused);
       setBlackout(blackout);
@@ -94,15 +93,15 @@ export function HomePage() {
     }
   }
 
-  // Replace the active patterns with the chosen stored set.
-  async function select(set: StoredPatternSet) {
+  // Replace the active patterns with the chosen scene.
+  async function select(scene: Scene) {
     setBusy(true);
     try {
-      setActive(names(await api.replaceWithStoredPatterns(set.name)));
+      setActive(names(await api.replaceWithScene(scene.name)));
       notifications.show({
         color: 'green',
-        title: 'Pattern selected',
-        message: `Now showing “${set.name}”.`
+        title: 'Scene selected',
+        message: `Now showing “${scene.name}”.`
       });
     } catch (e) {
       showError(e);
@@ -111,15 +110,13 @@ export function HomePage() {
     }
   }
 
-  // Add or remove a single stored set without touching the others.
-  async function toggle(set: StoredPatternSet, enabled: boolean) {
+  // Apply or unapply a single scene without touching the others.
+  async function toggle(scene: Scene, applied: boolean) {
     setBusy(true);
     try {
       setActive(
         names(
-          enabled
-            ? await api.addStoredPatterns(set.name)
-            : await api.removeStoredPatterns(set.name)
+          applied ? await api.applyScene(scene.name) : await api.unapplyScene(scene.name)
         )
       );
     } catch (e) {
@@ -181,15 +178,15 @@ export function HomePage() {
           <Group justify={'center'} py={'xl'}>
             <Loader />
           </Group>
-        ) : stored.length === 0 ? (
+        ) : scenes.length === 0 ? (
           <Text c={'dimmed'} ta={'center'} py={'xl'}>
-            No stored patterns yet. Create and store some in the editor.
+            No scenes yet. Create and save some in the editor.
           </Text>
         ) : (
           <Stack gap={'sm'}>
-            {stored.map((set) => (
+            {scenes.map((scene) => (
               <Group
-                key={set.name}
+                key={scene.name}
                 justify={'space-between'}
                 p={'md'}
                 style={{
@@ -198,14 +195,14 @@ export function HomePage() {
                 }}
               >
                 <Checkbox
-                  checked={isEnabled(set)}
-                  disabled={busy || set.patterns.length === 0}
-                  onChange={(e) => void toggle(set, e.currentTarget.checked)}
-                  label={<Text fw={600}>{set.name}</Text>}
+                  checked={isApplied(scene)}
+                  disabled={busy || scene.patterns.length === 0}
+                  onChange={(e) => void toggle(scene, e.currentTarget.checked)}
+                  label={<Text fw={600}>{scene.name}</Text>}
                 />
 
                 <Group gap={'xs'}>
-                  <Button disabled={busy} onClick={() => void select(set)}>
+                  <Button disabled={busy} onClick={() => void select(scene)}>
                     Select
                   </Button>
                 </Group>

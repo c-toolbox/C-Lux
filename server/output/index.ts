@@ -58,8 +58,9 @@ export async function startOutputs(getFrame: () => number[]): Promise<Output[]> 
 // along the strip (light 0 of the frame lands on light `offset` of the fixture).
 function withRotation(getFrame: () => number[]): () => number[] {
   const { nLights } = config;
-  const offset = ((Math.round((config.output.rotation / 360) * nLights) % nLights) +
-    nLights) % nLights;
+  const offset =
+    ((Math.round((config.output.rotation / 360) * nLights) % nLights) + nLights) %
+    nLights;
   if (offset === 0) return getFrame;
 
   const rotated = new Array<number>(nLights * 3).fill(0);

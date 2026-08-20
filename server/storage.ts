@@ -8,7 +8,7 @@ import { Pattern } from './patterns/pattern';
 import {
   patternFromParameters,
   type PatternParameters,
-  type StoredPatternSet
+  type Scene
 } from './patterns/patterns';
 
 // Resolve the storage file relative to the project root, regardless of cwd.
@@ -18,11 +18,11 @@ const storagePath = resolve(
   config.server.storage
 );
 
-// The library keeps named pattern presets that can be added back on demand.
-const libraryPath = resolve(
+// Scenes are named pattern combinations that can be applied on demand.
+const scenesPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   '..',
-  config.server.library
+  config.server.scenes
 );
 
 // Load the stored patterns from disk, reconstructing each concrete instance.
@@ -55,19 +55,19 @@ export async function savePatterns(patterns: Array<Pattern>): Promise<void> {
   await writeFile(storagePath, JSON.stringify(data, null, 2), 'utf8');
 }
 
-// Load the stored pattern library (named pattern sets) from disk.
-export async function loadLibrary(): Promise<Array<StoredPatternSet>> {
+// Load the saved scenes from disk.
+export async function loadScenes(): Promise<Array<Scene>> {
   try {
-    const raw = await readFile(libraryPath, 'utf8');
-    return JSON.parse(raw) as Array<StoredPatternSet>;
+    const raw = await readFile(scenesPath, 'utf8');
+    return JSON.parse(raw) as Array<Scene>;
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return [];
     throw err;
   }
 }
 
-// Persist the pattern library to disk as JSON.
-export async function saveLibrary(entries: Array<StoredPatternSet>): Promise<void> {
-  await mkdir(dirname(libraryPath), { recursive: true });
-  await writeFile(libraryPath, JSON.stringify(entries, null, 2), 'utf8');
+// Persist the scenes to disk as JSON.
+export async function saveScenes(scenes: Array<Scene>): Promise<void> {
+  await mkdir(dirname(scenesPath), { recursive: true });
+  await writeFile(scenesPath, JSON.stringify(scenes, null, 2), 'utf8');
 }

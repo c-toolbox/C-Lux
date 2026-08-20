@@ -1,37 +1,37 @@
 import { useState } from 'react';
 import { ActionIcon, Button, Group, Modal, Stack, Text, TextInput } from '@mantine/core';
 
-import { type StoredPatternSet } from '../lib/api';
+import { type Scene } from '../lib/api';
 
-interface ManageStoredModalProps {
+interface ManageScenesModalProps {
   opened: boolean;
   onClose: () => void;
-  stored: StoredPatternSet[];
+  scenes: Scene[];
   patternCount: number;
   busy: boolean;
-  storeName: string;
-  onStoreNameChange: (name: string) => void;
-  onStore: (name: string) => void;
-  onAdd: (set: StoredPatternSet) => void;
+  newSceneName: string;
+  onNewSceneNameChange: (name: string) => void;
+  onSave: (name: string) => void;
+  onApply: (scene: Scene) => void;
   onRename: (name: string, newName: string) => void;
   onMove: (from: number, to: number) => void;
-  onRemove: (name: string) => void;
+  onDelete: (name: string) => void;
 }
 
-export function ManageStoredModal({
+export function ManageScenesModal({
   opened,
   onClose,
-  stored,
+  scenes,
   patternCount,
   busy,
-  storeName,
-  onStoreNameChange,
-  onStore,
-  onAdd,
+  newSceneName,
+  onNewSceneNameChange,
+  onSave,
+  onApply,
   onRename,
   onMove,
-  onRemove
-}: ManageStoredModalProps) {
+  onDelete
+}: ManageScenesModalProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
@@ -46,45 +46,45 @@ export function ManageStoredModal({
     clearDrag();
   }
 
-  function confirmRemove() {
+  function confirmDelete() {
     const name = confirming;
     setConfirming(null);
-    if (name !== null) onRemove(name);
+    if (name !== null) onDelete(name);
   }
 
   return (
     <>
-      <Modal opened={opened} onClose={onClose} title={'Manage stored patterns'} centered>
+      <Modal opened={opened} onClose={onClose} title={'Manage scenes'} centered>
         <Stack gap={'md'}>
           <Group align={'flex-end'} gap={'xs'}>
             <TextInput
-              label={'Store current patterns'}
+              label={'Save current patterns as a scene'}
               placeholder={'Name'}
-              value={storeName}
+              value={newSceneName}
               disabled={busy}
-              onChange={(e) => onStoreNameChange(e.currentTarget.value)}
+              onChange={(e) => onNewSceneNameChange(e.currentTarget.value)}
               style={{ flex: 1 }}
             />
             <Button
-              disabled={busy || patternCount === 0 || storeName.trim() === ''}
-              onClick={() => onStore(storeName.trim())}
+              disabled={busy || patternCount === 0 || newSceneName.trim() === ''}
+              onClick={() => onSave(newSceneName.trim())}
             >
-              Store {patternCount} pattern(s)
+              Save {patternCount} pattern(s)
             </Button>
           </Group>
 
-          {stored.length === 0 ? (
+          {scenes.length === 0 ? (
             <Text c={'dimmed'} ta={'center'} py={'md'}>
-              No stored patterns yet. Use the field above to save the current list.
+              No scenes yet. Use the field above to save the current pattern list.
             </Text>
           ) : (
             <Stack gap={'sm'}>
-              {stored.map((set, i) => (
-                <ManageStoredRow
-                  key={set.name}
-                  set={set}
+              {scenes.map((scene, i) => (
+                <SceneRow
+                  key={scene.name}
+                  scene={scene}
                   index={i}
-                  count={stored.length}
+                  count={scenes.length}
                   busy={busy}
                   dragging={dragIndex === i}
                   dropTarget={dragOverIndex === i}
@@ -97,9 +97,9 @@ export function ManageStoredModal({
                   }}
                   onDrop={() => handleDrop(i)}
                   onMove={onMove}
-                  onAdd={onAdd}
+                  onApply={onApply}
                   onRename={onRename}
-                  onRemove={setConfirming}
+                  onDelete={setConfirming}
                 />
               ))}
             </Stack>
@@ -110,21 +110,18 @@ export function ManageStoredModal({
       <Modal
         opened={confirming !== null}
         onClose={() => setConfirming(null)}
-        title={'Remove stored patterns'}
+        title={'Delete scene'}
         centered
         zIndex={300}
       >
         <Stack gap={'md'}>
-          <Text>
-            Remove the stored pattern set &ldquo;{confirming}&rdquo;? This cannot be
-            undone.
-          </Text>
+          <Text>Delete the scene &ldquo;{confirming}&rdquo;? This cannot be undone.</Text>
           <Group justify={'flex-end'} gap={'xs'}>
             <Button variant={'default'} onClick={() => setConfirming(null)}>
               Cancel
             </Button>
-            <Button color={'red'} disabled={busy} onClick={confirmRemove}>
-              Remove
+            <Button color={'red'} disabled={busy} onClick={confirmDelete}>
+              Delete
             </Button>
           </Group>
         </Stack>
@@ -133,8 +130,8 @@ export function ManageStoredModal({
   );
 }
 
-interface ManageStoredRowProps {
-  set: StoredPatternSet;
+interface SceneRowProps {
+  scene: Scene;
   index: number;
   count: number;
   busy: boolean;
@@ -145,15 +142,15 @@ interface ManageStoredRowProps {
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
   onMove: (from: number, to: number) => void;
-  onAdd: (set: StoredPatternSet) => void;
+  onApply: (scene: Scene) => void;
   onRename: (name: string, newName: string) => void;
-  onRemove: (name: string) => void;
+  onDelete: (name: string) => void;
 }
 
-// A single editable row in the manage-stored modal: reorder, apply, rename, or remove a
-// set.
-function ManageStoredRow({
-  set,
+// A single editable row in the manage-scenes modal: reorder, apply, rename, or delete a
+// scene.
+function SceneRow({
+  scene,
   index,
   count,
   busy,
@@ -164,13 +161,13 @@ function ManageStoredRow({
   onDragOver,
   onDrop,
   onMove,
-  onAdd,
+  onApply,
   onRename,
-  onRemove
-}: ManageStoredRowProps) {
-  const [name, setName] = useState(set.name);
+  onDelete
+}: SceneRowProps) {
+  const [name, setName] = useState(scene.name);
   const trimmed = name.trim();
-  const changed = trimmed !== '' && trimmed !== set.name;
+  const changed = trimmed !== '' && trimmed !== scene.name;
 
   return (
     <Group
@@ -207,7 +204,7 @@ function ManageStoredRow({
             size={'sm'}
             disabled={busy || index === 0}
             onClick={() => onMove(index, index - 1)}
-            aria-label={'Move stored pattern set up'}
+            aria-label={'Move scene up'}
           >
             ▲
           </ActionIcon>
@@ -217,13 +214,13 @@ function ManageStoredRow({
             size={'sm'}
             disabled={busy || index === count - 1}
             onClick={() => onMove(index, index + 1)}
-            aria-label={'Move stored pattern set down'}
+            aria-label={'Move scene down'}
           >
             ▼
           </ActionIcon>
         </Stack>
         <TextInput
-          label={`${set.patterns.length} pattern(s)`}
+          label={`${scene.patterns.length} pattern(s)`}
           value={name}
           disabled={busy}
           onChange={(e) => setName(e.currentTarget.value)}
@@ -231,13 +228,18 @@ function ManageStoredRow({
         />
       </Group>
       <Group gap={'xs'}>
-        <Button size={'xs'} variant={'light'} disabled={busy} onClick={() => onAdd(set)}>
-          Add
+        <Button
+          size={'xs'}
+          variant={'light'}
+          disabled={busy}
+          onClick={() => onApply(scene)}
+        >
+          Apply
         </Button>
         <Button
           size={'xs'}
           disabled={busy || !changed}
-          onClick={() => onRename(set.name, trimmed)}
+          onClick={() => onRename(scene.name, trimmed)}
         >
           Rename
         </Button>
@@ -246,9 +248,9 @@ function ManageStoredRow({
           color={'red'}
           variant={'light'}
           disabled={busy}
-          onClick={() => onRemove(set.name)}
+          onClick={() => onDelete(scene.name)}
         >
-          Remove
+          Delete
         </Button>
       </Group>
     </Group>
