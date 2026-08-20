@@ -31,8 +31,8 @@ export type AudioProps = PatternBaseProps & {
 const clampUnit = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
 
 // Visualizes the audio a capture client streams to `POST /api/audio`. Both modes run
-// outward from the center of the ring: the spectrum puts bass at the center and treble
-// at the ends, the VU meter fills toward the ends with overall loudness.
+// outward from the top of the ring: the spectrum puts bass at the top and treble at the
+// bottom, the VU meter fills down both sides with overall loudness.
 export class AudioPattern extends Pattern {
   static readonly Type = AUDIO_TYPE;
   static readonly DisplayName = 'Audio';
@@ -162,13 +162,13 @@ export class AudioPattern extends Pattern {
     const n = this.state.length;
     if (n === 0) return;
 
-    // Both halves are drawn from the center outward, mirrored around the seam.
-    const mid = Math.floor(n / 2);
-    const reach = Math.max(mid, n - mid);
+    // Light 0 sits at the top of the ring, so both halves are drawn from there downward,
+    // mirrored around the vertical axis.
+    const reach = Math.floor(n / 2) + 1;
     const filled = this.vu * reach;
 
     for (let i = 0; i < n; i++) {
-      const distance = i >= mid ? i - mid : mid - 1 - i;
+      const distance = Math.min(i, n - i);
       const t = reach > 1 ? distance / (reach - 1) : 0;
       const value =
         this.mode === AUDIO_MODE_VU

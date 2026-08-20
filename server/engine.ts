@@ -276,7 +276,44 @@ export class PatternEngine {
       existing.add(instance.name);
     }
 
+    this.sortByLibraryOrder();
     this.schedulePersist();
+    return this.listPatterns();
+  }
+
+  // Composite enabled sets in the order they appear in the library rather than the order
+  // they were enabled. Patterns belonging to no stored set keep their order, on top.
+  private sortByLibraryOrder(): void {
+    const rank = new Map<string, number>();
+    this.library.forEach((entry, index) => {
+      for (const params of entry.patterns) {
+        if (!rank.has(params.name)) rank.set(params.name, index);
+      }
+    });
+
+    const unranked = this.library.length;
+    const rankOf = (name: string) => rank.get(name) ?? unranked;
+
+    this.patterns = this.patterns
+      .map((pattern, index) => ({ pattern, index }))
+      .sort(
+        (a, b) => rankOf(a.pattern.name) - rankOf(b.pattern.name) || a.index - b.index
+      )
+      .map((e) => e.pattern);
+  }
+
+  // Drop the patterns belonging to a stored set, leaving any other active pattern running.
+  removeStoredFromActive(name: string): PatternParameters[] {
+    const entry = this.library.find((e) => e.name === name);
+    if (!entry) throw new HttpError(404, `No stored pattern set named: ${name}`);
+
+    const names = new Set(entry.patterns.map((p) => p.name));
+    const remaining = this.patterns.filter((p) => !names.has(p.name));
+    if (remaining.length !== this.patterns.length) {
+      this.patterns = remaining;
+      this.schedulePersist();
+    }
+
     return this.listPatterns();
   }
 

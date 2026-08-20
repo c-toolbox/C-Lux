@@ -142,6 +142,10 @@ function applyStored(req: express.Request, res: express.Response) {
   res.json(engine.addStored(String(req.params.name)));
 }
 
+function unapplyStored(req: express.Request, res: express.Response) {
+  res.json(engine.removeStoredFromActive(String(req.params.name)));
+}
+
 function replaceWithStored(req: express.Request, res: express.Response) {
   res.json(engine.replaceWithStored(String(req.params.name)));
 }
@@ -185,6 +189,7 @@ async function main() {
   routes.get('/library', getLibrary);
   routes.post('/library', storeCurrent);
   routes.post('/library/:name/apply', applyStored);
+  routes.post('/library/:name/unapply', unapplyStored);
   routes.post('/library/:name/replace', replaceWithStored);
   routes.patch('/library/:name', renameStored);
   routes.delete('/library/:name', removeStored);

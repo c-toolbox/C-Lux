@@ -1,28 +1,48 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Container, Group, Loader, Stack, Text, Title } from '@mantine/core';
+import {
+  Button,
+  Checkbox,
+  Container,
+  Group,
+  Loader,
+  Stack,
+  Text,
+  Title
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
-import { api, type StoredPatternSet } from '../lib/api';
+import { api, type PatternParameters, type StoredPatternSet } from '../lib/api';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
 export function HomePage() {
   const [stored, setStored] = useState<StoredPatternSet[]>([]);
+  const [active, setActive] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [paused, setPaused] = useState(false);
   const [blackout, setBlackout] = useState(false);
   const [halfLight, setHalfLight] = useState(false);
 
+  const activeNames = new Set(active);
+
+  // A set counts as enabled once every pattern it holds is running.
+  const isEnabled = (set: StoredPatternSet) =>
+    set.patterns.length > 0 && set.patterns.every((p) => activeNames.has(p.name));
+
   async function refresh() {
     try {
-      const [sets, { paused }, { blackout }, { halfLight }] = await Promise.all([
-        api.storedPatterns(),
-        api.serverPaused(),
-        api.blackout(),
-        api.halfLight()
-      ]);
+      const [sets, patterns, { paused }, { blackout }, { halfLight }] = await Promise.all(
+        [
+          api.storedPatterns(),
+          api.listPatterns(),
+          api.serverPaused(),
+          api.blackout(),
+          api.halfLight()
+        ]
+      );
       setStored(sets);
+      setActive(patterns.map((p) => p.name));
       setPaused(paused);
       setBlackout(blackout);
       setHalfLight(halfLight);
@@ -78,7 +98,7 @@ export function HomePage() {
   async function select(set: StoredPatternSet) {
     setBusy(true);
     try {
-      await api.replaceWithStoredPatterns(set.name);
+      setActive(names(await api.replaceWithStoredPatterns(set.name)));
       notifications.show({
         color: 'green',
         title: 'Pattern selected',
@@ -91,12 +111,30 @@ export function HomePage() {
     }
   }
 
+  // Add or remove a single stored set without touching the others.
+  async function toggle(set: StoredPatternSet, enabled: boolean) {
+    setBusy(true);
+    try {
+      setActive(
+        names(
+          enabled
+            ? await api.addStoredPatterns(set.name)
+            : await api.removeStoredPatterns(set.name)
+        )
+      );
+    } catch (e) {
+      showError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <Container size={'sm'} w={'100%'} py={'xl'}>
       <Title
         order={1}
-        ta={'center'}
-        style={{ position: 'fixed', top: 16, left: 0, right: 0, zIndex: 100 }}
+        ta={'left'}
+        style={{ position: 'fixed', top: 16, left: 16, right: 0, zIndex: 100 }}
       >
         C-Lux
       </Title>
@@ -159,7 +197,12 @@ export function HomePage() {
                   borderRadius: 8
                 }}
               >
-                <Text fw={600}>{set.name}</Text>
+                <Checkbox
+                  checked={isEnabled(set)}
+                  disabled={busy || set.patterns.length === 0}
+                  onChange={(e) => void toggle(set, e.currentTarget.checked)}
+                  label={<Text fw={600}>{set.name}</Text>}
+                />
 
                 <Group gap={'xs'}>
                   <Button disabled={busy} onClick={() => void select(set)}>
@@ -179,6 +222,10 @@ export function HomePage() {
 
 function describeError(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
+}
+
+function names(patterns: PatternParameters[]): string[] {
+  return patterns.map((p) => p.name);
 }
 
 function showError(e: unknown): void {

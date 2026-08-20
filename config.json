@@ -18,8 +18,8 @@
       "refreshRate": 40
     },
     "artnet": {
-      "enabled": true,
-      "host": "172.19.28.231",
+      "enabled": false,
+      "host": "0.0.0.0",
       "port": 6454,
       "net": 0,
       "subnet": 0,

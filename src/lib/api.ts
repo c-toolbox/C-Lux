@@ -76,6 +76,9 @@ export const api = {
     request<StoredPatternSet[]>('/library', 'POST', { name }),
   addStoredPatterns: (name: string) =>
     request<PatternParameters[]>(`/library/${seg(name)}/apply`, 'POST'),
+  // Remove just this set's patterns, leaving any other active pattern running.
+  removeStoredPatterns: (name: string) =>
+    request<PatternParameters[]>(`/library/${seg(name)}/unapply`, 'POST'),
   // Swap the active patterns for a stored set in a single, all-or-nothing request.
   replaceWithStoredPatterns: (name: string) =>
     request<PatternParameters[]>(`/library/${seg(name)}/replace`, 'POST'),
