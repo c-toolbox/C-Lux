@@ -172,7 +172,12 @@ export function PatternSubForm({
         value={values.name}
         error={nameError}
         disabled={mode === 'edit'}
-        onChange={(e) => setValues((v) => ({ ...v, name: e.currentTarget.value }))}
+        onChange={(e) => {
+          // Read the value now: React nulls out `currentTarget` before the lazy
+          // updater below runs.
+          const name = e.currentTarget.value;
+          setValues((v) => ({ ...v, name }));
+        }}
       />
 
       {rows(schemaFor(values.type)).map((row) => {
