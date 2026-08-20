@@ -33,6 +33,7 @@ const configSchema = z.object({
       universe: z.int().nonnegative(),
       startChannel: z.int().min(1),
       endChannel: z.int().nonnegative(),
+      universeSize: z.int().min(2).max(512),
       refreshRate: z.number().positive()
     })
   })

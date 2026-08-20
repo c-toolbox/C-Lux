@@ -122,6 +122,7 @@ visualizer:
       "universe": 0,
       "startChannel": 1,
       "endChannel": 0,
+      "universeSize": 512,
       "refreshRate": 40
     }
   }
@@ -147,9 +148,9 @@ second.
 - **`output.artnet`** — Art-Net over the network. Point `host` at a node's IP or a broadcast
   address, and set the `net`/`subnet`/`universe` addressing. Only channels between
   `startChannel` and `endChannel` (both 1-based and inclusive) are transmitted; set
-  `endChannel` to `0` to send the whole frame. Frames longer than 512 channels
-  are split across consecutive universes automatically. The node's DMX output port must be
-  set to the same universe, or it ignores the frames.
+  `endChannel` to `0` to send the whole frame. Frames longer than `universeSize` channels
+  (512 by default, the maximum) are split across consecutive universes automatically. The
+  node's DMX output port must be set to the same universe, or it ignores the frames.
 
 > Enabling `output.dmx` loads the native `serialport` binding. If your package manager blocked
 > its install scripts, allow them (e.g. `npm install-scripts approve @serialport/bindings-cpp`)

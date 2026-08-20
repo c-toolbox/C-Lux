@@ -27,6 +27,7 @@
       "universe": 0,
       "startChannel": 1,
       "endChannel": 0,
+      "universeSize": 512,
       "refreshRate": 40
     }
   }

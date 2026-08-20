@@ -10,13 +10,14 @@ export interface ArtNetConfig {
   startChannel: number;
   // Last channel to transmit (1-based, inclusive). Use 0 to send everything.
   endChannel: number;
+  // Channels per universe before rolling over to the next port address.
+  universeSize: number;
   refreshRate: number;
 }
 
 const ART_NET_ID = 'Art-Net\0';
 const OP_DMX = 0x5000;
 const PROTOCOL_VERSION = 14;
-const UNIVERSE_SIZE = 512;
 
 // Streams DMX channel data over the network using the Art-Net protocol (ArtDmx packets).
 // Channel data longer than one universe (512 slots) is automatically split across
@@ -55,9 +56,10 @@ export class ArtNetSender {
       ((this.config.subnet & 0x0f) << 4) |
       (this.config.universe & 0x0f);
 
-    for (let i = 0; i < frame.length; i += UNIVERSE_SIZE) {
-      const slice = frame.slice(i, i + UNIVERSE_SIZE);
-      const portAddress = basePort + i / UNIVERSE_SIZE;
+    const universeSize = this.config.universeSize;
+    for (let i = 0; i < frame.length; i += universeSize) {
+      const slice = frame.slice(i, i + universeSize);
+      const portAddress = basePort + i / universeSize;
       this.sendUniverse(portAddress, slice);
     }
   }

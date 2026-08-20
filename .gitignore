@@ -25,3 +25,4 @@ dist-server
 *.sw?
 scenes.json
 patterns.json
+config.json
