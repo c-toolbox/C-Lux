@@ -27,6 +27,8 @@ advances animations on a fixed tick, and serves the composited frame.
 
 ## Getting started
 
+Requires Node.js 22 or newer.
+
 ```powershell
 npm install
 npm run all
@@ -46,8 +48,8 @@ The Vite dev server proxies the pattern endpoints to the API, so the UI works ou
 | `npm run all`     | Run the web and API processes concurrently         |
 | `npm run dev`     | Start only the Vite dev server                     |
 | `npm run server`  | Start only the Express API (watch mode)            |
-| `npm run build`   | Type-check and build the frontend                  |
-| `npm start`       | Run the API in production (serves the built SPA)   |
+| `npm run build`   | Type-check and build the frontend and server       |
+| `npm start`       | Run the compiled API (serves the built SPA)        |
 | `npm run preview` | Preview the production build                       |
 | `npm run lint`    | Check formatting and lint                          |
 
@@ -97,14 +99,14 @@ visualizer:
 {
   "nLights": 142,
   "server": {
-    "tick-rate": 30,
+    "tickRate": 30,
     "port": 8787,
     "storage": "patterns.json",
     "scenes": "scenes.json",
-    "pause-transition": 1.0,
-    "blackout-transition": 1.0,
-    "half-light-transition": 1.0,
-    "half-light-feather": 0.5
+    "pauseTransition": 1.0,
+    "blackoutTransition": 1.0,
+    "halfLightTransition": 1.0,
+    "halfLightFeather": 0.5
   },
   "output": {
     "rotation": 180,
@@ -152,10 +154,6 @@ second.
   are split across consecutive universes automatically. The node's DMX output port must be
   set to the same universe, or it ignores the frames.
 
-  `npm run artnet` prints the channel levels of the ArtDmx traffic on the network, i.e. the
-  current state of the lights (`--watch` to keep printing, `--poll` to make nodes identify
-  themselves and report their universes, `--help` for the options).
-
 > Enabling `output.dmx` loads the native `serialport` binding. If your package manager blocked
 > its install scripts, allow them (e.g. `npm install-scripts approve @serialport/bindings-cpp`)
 > before enabling DMX output.
@@ -163,11 +161,11 @@ second.
 
 ## Adding a pattern
 
-1. Create a class under `server/patterns/` that extends `Pattern`, with a static `Type`
+1. Create a class under `shared/patterns/` that extends `Pattern`, with a static `Type`
    tag, a static `Fields` schema describing its configurable parameters, and a
    `parameters()` method describing its shape.
 2. Register it in the `PATTERNS` array in
-   [`server/patterns/patterns.ts`](server/patterns/patterns.ts).
+   [`shared/patterns/patterns.ts`](shared/patterns/patterns.ts).
 
 The available pattern types and their parameter shapes are derived from that list, so the
 UI and shared types pick up the new pattern automatically. `Fields` is the single source

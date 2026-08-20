@@ -1,4 +1,4 @@
-import config from '../../config.json' with { type: 'json' };
+import { config } from '../config';
 
 import { ArtNetSender } from './artnet';
 import { DmxSender } from './dmx';

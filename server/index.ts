@@ -3,20 +3,43 @@ import express from 'express';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { z } from 'zod';
 
-import config from '../config.json' with { type: 'json' };
+import { audioFrame } from '../shared/audio';
 
-import type { PatternProps } from './patterns/patterns';
-import { audioFrame, publishAudioFrame } from './audio';
+import { publishAudioFrame } from './audio';
+import { config } from './config';
 import { PatternEngine } from './engine';
 import { HttpError } from './errors';
 import { startOutputs } from './output';
-import { validateBoolean } from './validation';
+import { parseBody } from './validation';
 
 const engine = new PatternEngine();
 
 // How often to send an SSE keep-alive comment so idle proxies don't close the stream.
 const SSE_HEARTBEAT_MS = 15000;
+
+// Request-body shapes. `parseBody` turns a mismatch into a 400 before a handler runs,
+// so the casts scattered over the handlers below can't hide a malformed body.
+const addPatternBody = z.object({
+  type: z.string('Missing pattern type'),
+  props: z.record(z.string(), z.unknown()).optional()
+});
+const updatePatternBody = z.object({
+  props: z.record(z.string(), z.unknown()).optional()
+});
+const orderBody = z.object({ order: z.array(z.string()) });
+const pausedBody = z.object({ paused: z.boolean('must be true or false') });
+const blackoutBody = z.object({
+  blackout: z.boolean('must be true or false')
+});
+const halfLightBody = z.object({
+  halfLight: z.boolean('must be true or false')
+});
+const sceneNameBody = z.object({ name: z.string('must be a string') });
+const renameSceneBody = z.object({
+  newName: z.string('must be a string')
+});
 
 //
 // Route handlers — thin adapters over the engine. Handlers throw `HttpError` on failure;
@@ -28,15 +51,12 @@ function listPatterns(_req: express.Request, res: express.Response) {
 }
 
 function addPattern(req: express.Request, res: express.Response) {
-  const { type, props } = (req.body ?? {}) as { type?: unknown; props?: unknown };
-  if (typeof type !== 'string') throw new HttpError(400, 'Missing pattern type');
-  res
-    .status(201)
-    .json(engine.addPattern(type, (props ?? {}) as PatternProps & { name?: string }));
+  const { type, props } = parseBody(addPatternBody, req.body);
+  res.status(201).json(engine.addPattern(type, props ?? {}));
 }
 
 function updatePattern(req: express.Request, res: express.Response) {
-  const { props } = (req.body ?? {}) as { props?: unknown };
+  const { props } = parseBody(updatePatternBody, req.body);
   res.json(engine.updatePattern(String(req.params.name), props ?? {}));
 }
 
@@ -45,7 +65,7 @@ function removePattern(req: express.Request, res: express.Response) {
 }
 
 function reorderPatterns(req: express.Request, res: express.Response) {
-  const { order } = (req.body ?? {}) as { order?: unknown };
+  const { order } = parseBody(orderBody, req.body);
   res.json(engine.reorderPatterns(order));
 }
 
@@ -54,8 +74,8 @@ function getPause(_req: express.Request, res: express.Response) {
 }
 
 function setPause(req: express.Request, res: express.Response) {
-  const { paused } = (req.body ?? {}) as { paused?: unknown };
-  res.json({ paused: engine.setPaused(validateBoolean(paused, 'paused')) });
+  const { paused } = parseBody(pausedBody, req.body);
+  res.json({ paused: engine.setPaused(paused) });
 }
 
 function getBlackout(_req: express.Request, res: express.Response) {
@@ -63,8 +83,8 @@ function getBlackout(_req: express.Request, res: express.Response) {
 }
 
 function setBlackout(req: express.Request, res: express.Response) {
-  const { blackout } = (req.body ?? {}) as { blackout?: unknown };
-  res.json({ blackout: engine.setBlackout(validateBoolean(blackout, 'blackout')) });
+  const { blackout } = parseBody(blackoutBody, req.body);
+  res.json({ blackout: engine.setBlackout(blackout) });
 }
 
 function getHalfLight(_req: express.Request, res: express.Response) {
@@ -72,8 +92,8 @@ function getHalfLight(_req: express.Request, res: express.Response) {
 }
 
 function setHalfLight(req: express.Request, res: express.Response) {
-  const { halfLight } = (req.body ?? {}) as { halfLight?: unknown };
-  res.json({ halfLight: engine.setHalfLight(validateBoolean(halfLight, 'halfLight')) });
+  const { halfLight } = parseBody(halfLightBody, req.body);
+  res.json({ halfLight: engine.setHalfLight(halfLight) });
 }
 
 function getFrame(_req: express.Request, res: express.Response) {
@@ -134,12 +154,12 @@ function listScenes(_req: express.Request, res: express.Response) {
 }
 
 async function saveScene(req: express.Request, res: express.Response) {
-  const { name } = (req.body ?? {}) as { name?: unknown };
+  const { name } = parseBody(sceneNameBody, req.body);
   res.json(await engine.saveScene(name));
 }
 
 async function reorderScenes(req: express.Request, res: express.Response) {
-  const { order } = (req.body ?? {}) as { order?: unknown };
+  const { order } = parseBody(orderBody, req.body);
   res.json(await engine.reorderScenes(order));
 }
 
@@ -156,7 +176,7 @@ function replaceWithScene(req: express.Request, res: express.Response) {
 }
 
 async function renameScene(req: express.Request, res: express.Response) {
-  const { newName } = (req.body ?? {}) as { newName?: unknown };
+  const { newName } = parseBody(renameSceneBody, req.body);
   res.json(await engine.renameScene(String(req.params.name), newName));
 }
 
@@ -235,19 +255,37 @@ async function main() {
 
   // Advance every pattern at a fixed rate so animations progress over time.
   let last = Date.now();
-  setInterval(() => {
+  const tickTimer = setInterval(() => {
     const now = Date.now();
     const dt = (now - last) / 1000;
     last = now;
     engine.tick(dt);
-  }, 1000 / config.server['tick-rate']);
+  }, 1000 / config.server.tickRate);
 
   // Share the blended frame over DMX-512 and/or Art-Net when enabled in config.json.
-  await startOutputs(() => engine.blend());
+  const outputs = await startOutputs(() => engine.blend());
 
-  app.listen(config.server.port, () => {
+  const httpServer = app.listen(config.server.port, () => {
     console.log(`C-Lux listening on http://localhost:${config.server.port}`);
   });
+
+  // On shutdown, flush the debounced pattern save so an edit made just before Ctrl+C
+  // isn't lost, and stop the timers/outputs so the process can exit cleanly.
+  const shutdown = (signal: NodeJS.Signals) => {
+    console.log(`${signal} received, shutting down`);
+    clearInterval(tickTimer);
+    for (const output of outputs) output.stop();
+    httpServer.close();
+    engine
+      .flushPersist()
+      .then(() => process.exit(0))
+      .catch((err: unknown) => {
+        console.error('Failed to save patterns during shutdown:', err);
+        process.exit(1);
+      });
+  };
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
 }
 
 //

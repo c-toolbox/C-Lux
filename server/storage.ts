@@ -2,14 +2,14 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import config from '../config.json' with { type: 'json' };
-
-import { Pattern } from './patterns/pattern';
+import { Pattern } from '../shared/patterns/pattern';
 import {
   patternFromParameters,
   type PatternParameters,
   type Scene
-} from './patterns/patterns';
+} from '../shared/patterns/patterns';
+
+import { config } from './config';
 
 // Resolve the storage file relative to the project root, regardless of cwd.
 const storagePath = resolve(

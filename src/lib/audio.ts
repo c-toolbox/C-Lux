@@ -1,4 +1,4 @@
-import { AUDIO_BANDS } from '../../server/audio';
+import { AUDIO_BANDS } from '../../shared/audio';
 
 // Where the audio the browser captures is sent so the server-side pattern can read it.
 const ENDPOINT = '/api/audio';

@@ -1,6 +1,21 @@
-import type { NumberRange } from './patterns/pattern';
-import { patternByType } from './patterns/patterns';
+import { z } from 'zod';
+
+import type { NumberRange } from '../shared/patterns/pattern';
+import { patternByType } from '../shared/patterns/patterns';
+
 import { HttpError } from './errors';
+
+// Parse a request body against a zod schema, mapping the first failure to a 400 with a
+// readable message. Treats a missing body as an empty object.
+export function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
+  const result = schema.safeParse(body ?? {});
+  if (!result.success) {
+    const [issue] = result.error.issues;
+    const path = issue.path.length > 0 ? `${issue.path.join('.')}: ` : '';
+    throw new HttpError(400, `${path}${issue.message}`);
+  }
+  return result.data;
+}
 
 // Keeps saved names reasonable and out of any control-character weirdness; pattern and
 // scene names are persisted to disk and used as map keys.
@@ -24,15 +39,6 @@ export function validateName(value: unknown, label: string): string {
     );
   }
   return trimmed;
-}
-
-// Require an actual boolean, so a malformed value like the string "false" is rejected
-// instead of being coerced into the opposite of what the client meant.
-export function validateBoolean(value: unknown, label: string): boolean {
-  if (typeof value !== 'boolean') {
-    throw new HttpError(400, `${label} must be true or false`);
-  }
-  return value;
 }
 
 // Fields with a well-defined 0-255 range (RGB channels), validated more strictly than

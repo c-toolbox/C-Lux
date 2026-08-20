@@ -8,7 +8,7 @@ import tseslint from 'typescript-eslint';
 import js from '@eslint/js';
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'dist-server'] },
   {
     extends: [
       js.configs.recommended,
@@ -18,8 +18,7 @@ export default tseslint.config(
     files: ['**/*.{ts,tsx}'],
     ignores: ['**/*.d.ts'],
     languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
+      ecmaVersion: 'latest',
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname
@@ -75,6 +74,14 @@ export default tseslint.config(
       'no-template-curly-in-string': 'error', // Catches "${}" template strings
       'default-case': ['error', { commentPattern: '^skip\\sdefault' }], // require default switch case
       'default-case-last': 'error' // enforce default switch case last
+    }
+  },
+  {
+    // Browser code; shared/ deliberately gets no environment globals so it stays
+    // runnable on both sides.
+    files: ['src/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: globals.browser
     }
   },
   {

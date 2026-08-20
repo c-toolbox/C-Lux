@@ -1,13 +1,13 @@
-import config from '../config.json' with { type: 'json' };
-
-import { Pattern } from './patterns/pattern';
+import { Pattern } from '../shared/patterns/pattern';
 import {
   patternByType,
   patternFromParameters,
   type PatternParameters,
   type PatternProps,
   type Scene
-} from './patterns/patterns';
+} from '../shared/patterns/patterns';
+
+import { config } from './config';
 import { HttpError } from './errors';
 import { loadPatterns, loadScenes, savePatterns, saveScenes } from './storage';
 import {
@@ -143,8 +143,10 @@ export class PatternEngine {
     return this.patterns.map((p) => p.parameters() as PatternParameters);
   }
 
-  addPattern(type: string, props: PatternProps & { name?: string }): { name: string } {
-    const name = validateName(props?.name, 'pattern name');
+  // Props arrive as an untyped record from the HTTP boundary; `validateName` and
+  // `validateNewPatternProps` narrow them before the pattern is constructed.
+  addPattern(type: string, props: Record<string, unknown>): { name: string } {
+    const name = validateName(props.name, 'pattern name');
 
     if (this.patterns.find((p) => p.name === name)) {
       throw new HttpError(400, `A pattern named ${name} already exists`);
@@ -169,7 +171,7 @@ export class PatternEngine {
     return { name };
   }
 
-  updatePattern(name: string, props: Partial<PatternProps>): PatternParameters {
+  updatePattern(name: string, props: Record<string, unknown>): PatternParameters {
     const instance = this.patterns.find((p) => p.name === name);
     if (!instance) throw new HttpError(404, `No pattern named: ${name}`);
 
@@ -454,7 +456,7 @@ export class PatternEngine {
       this.pauseFactor,
       this.serverPaused ? 0 : 1,
       dt,
-      config.server['pause-transition']
+      config.server.pauseTransition
     );
 
     const scaledDt = dt * this.pauseFactor;
@@ -464,14 +466,14 @@ export class PatternEngine {
       this.brightnessFactor,
       this.blackout ? 0 : 1,
       dt,
-      config.server['blackout-transition']
+      config.server.blackoutTransition
     );
 
     this.halfLightFactor = approach(
       this.halfLightFactor,
       this.halfLight ? 1 : 0,
       dt,
-      config.server['half-light-transition']
+      config.server.halfLightTransition
     );
 
     if (this.frameListeners.size > 0) {
@@ -496,7 +498,7 @@ export class PatternEngine {
 // over a band around the horizontal midline so the dark and lit halves interpolate.
 function buildHalfLightMask(): number[] {
   const { nLights } = config;
-  const feather = Math.max(1e-6, config.server['half-light-feather']);
+  const feather = Math.max(1e-6, config.server.halfLightFeather);
   const mask = new Array<number>(nLights);
   for (let i = 0; i < nLights; i++) {
     const vertical = Math.cos((2 * Math.PI * i) / nLights);

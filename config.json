@@ -1,14 +1,14 @@
 {
   "nLights": 142,
   "server": {
-    "tick-rate": 30,
+    "tickRate": 30,
     "port": 8787,
     "storage": "patterns.json",
     "scenes": "scenes.json",
-    "pause-transition": 1.0,
-    "blackout-transition": 1.0,
-    "half-light-transition": 1.0,
-    "half-light-feather": 0.5
+    "pauseTransition": 1.0,
+    "blackoutTransition": 1.0,
+    "halfLightTransition": 1.0,
+    "halfLightFeather": 0.5
   },
   "output": {
     "rotation": 180,

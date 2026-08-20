@@ -1,4 +1,4 @@
-export { AUDIO_TYPE } from '../../server/patterns/audio';
+export { AUDIO_TYPE } from '../../shared/patterns/audio';
 export type {
   Color,
   FieldSpec,
@@ -10,16 +10,16 @@ export type {
   Scene,
   SparkleProps,
   StaticProps
-} from '../../server/patterns/patterns';
-export { PATTERN_TYPES } from '../../server/patterns/patterns';
-export { patternByType, patternDisplayName } from '../../server/patterns/patterns';
+} from '../../shared/patterns/patterns';
+export { PATTERN_TYPES } from '../../shared/patterns/patterns';
+export { patternByType, patternDisplayName } from '../../shared/patterns/patterns';
 
 import type {
   PatternParameters,
   PatternProps,
   PatternType,
   Scene
-} from '../../server/patterns/patterns';
+} from '../../shared/patterns/patterns';
 
 async function request<T>(
   url: string,
