@@ -118,6 +118,7 @@ visualizer:
       "subnet": 0,
       "universe": 0,
       "startChannel": 1,
+      "endChannel": 0,
       "refreshRate": 40
     }
   }
@@ -135,7 +136,9 @@ second.
   Pro). Set `device` to the serial port (`COM3` on Windows, `/dev/ttyUSB0` on Linux). One
   universe (512 channels) is sent.
 - **`output.artnet`** — Art-Net over the network. Point `host` at a node's IP or a broadcast
-  address, and set the `net`/`subnet`/`universe` addressing. Frames longer than 512 channels
+  address, and set the `net`/`subnet`/`universe` addressing. Only channels between
+  `startChannel` and `endChannel` (both 1-based and inclusive) are transmitted; set
+  `endChannel` to `0` to send the whole frame. Frames longer than 512 channels
   are split across consecutive universes automatically. The node's DMX output port must be
   set to the same universe, or it ignores the frames.
 

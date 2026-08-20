@@ -18,13 +18,14 @@
       "refreshRate": 40
     },
     "artnet": {
-      "enabled": false,
-      "host": "255.255.255.255",
+      "enabled": true,
+      "host": "172.19.28.231",
       "port": 6454,
       "net": 0,
       "subnet": 0,
       "universe": 0,
       "startChannel": 1,
+      "endChannel": 0,
       "refreshRate": 40
     }
   }

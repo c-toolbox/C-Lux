@@ -8,6 +8,8 @@ export interface ArtNetConfig {
   subnet: number;
   universe: number;
   startChannel: number;
+  // Last channel to transmit (1-based, inclusive). Use 0 to send everything.
+  endChannel: number;
   refreshRate: number;
 }
 
@@ -35,12 +37,18 @@ export class ArtNetSender {
     });
   }
 
-  // Send a flat array of 8-bit channel values, offset by the configured start channel.
+  // Send a flat array of 8-bit channel values, limited to the configured channel window.
   send(channels: number[]): void {
     if (!this.ready) return;
 
     const offset = Math.max(0, this.config.startChannel - 1);
-    const frame = new Array<number>(offset).fill(0).concat(channels);
+    let frame = new Array<number>(offset).fill(0).concat(channels);
+
+    const endChannel = this.config.endChannel;
+    if (endChannel > 0) {
+      if (endChannel <= offset) return;
+      frame = frame.slice(0, endChannel);
+    }
 
     const basePort =
       ((this.config.net & 0x7f) << 8) |
