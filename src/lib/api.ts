@@ -1,3 +1,4 @@
+export { AUDIO_TYPE } from '../../server/patterns/audio';
 export type {
   Color,
   FieldSpec,

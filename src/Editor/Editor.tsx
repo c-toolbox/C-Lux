@@ -11,11 +11,17 @@ import {
   Title
 } from '@mantine/core';
 
-import { api, type PatternParameters, type StoredPatternSet } from '../lib/api';
+import {
+  api,
+  AUDIO_TYPE,
+  type PatternParameters,
+  type StoredPatternSet
+} from '../lib/api';
 import { type FormValues, toProps } from '../PatternForm/PatternForm';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
 import { AddPatternModal } from './AddPatternModal';
+import { AudioCapture } from './AudioCapture';
 import { EditPatternModal } from './EditPatternModal';
 import { ManageStoredModal } from './ManageStoredModal';
 import { PatternList } from './PatternList';
@@ -210,6 +216,8 @@ function Editor() {
             onRemove={handleRemove}
           />
         )}
+
+        {patterns.some((p) => p.type === AUDIO_TYPE) && <AudioCapture />}
       </Stack>
 
       <PatternVisualizer />

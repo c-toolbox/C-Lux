@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import config from '../config.json' with { type: 'json' };
 
 import type { PatternProps } from './patterns/patterns';
+import { audioFrame, publishAudioFrame } from './audio';
 import { PatternEngine } from './engine';
 import { HttpError } from './errors';
 import { startOutputs } from './output';
@@ -77,6 +78,18 @@ function setHalfLight(req: express.Request, res: express.Response) {
 
 function getFrame(_req: express.Request, res: express.Response) {
   res.json(engine.blend());
+}
+
+// The latest analysis a capture client streamed, for patterns and diagnostics.
+function getAudio(_req: express.Request, res: express.Response) {
+  res.json(audioFrame());
+}
+
+// Ingest one analysis frame from a browser capturing the sound card. Answers 204 so a
+// client posting tens of times a second doesn't have to read a body it ignores.
+function postAudio(req: express.Request, res: express.Response) {
+  publishAudioFrame(req.body);
+  res.status(204).end();
 }
 
 // Durability of the pattern list on disk. Pattern mutations answer before the debounced
@@ -164,6 +177,8 @@ async function main() {
   routes.get('/half-light', getHalfLight);
   routes.put('/half-light', setHalfLight);
   routes.get('/frame', getFrame);
+  routes.get('/audio', getAudio);
+  routes.post('/audio', postAudio);
   routes.get('/stream', streamFrames);
   routes.get('/health', getHealth);
   routes.post('/persist', persistPatterns);

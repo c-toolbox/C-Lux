@@ -1,3 +1,4 @@
+import { AudioPattern, type AudioProps } from './audio.ts';
 import { AuroraPattern, type AuroraProps } from './aurora.ts';
 import { BouncePattern, type BounceProps } from './bounce.ts';
 import { ColorCyclePattern, type ColorCycleProps } from './color-cycle.ts';
@@ -40,7 +41,8 @@ export const PATTERNS = [
   FirePattern,
   TheaterChasePattern,
   AuroraPattern,
-  RipplePattern
+  RipplePattern,
+  AudioPattern
 ] as const satisfies readonly PatternStatics[];
 
 export type PatternType = (typeof PATTERNS)[number]['Type'];
@@ -70,6 +72,7 @@ export function patternDisplayName(type: string): string {
 }
 
 export type {
+  AudioProps,
   AuroraProps,
   BounceProps,
   Color,
@@ -102,7 +105,8 @@ export type PatternProps =
   | FireProps
   | TheaterChaseProps
   | AuroraProps
-  | RippleProps;
+  | RippleProps
+  | AudioProps;
 
 // Union of every pattern's `parameters()` shape, derived from the registry.
 export type PatternParameters = ReturnType<
