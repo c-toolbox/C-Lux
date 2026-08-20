@@ -82,6 +82,8 @@ export const api = {
   // Swap the active patterns for a stored set in a single, all-or-nothing request.
   replaceWithStoredPatterns: (name: string) =>
     request<PatternParameters[]>(`/library/${seg(name)}/replace`, 'POST'),
+  reorderStoredPatterns: (order: string[]) =>
+    request<StoredPatternSet[]>('/library/reorder', 'POST', { order }),
   renameStoredPattern: (name: string, newName: string) =>
     request<StoredPatternSet[]>(`/library/${seg(name)}`, 'PATCH', { newName }),
   removeStoredPattern: (name: string) =>

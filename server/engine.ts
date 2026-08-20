@@ -341,6 +341,30 @@ export class PatternEngine {
     return this.listPatterns();
   }
 
+  async reorderLibrary(order: unknown): Promise<StoredPatternSet[]> {
+    if (!Array.isArray(order) || order.length !== this.library.length) {
+      throw new HttpError(400, 'order must list every stored pattern set name once');
+    }
+
+    const byName = new Map(this.library.map((e) => [e.name, e]));
+    const reordered: StoredPatternSet[] = [];
+    for (const name of order) {
+      if (typeof name !== 'string') {
+        throw new HttpError(400, 'order must contain only stored pattern set names');
+      }
+      const entry = byName.get(name);
+      if (!entry) {
+        throw new HttpError(400, `Unknown or duplicate stored pattern set name: ${name}`);
+      }
+      byName.delete(name);
+      reordered.push(entry);
+    }
+
+    this.library = reordered;
+    await this.persistLibrary('reorder');
+    return this.library;
+  }
+
   async renameStored(name: string, newName: unknown): Promise<StoredPatternSet[]> {
     const trimmed = validateName(newName, 'new name for stored pattern set');
 

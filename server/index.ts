@@ -138,6 +138,11 @@ async function storeCurrent(req: express.Request, res: express.Response) {
   res.json(await engine.storeCurrent(name));
 }
 
+async function reorderLibrary(req: express.Request, res: express.Response) {
+  const { order } = (req.body ?? {}) as { order?: unknown };
+  res.json(await engine.reorderLibrary(order));
+}
+
 function applyStored(req: express.Request, res: express.Response) {
   res.json(engine.addStored(String(req.params.name)));
 }
@@ -188,6 +193,7 @@ async function main() {
   routes.post('/persist', persistPatterns);
   routes.get('/library', getLibrary);
   routes.post('/library', storeCurrent);
+  routes.post('/library/reorder', reorderLibrary);
   routes.post('/library/:name/apply', applyStored);
   routes.post('/library/:name/unapply', unapplyStored);
   routes.post('/library/:name/replace', replaceWithStored);

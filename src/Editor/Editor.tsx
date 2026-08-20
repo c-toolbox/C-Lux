@@ -125,6 +125,16 @@ function Editor() {
     });
   }
 
+  function moveStored(from: number, to: number) {
+    if (from === to || to < 0 || to >= stored.length) return;
+    const order = stored.map((s) => s.name);
+    const [moved] = order.splice(from, 1);
+    order.splice(to, 0, moved);
+    void run(async () => {
+      setStored(await api.reorderStoredPatterns(order));
+    });
+  }
+
   async function openManage() {
     setError(null);
     try {
@@ -250,6 +260,7 @@ function Editor() {
         onStore={handleStore}
         onAdd={handleAddStored}
         onRename={handleRenameStored}
+        onMove={moveStored}
         onRemove={handleRemoveStored}
       />
     </Container>
