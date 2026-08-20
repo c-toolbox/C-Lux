@@ -9,12 +9,12 @@ import { audioFrame } from '../shared/audio';
 
 import { publishAudioFrame } from './audio';
 import { config } from './config';
-import { PatternEngine } from './engine';
+import { Engine } from './engine';
 import { HttpError } from './errors';
 import { startOutputs } from './output';
 import { parseBody } from './validation';
 
-const engine = new PatternEngine();
+const engine = new Engine();
 
 // How often to send an SSE keep-alive comment so idle proxies don't close the stream.
 const SSE_HEARTBEAT_MS = 15000;

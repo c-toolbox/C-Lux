@@ -16,9 +16,6 @@ advances animations on a fixed tick, and serves the composited frame.
   backend drops.
 - **Server-driven animation** — a fixed-rate tick advances every pattern so moving patterns
   animate over time.
-- **Registry-based patterns** — patterns are defined once and registered in a single list;
-  the shared type list (`PatternType`, `PATTERN_TYPES`, `PatternParameters`) is derived
-  automatically, so adding a new pattern requires no central type edits.
 
 ## Tech stack
 
@@ -171,29 +168,3 @@ The available pattern types and their parameter shapes are derived from that lis
 UI and shared types pick up the new pattern automatically. `Fields` is the single source
 of truth for each parameter's label, default and allowed range: the server validates
 incoming props against it and the browser generates the edit form from it.
-
-## Project structure
-
-```
-config.json              Global configuration (light count, tick rate, outputs)
-server/
-  index.ts               Express app, REST routes, SSE stream, and the tick loop
-  engine.ts              PatternEngine: state, blending, ticking, and persistence
-  errors.ts              HttpError used by handlers and the error middleware
-  storage.ts             Persistence for the active pattern list and the saved scenes
-  output/                DMX-512 and Art-Net streaming outputs
-  patterns/
-    pattern.ts           Abstract Pattern base class
-    patterns.ts          Pattern registry and derived types
-    *.ts                 Concrete patterns (static, moving-gaussian, fire, comet, …)
-src/
-  main.tsx               App entry, Mantine theme, and router
-  Editor/                Pattern editor UI
-  HomePage/              Landing page with global controls
-  PatternForm/           Parameter form generated from a pattern's `Fields` schema
-  PatternVisualizer/     Circular canvas that renders the streamed blended frame
-  lib/api.ts             Typed client for the pattern API
-scripts/
-  artnet-monitor.ts      Prints Art-Net nodes and the DMX levels seen on the network
-```
-

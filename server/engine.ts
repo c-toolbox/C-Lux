@@ -32,7 +32,7 @@ export interface PersistenceStatus {
 
 // Owns all mutable server state (patterns, scenes, pause/blackout) and the logic that
 // ticks animations, blends layers, persists to disk, and broadcasts frames.
-export class PatternEngine {
+export class Engine {
   private patterns: Array<Pattern> = [];
   private scenes: Array<Scene> = [];
 
