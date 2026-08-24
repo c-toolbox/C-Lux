@@ -22,6 +22,8 @@ import type {
   Scene
 } from '../../shared/patterns/patterns';
 
+import { authHeaders, editorToken, signOut } from './auth';
+
 // Shape of the /api/solid-color responses: what is lit now, and where a running fade is
 // heading.
 export interface SolidColorStatus {
@@ -44,11 +46,18 @@ async function request<T>(
 ): Promise<T> {
   const res = await fetch(`/api${url}`, {
     method,
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    headers: {
+      ...authHeaders(),
+      ...(body === undefined ? {} : { 'Content-Type': 'application/json' })
+    },
     body: body === undefined ? undefined : JSON.stringify(body)
   });
 
   if (!res.ok) {
+    // A token the server no longer honours (expired, or lost to a restart) has to go, so
+    // the editor stops retrying with it and asks for the password again.
+    if (res.status === 401 && editorToken() !== null) signOut();
+
     let message = `HTTP ${res.status}`;
     try {
       const data = (await res.json()) as { error?: string };
@@ -59,6 +68,8 @@ async function request<T>(
     throw new Error(message);
   }
 
+  if (res.status === 204) return undefined as T;
+
   return (await res.json()) as T;
 }
 
@@ -66,6 +77,11 @@ async function request<T>(
 const seg = (name: string) => encodeURIComponent(name);
 
 export const api = {
+  // Whether the token this tab is holding still unlocks the editor-only endpoints.
+  authStatus: () => request<{ authenticated: boolean }>('/auth'),
+  login: (password: string) =>
+    request<{ token: string; expiresAt: number }>('/auth/login', 'POST', { password }),
+  logout: () => request<void>('/auth/logout', 'POST'),
   listPatterns: () => request<PatternParameters[]>('/patterns'),
   addPattern: (type: PatternType, props: PatternProps) =>
     request<{ name: string }>('/patterns', 'POST', { type, props }),
@@ -97,6 +113,9 @@ export const api = {
   persistPatterns: () => request<{ ok: boolean; pending: boolean }>('/persist', 'POST'),
   listScenes: () => request<Scene[]>('/scenes'),
   saveScene: (name: string) => request<Scene[]>('/scenes', 'POST', { name }),
+  // Add a scene read from a JSON file; the server re-validates it and renames it if the
+  // name is already taken.
+  importScene: (scene: unknown) => request<Scene[]>('/scenes/import', 'POST', scene),
   applyScene: (name: string) =>
     request<PatternParameters[]>(`/scenes/${seg(name)}/apply`, 'POST'),
   // Remove just this scene's patterns, leaving any other active pattern running.

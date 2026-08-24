@@ -5,6 +5,7 @@ import { createTheme, MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 
 import Editor from './Editor/Editor.tsx';
+import { PasswordGate } from './Editor/PasswordGate.tsx';
 import { HomePage } from './HomePage/HomePage.tsx';
 import { ErrorBoundary } from './ErrorBoundary.tsx';
 
@@ -22,7 +23,14 @@ const theme = createTheme({
 
 const router = createBrowserRouter([
   { path: '/', element: <HomePage /> },
-  { path: '/editor', element: <Editor /> }
+  {
+    path: '/editor',
+    element: (
+      <PasswordGate>
+        <Editor />
+      </PasswordGate>
+    )
+  }
 ]);
 
 createRoot(document.getElementById('root')!).render(

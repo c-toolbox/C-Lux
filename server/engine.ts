@@ -342,6 +342,67 @@ export class Engine {
     return this.scenes;
   }
 
+  // Add a scene from an exported JSON file. The file is untrusted input, so every
+  // pattern is re-validated and rebuilt through its own class here rather than stored as
+  // given. A name clash gets a numeric suffix instead of overwriting the existing scene.
+  async importScene(raw: unknown): Promise<Scene[]> {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      throw new HttpError(400, 'A scene must be an object');
+    }
+
+    const { name: rawName, patterns } = raw as Record<string, unknown>;
+    const name = this.uniqueSceneName(validateName(rawName, 'scene name'));
+    if (!Array.isArray(patterns)) {
+      throw new HttpError(400, 'scene.patterns must be an array');
+    }
+
+    const seen = new Set<string>();
+    const imported: PatternParameters[] = [];
+    for (const entry of patterns) {
+      if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+        throw new HttpError(400, 'scene.patterns must contain only objects');
+      }
+
+      const params = entry as Record<string, unknown>;
+      const patternName = validateName(params.name, 'pattern name');
+      // The solid color layer lives outside the pattern list and can't be resurrected
+      // as an ordinary pattern.
+      if (patternName === SOLID_COLOR_NAME) continue;
+      if (seen.has(patternName)) {
+        throw new HttpError(400, `Duplicate pattern name in scene: ${patternName}`);
+      }
+
+      const { type } = params;
+      if (typeof type !== 'string') throw new HttpError(400, 'Missing pattern type');
+      const cls = patternByType(type);
+      if (!cls) throw new HttpError(400, `Unknown pattern type: ${type}`);
+      if (params.enabled !== undefined && typeof params.enabled !== 'boolean') {
+        throw new HttpError(400, 'props.enabled must be true or false');
+      }
+
+      const { enabled, ...rest } = params;
+      const props = validateNewPatternProps(type, Pattern.propsFromParameters(rest));
+      const instance = new cls({ ...props, name: patternName } as PatternProps);
+      instance.enabled = enabled !== false;
+
+      seen.add(patternName);
+      imported.push(instance.serialize() as PatternParameters);
+    }
+
+    this.scenes.push({ name, patterns: imported });
+    await this.persistScenes('import');
+    return this.scenes;
+  }
+
+  // Append " 2", " 3", … until the name is free, so an import never clobbers a scene.
+  private uniqueSceneName(name: string): string {
+    if (!this.scenes.some((s) => s.name === name)) return name;
+    for (let n = 2; ; n++) {
+      const candidate = `${name} ${n}`;
+      if (!this.scenes.some((s) => s.name === candidate)) return candidate;
+    }
+  }
+
   applyScene(name: string): PatternParameters[] {
     const scene = this.scenes.find((s) => s.name === name);
     if (!scene) throw new HttpError(404, `No scene named: ${name}`);

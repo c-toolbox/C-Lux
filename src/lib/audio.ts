@@ -1,5 +1,7 @@
 import { AUDIO_BANDS } from '../../shared/audio';
 
+import { authHeaders } from './auth';
+
 // Where the audio the browser captures is sent so the server-side pattern can read it.
 const ENDPOINT = '/api/audio';
 
@@ -95,7 +97,7 @@ export async function startAudioCapture({
     posting = true;
     void fetch(ENDPOINT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ bands, level })
     })
       .catch(() => undefined)

@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { audioFrame } from '../shared/audio';
 
 import { publishAudioFrame } from './audio';
+import { getAuth, login, logout, requireAuth } from './auth';
 import { config } from './config';
 import { Engine } from './engine';
 import { HttpError } from './errors';
@@ -183,6 +184,12 @@ async function saveScene(req: express.Request, res: express.Response) {
   res.json(await engine.saveScene(name));
 }
 
+// Add a scene from a JSON file the user picked in the browser. The whole body is the
+// exported scene; the engine validates it before anything is kept.
+async function importScene(req: express.Request, res: express.Response) {
+  res.status(201).json(await engine.importScene(req.body));
+}
+
 async function reorderScenes(req: express.Request, res: express.Response) {
   const { order } = parseBody(orderBody, req.body);
   res.json(await engine.reorderScenes(order));
@@ -218,14 +225,19 @@ async function main() {
   app.use(express.json());
 
   // All endpoints live under /api so a single proxy/CORS rule covers them.
+  // `requireAuth` marks the ones the edit page drives; everything the landing page needs
+  // stays open so the house controls work without the password.
   const routes = express.Router();
+  routes.get('/auth', getAuth);
+  routes.post('/auth/login', login);
+  routes.post('/auth/logout', logout);
   routes.get('/patterns', listPatterns);
-  routes.post('/patterns', addPattern);
-  routes.post('/patterns/reorder', reorderPatterns);
+  routes.post('/patterns', requireAuth, addPattern);
+  routes.post('/patterns/reorder', requireAuth, reorderPatterns);
   routes.post('/patterns/clear', clearPatterns);
-  routes.patch('/patterns/:name', updatePattern);
-  routes.put('/patterns/:name/enabled', setPatternEnabled);
-  routes.delete('/patterns/:name', removePattern);
+  routes.patch('/patterns/:name', requireAuth, updatePattern);
+  routes.put('/patterns/:name/enabled', requireAuth, setPatternEnabled);
+  routes.delete('/patterns/:name', requireAuth, removePattern);
   routes.get('/pause', getPause);
   routes.put('/pause', setPause);
   routes.get('/blackout', getBlackout);
@@ -236,18 +248,19 @@ async function main() {
   routes.put('/solid-color', setSolidColor);
   routes.get('/frame', getFrame);
   routes.get('/audio', getAudio);
-  routes.post('/audio', postAudio);
+  routes.post('/audio', requireAuth, postAudio);
   routes.get('/stream', streamFrames);
   routes.get('/health', getHealth);
-  routes.post('/persist', persistPatterns);
+  routes.post('/persist', requireAuth, persistPatterns);
   routes.get('/scenes', listScenes);
-  routes.post('/scenes', saveScene);
-  routes.post('/scenes/reorder', reorderScenes);
+  routes.post('/scenes', requireAuth, saveScene);
+  routes.post('/scenes/import', requireAuth, importScene);
+  routes.post('/scenes/reorder', requireAuth, reorderScenes);
   routes.post('/scenes/:name/apply', applyScene);
   routes.post('/scenes/:name/unapply', unapplyScene);
   routes.post('/scenes/:name/replace', replaceWithScene);
-  routes.patch('/scenes/:name', renameScene);
-  routes.delete('/scenes/:name', deleteScene);
+  routes.patch('/scenes/:name', requireAuth, renameScene);
+  routes.delete('/scenes/:name', requireAuth, deleteScene);
   app.use('/api', routes);
 
   // Unknown API routes get a JSON 404 instead of falling through to the SPA.

@@ -61,15 +61,19 @@ npm start
 ## API
 
 All endpoints are served by the Express backend under the `/api` prefix and proxied through
-Vite in development.
+Vite in development. Endpoints marked with a lock require the editor password (see
+[Configuration](#configuration)) and answer `401` without it.
 
 | Method | Path                          | Body                    | Description                             |
 | ------ | ----------------------------- | ----------------------- | --------------------------------------- |
+| GET    | `/api/auth`                   | —                       | Whether the caller's token is still valid |
+| POST   | `/api/auth/login`             | `{ password }`          | Exchange the editor password for a token |
+| POST   | `/api/auth/logout`            | —                       | Revoke the caller's token               |
 | GET    | `/api/patterns`               | —                       | List the active patterns' parameters    |
-| POST   | `/api/patterns`               | `{ type, props }`       | Add a pattern of the given type         |
-| PATCH  | `/api/patterns/:name`         | `{ props }`             | Update an existing pattern by name      |
-| DELETE | `/api/patterns/:name`         | —                       | Remove a pattern by name                |
-| POST   | `/api/patterns/reorder`       | `{ order: string[] }`   | Reorder patterns (controls blend order) |
+| POST   | `/api/patterns` 🔒            | `{ type, props }`       | Add a pattern of the given type         |
+| PATCH  | `/api/patterns/:name` 🔒      | `{ props }`             | Update an existing pattern by name      |
+| DELETE | `/api/patterns/:name` 🔒      | —                       | Remove a pattern by name                |
+| POST   | `/api/patterns/reorder` 🔒    | `{ order: string[] }`   | Reorder patterns (controls blend order) |
 | POST   | `/api/patterns/clear`         | —                       | Remove every pattern                    |
 | GET    | `/api/pause`                  | —                       | Whether the server is paused            |
 | PUT    | `/api/pause`                  | `{ paused }`            | Pause or resume all patterns            |
@@ -82,13 +86,13 @@ Vite in development.
 | GET    | `/api/frame`                  | —                       | The blended frame as a flat RGB array   |
 | GET    | `/api/stream`                 | —                       | Server-Sent Events stream of frames     |
 | GET    | `/api/scenes`                 | —                       | List the saved scenes                   |
-| POST   | `/api/scenes`                 | `{ name }`              | Save the active patterns as a scene     |
+| POST   | `/api/scenes` 🔒              | `{ name }`              | Save the active patterns as a scene     |
 | POST   | `/api/scenes/:name/apply`     | —                       | Add a scene's patterns to the list      |
 | POST   | `/api/scenes/:name/unapply`   | —                       | Remove a scene's patterns from the list |
 | POST   | `/api/scenes/:name/replace`   | —                       | Replace the active patterns with a scene|
-| POST   | `/api/scenes/reorder`         | `{ order: string[] }`   | Reorder scenes (controls blend order)   |
-| PATCH  | `/api/scenes/:name`           | `{ newName }`           | Rename a scene                          |
-| DELETE | `/api/scenes/:name`           | —                       | Delete a scene                          |
+| POST   | `/api/scenes/reorder` 🔒      | `{ order: string[] }`   | Reorder scenes (controls blend order)   |
+| PATCH  | `/api/scenes/:name` 🔒        | `{ newName }`           | Rename a scene                          |
+| DELETE | `/api/scenes/:name` 🔒        | —                       | Delete a scene                          |
 
 ## Configuration
 
@@ -103,6 +107,7 @@ visualizer:
     "port": 8787,
     "storage": "patterns.json",
     "scenes": "scenes.json",
+    "editPassword": "change-me",
     "pauseTransition": 1.0,
     "blackoutTransition": 1.0,
     "halfLightTransition": 1.0,
@@ -132,6 +137,18 @@ visualizer:
   }
 }
 ```
+
+### Editor password
+
+The edit page and every endpoint it drives are behind `server.editPassword`. Set it to
+something of your own, or leave it empty and pass the value in the `CLUX_EDIT_PASSWORD`
+environment variable instead — the environment wins when both are present. The server
+refuses to start with no password configured either way.
+
+The editor exchanges the password for a token that is good for twelve hours, kept in the
+tab's `sessionStorage`, and forgotten when the server restarts. Repeated bad guesses lock
+logins out for a few minutes. The password travels in the clear unless the app is behind
+HTTPS, so put a TLS-terminating proxy in front of it on an untrusted network.
 
 ### Sharing lighting data (DMX-512 & Art-Net)
 

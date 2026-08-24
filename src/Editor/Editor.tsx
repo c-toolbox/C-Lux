@@ -12,6 +12,7 @@ import {
 } from '@mantine/core';
 
 import { api, AUDIO_TYPE, type PatternParameters, type Scene } from '../lib/api';
+import { signOut } from '../lib/auth';
 import { type FormValues, toProps } from '../PatternForm/PatternForm';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
@@ -20,7 +21,7 @@ import { AudioCapture } from './AudioCapture';
 import { EditPatternModal } from './EditPatternModal';
 import { ManageScenesModal } from './ManageScenesModal';
 import { PatternList } from './PatternList';
-import { describeError, randomName } from './utils';
+import { describeError, downloadJson, randomName, readJsonFile } from './utils';
 
 function Editor() {
   const [patterns, setPatterns] = useState<PatternParameters[]>([]);
@@ -124,6 +125,22 @@ function Editor() {
     });
   }
 
+  function handleExportScene(scene: Scene) {
+    setError(null);
+    try {
+      downloadJson(scene.name, scene);
+    } catch (e) {
+      setError(describeError(e));
+    }
+  }
+
+  function handleImportScene(file: File) {
+    void run(async () => {
+      await api.importScene(await readJsonFile(file));
+      await refreshScenes();
+    });
+  }
+
   function moveScene(from: number, to: number) {
     if (from === to || to < 0 || to >= scenes.length) return;
     const order = scenes.map((s) => s.name);
@@ -155,6 +172,16 @@ function Editor() {
 
   const existingNames = patterns.map((p) => p.name);
 
+  // Give the session token back so the next visitor has to re-enter the password.
+  async function lock() {
+    try {
+      await api.logout();
+    } catch {
+      // The token is being discarded either way.
+    }
+    signOut();
+  }
+
   return (
     <Container size={'sm'} w={'100%'} py={'xl'}>
       <Title
@@ -164,14 +191,14 @@ function Editor() {
       >
         C-Lux
       </Title>
-      <Button
-        component={Link}
-        to={'/'}
-        variant={'default'}
-        style={{ position: 'fixed', top: 16, right: 16, zIndex: 100 }}
-      >
-        Home
-      </Button>
+      <Group gap={'xs'} style={{ position: 'fixed', top: 16, right: 16, zIndex: 100 }}>
+        <Button variant={'default'} onClick={() => void lock()}>
+          Lock
+        </Button>
+        <Button component={Link} to={'/'} variant={'default'}>
+          Home
+        </Button>
+      </Group>
       <Stack mt={'xl'}>
         <Group grow>
           <Button
@@ -262,6 +289,8 @@ function Editor() {
         onRename={handleRenameScene}
         onMove={moveScene}
         onDelete={handleDeleteScene}
+        onExport={handleExportScene}
+        onImport={handleImportScene}
       />
     </Container>
   );

@@ -1,5 +1,14 @@
-import { useState } from 'react';
-import { ActionIcon, Button, Group, Modal, Stack, Text, TextInput } from '@mantine/core';
+import { useRef, useState } from 'react';
+import {
+  ActionIcon,
+  Button,
+  FileButton,
+  Group,
+  Modal,
+  Stack,
+  Text,
+  TextInput
+} from '@mantine/core';
 
 import { type Scene } from '../lib/api';
 
@@ -16,6 +25,8 @@ interface ManageScenesModalProps {
   onRename: (name: string, newName: string) => void;
   onMove: (from: number, to: number) => void;
   onDelete: (name: string) => void;
+  onExport: (scene: Scene) => void;
+  onImport: (file: File) => void;
 }
 
 export function ManageScenesModal({
@@ -30,11 +41,14 @@ export function ManageScenesModal({
   onApply,
   onRename,
   onMove,
-  onDelete
+  onDelete,
+  onExport,
+  onImport
 }: ManageScenesModalProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
+  const resetFile = useRef<() => void>(null);
 
   function clearDrag() {
     setDragIndex(null);
@@ -73,6 +87,25 @@ export function ManageScenesModal({
             </Button>
           </Group>
 
+          <Group justify={'flex-end'}>
+            <FileButton
+              resetRef={resetFile}
+              accept={'application/json,.json'}
+              onChange={(file) => {
+                if (!file) return;
+                onImport(file);
+                // Clear the input so picking the same file again still fires onChange.
+                resetFile.current?.();
+              }}
+            >
+              {(props) => (
+                <Button {...props} size={'xs'} variant={'default'} disabled={busy}>
+                  Import scene…
+                </Button>
+              )}
+            </FileButton>
+          </Group>
+
           {scenes.length === 0 ? (
             <Text c={'dimmed'} ta={'center'} py={'md'}>
               No scenes yet. Use the field above to save the current pattern list.
@@ -100,6 +133,7 @@ export function ManageScenesModal({
                   onApply={onApply}
                   onRename={onRename}
                   onDelete={setConfirming}
+                  onExport={onExport}
                 />
               ))}
             </Stack>
@@ -145,10 +179,11 @@ interface SceneRowProps {
   onApply: (scene: Scene) => void;
   onRename: (name: string, newName: string) => void;
   onDelete: (name: string) => void;
+  onExport: (scene: Scene) => void;
 }
 
-// A single editable row in the manage-scenes modal: reorder, apply, rename, or delete a
-// scene.
+// A single editable row in the manage-scenes modal: reorder, apply, rename, export, or
+// delete a scene.
 function SceneRow({
   scene,
   index,
@@ -163,7 +198,8 @@ function SceneRow({
   onMove,
   onApply,
   onRename,
-  onDelete
+  onDelete,
+  onExport
 }: SceneRowProps) {
   const [name, setName] = useState(scene.name);
   const trimmed = name.trim();
@@ -242,6 +278,14 @@ function SceneRow({
           onClick={() => onRename(scene.name, trimmed)}
         >
           Rename
+        </Button>
+        <Button
+          size={'xs'}
+          variant={'light'}
+          color={'gray'}
+          onClick={() => onExport(scene)}
+        >
+          Export
         </Button>
         <Button
           size={'xs'}
