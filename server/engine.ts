@@ -21,18 +21,24 @@ import {
 // bursts of edits (drag-reorder, slider drags) into a single write.
 const SAVE_DEBOUNCE_MS = 250;
 
-// What the solid color layer shows before anyone sets one: black, which blends the same
-// as having no bottom layer at all.
-const SOLID_COLOR_DEFAULT: Color = { r: 0, g: 0, b: 0 };
+// The color the hardcoded layer starts on, until one is set and persisted.
+const SOLID_COLOR_DEFAULT: Color = StaticPattern.Fields.color.default;
 
 type FrameListener = (frame: number[]) => void;
 
-// The color the solid-color layer is showing right now plus, while it is interpolating,
-// where it is heading.
+// State of the hardcoded solid color layer: whether it is showing, the color on the
+// lights right now and, while it is interpolating, where it is heading.
 export interface SolidColorStatus {
+  enabled: boolean;
   color: Color;
   target: Color;
   fading: boolean;
+}
+
+// A change to that layer; omitted fields are left alone.
+export interface SolidColorUpdate {
+  color?: Color;
+  enabled?: boolean;
 }
 
 // Durability of the active pattern list on disk.
@@ -49,9 +55,13 @@ export class Engine {
   private patterns: Array<Pattern> = [];
   private scenes: Array<Scene> = [];
 
-  // The hardcoded bottom layer; kept in `patterns` too, and re-inserted by
-  // `ensureSolidColor()` whenever a scene operation drops it.
-  private solidColor: StaticPattern | undefined;
+  // The hardcoded bottom layer. It is kept out of `patterns` so it never shows up in
+  // the editor or in a saved scene, and is composited under them by `blend()`.
+  private solidColor = new StaticPattern({
+    name: SOLID_COLOR_NAME,
+    enabled: false,
+    ...SOLID_COLOR_DEFAULT
+  });
 
   // Global pause. `pauseFactor` scales the tick dt and eases between 1 (running) and 0
   // (paused) so animations ramp in and out instead of snapping.
@@ -95,30 +105,20 @@ export class Engine {
   private readonly blendAccum: number[] = new Array<number>(config.nLights * 3).fill(0);
   private readonly blendOut: number[] = new Array<number>(config.nLights * 3).fill(0);
 
-  // Restore any patterns and scenes saved from a previous run.
+  // Restore any patterns and scenes saved from a previous run. The solid color layer is
+  // stored with the patterns under its reserved name, so it is lifted back out here;
+  // scenes saved before it moved out of the list may still carry it, and must not
+  // resurrect it as an ordinary pattern.
   async load(): Promise<void> {
-    this.patterns = await loadPatterns();
-    this.scenes = await loadScenes();
-    this.ensureSolidColor();
-  }
+    const stored = await loadPatterns();
+    const saved = stored.find((p) => p.name === SOLID_COLOR_NAME);
+    if (saved instanceof StaticPattern) this.solidColor = saved;
+    this.patterns = stored.filter((p) => p.name !== SOLID_COLOR_NAME);
 
-  // Guarantee the solid color layer exists at the bottom of the stack, adopting a stored
-  // or scene-supplied instance so its color survives a restart or a scene swap.
-  private ensureSolidColor(): void {
-    const index = this.patterns.findIndex((p) => p.name === SOLID_COLOR_NAME);
-    if (index !== -1) {
-      const existing = this.patterns[index];
-      // A pattern of another type squatting on the reserved name would make the
-      // endpoints unusable, so it is dropped rather than adopted.
-      if (existing instanceof StaticPattern) this.solidColor = existing;
-      this.patterns.splice(index, 1);
-    }
-
-    this.solidColor ??= new StaticPattern({
-      name: SOLID_COLOR_NAME,
-      ...SOLID_COLOR_DEFAULT
-    });
-    this.patterns.unshift(this.solidColor);
+    this.scenes = (await loadScenes()).map((scene) => ({
+      ...scene,
+      patterns: scene.patterns.filter((p) => p.name !== SOLID_COLOR_NAME)
+    }));
   }
 
   // Schedule a debounced write, capturing the latest state at flush time and keeping at
@@ -133,7 +133,7 @@ export class Engine {
   // rejects; failures are kept in `persistError` for `persistenceStatus()` to report.
   private persistNow(): Promise<void> {
     clearTimeout(this.saveTimer);
-    const snapshot = this.patterns.slice();
+    const snapshot = [this.solidColor, ...this.patterns];
     const version = this.changeCount;
     this.saving = this.saving.then(async () => {
       try {
@@ -185,6 +185,10 @@ export class Engine {
   addPattern(type: string, props: Record<string, unknown>): { name: string } {
     const name = validateName(props.name, 'pattern name');
 
+    if (name === SOLID_COLOR_NAME) {
+      throw new HttpError(400, `${SOLID_COLOR_NAME} is a reserved pattern name`);
+    }
+
     if (this.patterns.find((p) => p.name === name)) {
       throw new HttpError(400, `A pattern named ${name} already exists`);
     }
@@ -200,10 +204,6 @@ export class Engine {
   }
 
   removePattern(name: string): { name: string } {
-    if (name === SOLID_COLOR_NAME) {
-      throw new HttpError(400, `${SOLID_COLOR_NAME} cannot be removed`);
-    }
-
     const index = this.patterns.findIndex((p) => p.name === name);
     if (index === -1) throw new HttpError(404, `No pattern named: ${name}`);
 
@@ -212,11 +212,9 @@ export class Engine {
     return { name };
   }
 
-  // Drop every pattern; the hardcoded solid color layer is re-inserted, so this leaves
-  // the ring showing just that.
+  // Drop every pattern, leaving only the hardcoded solid color layer under them.
   clearPatterns(): PatternParameters[] {
     this.patterns = [];
-    this.ensureSolidColor();
     this.schedulePersist();
     return this.listPatterns();
   }
@@ -262,7 +260,6 @@ export class Engine {
     }
 
     this.patterns = reordered;
-    this.ensureSolidColor();
     this.schedulePersist();
     return this.patterns.map((p) => p.name);
   }
@@ -271,22 +268,21 @@ export class Engine {
   // Solid color
   //
 
-  // The hardcoded layer always exists, but only after `load()` has run.
-  private requireSolidColor(): StaticPattern {
-    if (!this.solidColor) throw new HttpError(503, 'Engine is still starting up');
-    return this.solidColor;
-  }
-
   solidColorStatus(): SolidColorStatus {
-    const pattern = this.requireSolidColor();
-    const { color } = pattern.parameters();
-    return { color: pattern.color(), target: color, fading: pattern.fading() };
+    const { color } = this.solidColor.parameters();
+    return {
+      enabled: this.solidColor.enabled,
+      color: this.solidColor.color(),
+      target: color,
+      fading: this.solidColor.fading()
+    };
   }
 
-  // Ease the solid color layer from whatever it is showing to `color` over
-  // `solidColorTransition` seconds.
-  setSolidColor(color: Color): SolidColorStatus {
-    this.requireSolidColor().fadeTo(color, config.server.solidColorTransition);
+  // A new color eases in from whatever is currently lit over `solidColorTransition`
+  // seconds; `enabled` switches the whole layer on or off.
+  setSolidColor({ color, enabled }: SolidColorUpdate): SolidColorStatus {
+    if (color) this.solidColor.fadeTo(color, config.server.solidColorTransition);
+    if (enabled !== undefined) this.solidColor.enabled = enabled;
     this.schedulePersist();
     return this.solidColorStatus();
   }
@@ -365,7 +361,6 @@ export class Engine {
     }
 
     this.sortBySceneOrder();
-    this.ensureSolidColor();
     this.schedulePersist();
     return this.listPatterns();
   }
@@ -400,7 +395,6 @@ export class Engine {
     const remaining = this.patterns.filter((p) => !names.has(p.name));
     if (remaining.length !== this.patterns.length) {
       this.patterns = remaining;
-      this.ensureSolidColor();
       this.schedulePersist();
     }
 
@@ -427,7 +421,6 @@ export class Engine {
     }
 
     this.patterns = replacement;
-    this.ensureSolidColor();
     this.schedulePersist();
     return this.listPatterns();
   }
@@ -511,18 +504,10 @@ export class Engine {
     const accum = this.blendAccum;
     accum.fill(0);
 
+    if (this.solidColor.enabled) this.composite(this.solidColor, accum);
     for (const p of this.patterns) {
       if (!p.enabled) continue;
-      const layer = p.data();
-      for (let i = 0; i < nLights; i++) {
-        const src = i * 4;
-        const dst = i * 3;
-        const alpha = layer[src + 3];
-
-        accum[dst] = layer[src] * alpha + accum[dst] * (1 - alpha);
-        accum[dst + 1] = layer[src + 1] * alpha + accum[dst + 1] * (1 - alpha);
-        accum[dst + 2] = layer[src + 2] * alpha + accum[dst + 2] * (1 - alpha);
-      }
+      this.composite(p, accum);
     }
 
     const out = this.blendOut;
@@ -540,6 +525,20 @@ export class Engine {
     return out;
   }
 
+  // Source-over composite one pattern's layer onto the accumulator.
+  private composite(pattern: Pattern, accum: number[]): void {
+    const layer = pattern.data();
+    for (let i = 0; i < config.nLights; i++) {
+      const src = i * 4;
+      const dst = i * 3;
+      const alpha = layer[src + 3];
+
+      accum[dst] = layer[src] * alpha + accum[dst] * (1 - alpha);
+      accum[dst + 1] = layer[src + 1] * alpha + accum[dst + 1] * (1 - alpha);
+      accum[dst + 2] = layer[src + 2] * alpha + accum[dst + 2] * (1 - alpha);
+    }
+  }
+
   // Advance every pattern and ease the pause/brightness factors toward their targets.
   tick(dt: number): void {
     this.pauseFactor = approach(
@@ -551,6 +550,9 @@ export class Engine {
 
     const scaledDt = dt * this.pauseFactor;
     for (const p of this.patterns) if (p.enabled) p.tick(scaledDt);
+
+    // Color fades are transitions rather than animation, so they run even while paused.
+    this.solidColor.tick(dt);
 
     this.brightnessFactor = approach(
       this.brightnessFactor,

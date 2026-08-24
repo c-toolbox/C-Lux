@@ -7,8 +7,8 @@ import {
 
 export type StaticProps = PatternBaseProps & Color;
 
-// Name of the hardcoded static layer the server keeps at the bottom of the stack and
-// drives through the /api/solid-color endpoints.
+// Reserved name of the fixed solid color layer the server keeps outside the pattern
+// list and drives through the /api/solid-color endpoints.
 export const SOLID_COLOR_NAME = 'solid-color';
 
 export class StaticPattern extends Pattern {

@@ -43,7 +43,8 @@ const renameSceneBody = z.object({
 });
 const channel = z.int('must be a whole number').min(0).max(255);
 const solidColorBody = z.object({
-  color: z.object({ r: channel, g: channel, b: channel })
+  color: z.object({ r: channel, g: channel, b: channel }).optional(),
+  enabled: z.boolean('must be true or false').optional()
 });
 
 //
@@ -119,10 +120,9 @@ function getSolidColor(_req: express.Request, res: express.Response) {
   res.json(engine.solidColorStatus());
 }
 
-// Fade the solid-color layer from its current color to the requested one.
+// Fade the solid-color layer to a new color and/or switch the layer on or off.
 function setSolidColor(req: express.Request, res: express.Response) {
-  const { color } = parseBody(solidColorBody, req.body);
-  res.json(engine.setSolidColor(color));
+  res.json(engine.setSolidColor(parseBody(solidColorBody, req.body)));
 }
 
 // The latest analysis a capture client streamed, for patterns and diagnostics.

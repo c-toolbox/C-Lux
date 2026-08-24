@@ -22,14 +22,19 @@ import type {
   Scene
 } from '../../shared/patterns/patterns';
 
-export { SOLID_COLOR_NAME } from '../../shared/patterns/static';
-
 // Shape of the /api/solid-color responses: what is lit now, and where a running fade is
 // heading.
 export interface SolidColorStatus {
+  enabled: boolean;
   color: Color;
   target: Color;
   fading: boolean;
+}
+
+// A change to that layer; omitted fields are left alone.
+export interface SolidColorUpdate {
+  color?: Color;
+  enabled?: boolean;
 }
 
 async function request<T>(
@@ -78,9 +83,9 @@ export const api = {
   setHalfLight: (halfLight: boolean) =>
     request<{ halfLight: boolean }>('/half-light', 'PUT', { halfLight }),
   solidColor: () => request<SolidColorStatus>('/solid-color'),
-  // Fades from the color currently lit to `color`; the response reports the fade start.
-  setSolidColor: (color: Color) =>
-    request<SolidColorStatus>('/solid-color', 'PUT', { color }),
+  // A new color eases in from the one currently lit; the response reports the fade start.
+  setSolidColor: (update: SolidColorUpdate) =>
+    request<SolidColorStatus>('/solid-color', 'PUT', update),
   removePattern: (name: string) =>
     request<{ name: string }>(`/patterns/${seg(name)}`, 'DELETE'),
   reorderPatterns: (order: string[]) =>

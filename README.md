@@ -70,15 +70,15 @@ Vite in development.
 | PATCH  | `/api/patterns/:name`         | `{ props }`             | Update an existing pattern by name      |
 | DELETE | `/api/patterns/:name`         | —                       | Remove a pattern by name                |
 | POST   | `/api/patterns/reorder`       | `{ order: string[] }`   | Reorder patterns (controls blend order) |
-| POST   | `/api/patterns/clear`         | —                       | Remove all but the `solid-color` layer   |
+| POST   | `/api/patterns/clear`         | —                       | Remove every pattern                    |
 | GET    | `/api/pause`                  | —                       | Whether the server is paused            |
 | PUT    | `/api/pause`                  | `{ paused }`            | Pause or resume all patterns            |
 | GET    | `/api/blackout`               | —                       | Whether the master blackout is engaged  |
 | PUT    | `/api/blackout`               | `{ blackout }`          | Fade output to black or restore it      |
 | GET    | `/api/half-light`             | —                       | Whether half-light mode is engaged      |
 | PUT    | `/api/half-light`             | `{ halfLight }`         | Fade the top half out or restore it     |
-| GET    | `/api/solid-color`            | —                       | Color of the `solid-color` layer        |
-| PUT    | `/api/solid-color`            | `{ color: { r, g, b } }`| Interpolate that layer to a new color   |
+| GET    | `/api/solid-color`            | —                       | State of the fixed solid color scene     |
+| PUT    | `/api/solid-color`            | `{ color?, enabled? }`  | Fade it to a color, or switch it on/off |
 | GET    | `/api/frame`                  | —                       | The blended frame as a flat RGB array   |
 | GET    | `/api/stream`                 | —                       | Server-Sent Events stream of frames     |
 | GET    | `/api/scenes`                 | —                       | List the saved scenes                   |

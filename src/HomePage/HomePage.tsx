@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Button,
   Checkbox,
-  ColorSwatch,
+  ColorInput,
   Container,
   Group,
   Loader,
@@ -13,16 +13,23 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
-import { api, type PatternParameters, type Scene, SOLID_COLOR_NAME } from '../lib/api';
-import { patternSwatchHex } from '../lib/color';
+import {
+  api,
+  type PatternParameters,
+  type Scene,
+  type SolidColorStatus,
+  type SolidColorUpdate
+} from '../lib/api';
+import { hexToRgb, rgbToHex } from '../lib/color';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
 export function HomePage() {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [active, setActive] = useState<string[]>([]);
-  // The hardcoded solid color layer, listed alongside the scenes so it can be switched
-  // off without opening the editor.
-  const [solid, setSolid] = useState<PatternParameters | null>(null);
+  // The fixed solid color scene, which lives outside the pattern list and is listed
+  // alongside the saved scenes. `solidHex` follows the picker while it is being dragged.
+  const [solid, setSolid] = useState<SolidColorStatus | null>(null);
+  const [solidHex, setSolidHex] = useState('#000000');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -35,23 +42,25 @@ export function HomePage() {
   const isApplied = (scene: Scene) =>
     scene.patterns.length > 0 && scene.patterns.every((p) => activeNames.has(p.name));
 
-  function trackPatterns(patterns: PatternParameters[]) {
-    setActive(names(patterns));
-    setSolid(patterns.find((p) => p.name === SOLID_COLOR_NAME) ?? null);
+  function trackSolid(status: SolidColorStatus) {
+    setSolid(status);
+    setSolidHex(rgbToHex(status.target));
   }
 
   async function refresh() {
     try {
-      const [sceneList, patterns, { paused }, { blackout }, { halfLight }] =
+      const [sceneList, patterns, solidColor, { paused }, { blackout }, { halfLight }] =
         await Promise.all([
           api.listScenes(),
           api.listPatterns(),
+          api.solidColor(),
           api.serverPaused(),
           api.blackout(),
           api.halfLight()
         ]);
       setScenes(sceneList);
-      trackPatterns(patterns);
+      setActive(names(patterns));
+      trackSolid(solidColor);
       setPaused(paused);
       setBlackout(blackout);
       setHalfLight(halfLight);
@@ -107,7 +116,7 @@ export function HomePage() {
   async function select(scene: Scene) {
     setBusy(true);
     try {
-      trackPatterns(await api.replaceWithScene(scene.name));
+      setActive(names(await api.replaceWithScene(scene.name)));
       notifications.show({
         color: 'green',
         title: 'Scene selected',
@@ -124,8 +133,10 @@ export function HomePage() {
   async function toggle(scene: Scene, applied: boolean) {
     setBusy(true);
     try {
-      trackPatterns(
-        applied ? await api.applyScene(scene.name) : await api.unapplyScene(scene.name)
+      setActive(
+        names(
+          applied ? await api.applyScene(scene.name) : await api.unapplyScene(scene.name)
+        )
       );
     } catch (e) {
       showError(e);
@@ -134,11 +145,11 @@ export function HomePage() {
     }
   }
 
-  // The solid color layer can't be removed, so switching it off means disabling it.
-  async function toggleSolid(enabled: boolean) {
+  // Switch the solid color scene on or off, or fade it to a new color.
+  async function updateSolid(update: SolidColorUpdate) {
     setBusy(true);
     try {
-      setSolid(await api.setPatternEnabled(SOLID_COLOR_NAME, enabled));
+      trackSolid(await api.setSolidColor(update));
     } catch (e) {
       showError(e);
     } finally {
@@ -146,13 +157,13 @@ export function HomePage() {
     }
   }
 
-  // The solid color equivalent of selecting a scene: drop everything else and make sure
-  // the layer itself is on.
+  // The solid color equivalent of selecting a scene: drop every pattern and switch the
+  // color on, so it is all that is left showing.
   async function selectSolid() {
     setBusy(true);
     try {
-      await api.clearPatterns();
-      trackPatterns([await api.setPatternEnabled(SOLID_COLOR_NAME, true)]);
+      setActive(names(await api.clearPatterns()));
+      trackSolid(await api.setSolidColor({ enabled: true }));
       notifications.show({
         color: 'green',
         title: 'Scene selected',
@@ -231,14 +242,19 @@ export function HomePage() {
                 <Checkbox
                   checked={solid.enabled}
                   disabled={busy}
-                  onChange={(e) => void toggleSolid(e.currentTarget.checked)}
+                  onChange={(e) => void updateSolid({ enabled: e.currentTarget.checked })}
                   label={<Text fw={600}>Solid color</Text>}
                 />
 
                 <Group gap={'xs'}>
-                  <ColorSwatch
-                    color={patternSwatchHex(solid)}
-                    opacity={solid.enabled ? 1 : 0.4}
+                  <ColorInput
+                    format={'hex'}
+                    value={solidHex}
+                    onChange={setSolidHex}
+                    onChangeEnd={(hex) => void updateSolid({ color: hexToRgb(hex) })}
+                    disabled={busy}
+                    w={130}
+                    aria-label={'Solid color'}
                   />
                   <Button disabled={busy} onClick={() => void selectSolid()}>
                     Select
