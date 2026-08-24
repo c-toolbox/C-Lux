@@ -138,17 +138,9 @@ function postAudio(req: express.Request, res: express.Response) {
   res.status(204).end();
 }
 
-// Durability of the pattern list on disk. Pattern mutations answer before the debounced
-// write runs, so this is how a client or monitor learns a save is failing.
+// Liveness probe for a monitor or reverse proxy.
 function getHealth(_req: express.Request, res: express.Response) {
-  const persistence = engine.persistenceStatus();
-  res.status(persistence.ok ? 200 : 503).json({ ok: persistence.ok, persistence });
-}
-
-// Force the pending write and answer 500 if it fails, so a caller can confirm its
-// changes actually reached the disk.
-async function persistPatterns(_req: express.Request, res: express.Response) {
-  res.json(await engine.flushPersist());
+  res.json({ ok: true });
 }
 
 // Stream the blended frame to the client on every tick via Server-Sent Events.
@@ -251,7 +243,6 @@ async function main() {
   routes.post('/audio', requireAuth, postAudio);
   routes.get('/stream', streamFrames);
   routes.get('/health', getHealth);
-  routes.post('/persist', requireAuth, persistPatterns);
   routes.get('/scenes', listScenes);
   routes.post('/scenes', requireAuth, saveScene);
   routes.post('/scenes/import', requireAuth, importScene);
@@ -311,20 +302,13 @@ async function main() {
     console.log(`C-Lux listening on http://localhost:${config.server.port}`);
   });
 
-  // On shutdown, flush the debounced pattern save so an edit made just before Ctrl+C
-  // isn't lost, and stop the timers/outputs so the process can exit cleanly.
+  // Stop the timers and outputs on shutdown so the process can exit cleanly.
   const shutdown = (signal: NodeJS.Signals) => {
     console.log(`${signal} received, shutting down`);
     clearInterval(tickTimer);
     for (const output of outputs) output.stop();
     httpServer.close();
-    engine
-      .flushPersist()
-      .then(() => process.exit(0))
-      .catch((err: unknown) => {
-        console.error('Failed to save patterns during shutdown:', err);
-        process.exit(1);
-      });
+    process.exit(0);
   };
   process.once('SIGINT', shutdown);
   process.once('SIGTERM', shutdown);

@@ -56,7 +56,6 @@ function Editor() {
     let failure: string | null = null;
     try {
       await action();
-      await api.persistPatterns();
     } catch (e) {
       failure = describeError(e);
     }

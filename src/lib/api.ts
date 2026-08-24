@@ -109,8 +109,6 @@ export const api = {
   // Leaves only the hardcoded solid-color layer running.
   clearPatterns: () => request<PatternParameters[]>('/patterns/clear', 'POST'),
   getFrame: () => request<number[]>('/frame'),
-  // Force the server's debounced save and surface a disk failure as a rejected promise.
-  persistPatterns: () => request<{ ok: boolean; pending: boolean }>('/persist', 'POST'),
   listScenes: () => request<Scene[]>('/scenes'),
   saveScene: (name: string) => request<Scene[]>('/scenes', 'POST', { name }),
   // Add a scene read from a JSON file; the server re-validates it and renames it if the

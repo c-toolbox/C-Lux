@@ -9,6 +9,8 @@ advances animations on a fixed tick, and serves the composited frame.
 ## Features
 
 - **Pattern management** — add, edit, remove, and reorder patterns from the UI.
+- **Scenes** — the active pattern stack is held in memory only, so save it as a scene (or
+  export it to a JSON file) to keep it across a restart.
 - **Live blend** — the server alpha-composites all patterns (first is the bottom layer, last
   on top) and exposes the result as a flat RGB array.
 - **Circular visualizer** — a canvas renders all lights counterclockwise around a ring and
@@ -105,7 +107,6 @@ visualizer:
   "server": {
     "tickRate": 30,
     "port": 8787,
-    "storage": "patterns.json",
     "scenes": "scenes.json",
     "editPassword": "change-me",
     "pauseTransition": 1.0,

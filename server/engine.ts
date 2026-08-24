@@ -10,18 +10,14 @@ import { SOLID_COLOR_NAME, StaticPattern } from '../shared/patterns/static';
 
 import { config } from './config';
 import { HttpError } from './errors';
-import { loadPatterns, loadScenes, savePatterns, saveScenes } from './storage';
+import { loadScenes, saveScenes } from './storage';
 import {
   validateName,
   validateNewPatternProps,
   validateUpdatedPatternProps
 } from './validation';
 
-// How long to wait after the last change before writing patterns to disk. Coalesces
-// bursts of edits (drag-reorder, slider drags) into a single write.
-const SAVE_DEBOUNCE_MS = 250;
-
-// The color the hardcoded layer starts on, until one is set and persisted.
+// The color the hardcoded layer starts on, until one is set.
 const SOLID_COLOR_DEFAULT: Color = StaticPattern.Fields.color.default;
 
 type FrameListener = (frame: number[]) => void;
@@ -41,16 +37,9 @@ export interface SolidColorUpdate {
   enabled?: boolean;
 }
 
-// Durability of the active pattern list on disk.
-export interface PersistenceStatus {
-  ok: boolean; // the last write attempt succeeded
-  pending: boolean; // changes not yet written to disk
-  error: string | null; // message from the last failed write
-  lastSavedAt: string | null;
-}
-
 // Owns all mutable server state (patterns, scenes, pause/blackout) and the logic that
-// ticks animations, blends layers, persists to disk, and broadcasts frames.
+// ticks animations, blends layers, and broadcasts frames. The active pattern list is
+// deliberately not persisted: it only outlives a restart once saved as a scene.
 export class Engine {
   private patterns: Array<Pattern> = [];
   private scenes: Array<Scene> = [];
@@ -81,18 +70,6 @@ export class Engine {
   private halfLightFactor = 0;
   private readonly halfLightMask: number[] = buildHalfLightMask();
 
-  // Debounced, serialized disk writer for the active pattern list.
-  private saveTimer: ReturnType<typeof setTimeout> | undefined;
-  private saving: Promise<void> = Promise.resolve();
-
-  // Durability bookkeeping: `changeCount` bumps on every mutation and `savedCount`
-  // catches up once a write lands, so unsaved changes and the last failure can be
-  // reported instead of only logged.
-  private changeCount = 0;
-  private savedCount = 0;
-  private persistError: string | null = null;
-  private lastPersistedAt: string | null = null;
-
   // Serialized disk writer for the scenes; scene edits are rare, so they're written
   // immediately instead of debounced.
   private savingScenes: Promise<void> = Promise.resolve();
@@ -105,71 +82,14 @@ export class Engine {
   private readonly blendAccum: number[] = new Array<number>(config.nLights * 3).fill(0);
   private readonly blendOut: number[] = new Array<number>(config.nLights * 3).fill(0);
 
-  // Restore any patterns and scenes saved from a previous run. The solid color layer is
-  // stored with the patterns under its reserved name, so it is lifted back out here;
-  // scenes saved before it moved out of the list may still carry it, and must not
-  // resurrect it as an ordinary pattern.
+  // Restore the scenes saved by a previous run. Scenes saved before the solid color
+  // layer moved out of the pattern list may still carry it, and must not resurrect it as
+  // an ordinary pattern.
   async load(): Promise<void> {
-    const stored = await loadPatterns();
-    const saved = stored.find((p) => p.name === SOLID_COLOR_NAME);
-    if (saved instanceof StaticPattern) this.solidColor = saved;
-    this.patterns = stored.filter((p) => p.name !== SOLID_COLOR_NAME);
-
     this.scenes = (await loadScenes()).map((scene) => ({
       ...scene,
       patterns: scene.patterns.filter((p) => p.name !== SOLID_COLOR_NAME)
     }));
-  }
-
-  // Schedule a debounced write, capturing the latest state at flush time and keeping at
-  // most one write in flight so concurrent writes can't interleave.
-  private schedulePersist(): void {
-    this.changeCount++;
-    clearTimeout(this.saveTimer);
-    this.saveTimer = setTimeout(() => void this.persistNow(), SAVE_DEBOUNCE_MS);
-  }
-
-  // Queue a write behind any write already in flight and record its outcome. Never
-  // rejects; failures are kept in `persistError` for `persistenceStatus()` to report.
-  private persistNow(): Promise<void> {
-    clearTimeout(this.saveTimer);
-    const snapshot = [this.solidColor, ...this.patterns];
-    const version = this.changeCount;
-    this.saving = this.saving.then(async () => {
-      try {
-        await savePatterns(snapshot);
-        this.savedCount = Math.max(this.savedCount, version);
-        this.persistError = null;
-        this.lastPersistedAt = new Date().toISOString();
-      } catch (err) {
-        this.persistError = err instanceof Error ? err.message : String(err);
-        console.error('Failed to save patterns:', err);
-      }
-    });
-    return this.saving;
-  }
-
-  persistenceStatus(): PersistenceStatus {
-    return {
-      ok: this.persistError === null,
-      pending: this.savedCount !== this.changeCount,
-      error: this.persistError,
-      lastSavedAt: this.lastPersistedAt
-    };
-  }
-
-  // Write any pending changes immediately and fail loudly if they didn't reach the disk,
-  // so a caller can confirm its mutation is durable rather than assume the debounced
-  // write succeeded.
-  async flushPersist(): Promise<PersistenceStatus> {
-    if (this.savedCount !== this.changeCount) await this.persistNow();
-    else await this.saving;
-
-    const status = this.persistenceStatus();
-    if (!status.ok) {
-      throw new HttpError(500, `Changes applied but not saved to disk: ${status.error}`);
-    }
-    return status;
   }
 
   //
@@ -199,7 +119,6 @@ export class Engine {
     const validProps = validateNewPatternProps(type, props);
     const instance = new cls({ ...validProps, name } as PatternProps);
     this.patterns.push(instance);
-    this.schedulePersist();
     return { name: instance.name };
   }
 
@@ -208,14 +127,12 @@ export class Engine {
     if (index === -1) throw new HttpError(404, `No pattern named: ${name}`);
 
     this.patterns.splice(index, 1);
-    this.schedulePersist();
     return { name };
   }
 
   // Drop every pattern, leaving only the hardcoded solid color layer under them.
   clearPatterns(): PatternParameters[] {
     this.patterns = [];
-    this.schedulePersist();
     return this.listPatterns();
   }
 
@@ -225,7 +142,6 @@ export class Engine {
 
     const { type } = instance.parameters() as PatternParameters;
     instance.set(validateUpdatedPatternProps(type, props));
-    this.schedulePersist();
     return instance.serialize() as PatternParameters;
   }
 
@@ -236,7 +152,6 @@ export class Engine {
     if (!instance) throw new HttpError(404, `No pattern named: ${name}`);
 
     instance.enabled = enabled;
-    this.schedulePersist();
     return instance.serialize() as PatternParameters;
   }
 
@@ -260,7 +175,6 @@ export class Engine {
     }
 
     this.patterns = reordered;
-    this.schedulePersist();
     return this.patterns.map((p) => p.name);
   }
 
@@ -283,7 +197,6 @@ export class Engine {
   setSolidColor({ color, enabled }: SolidColorUpdate): SolidColorStatus {
     if (color) this.solidColor.fadeTo(color, config.server.solidColorTransition);
     if (enabled !== undefined) this.solidColor.enabled = enabled;
-    this.schedulePersist();
     return this.solidColorStatus();
   }
 
@@ -422,7 +335,6 @@ export class Engine {
     }
 
     this.sortBySceneOrder();
-    this.schedulePersist();
     return this.listPatterns();
   }
 
@@ -453,11 +365,7 @@ export class Engine {
     if (!scene) throw new HttpError(404, `No scene named: ${name}`);
 
     const names = new Set(scene.patterns.map((p) => p.name));
-    const remaining = this.patterns.filter((p) => !names.has(p.name));
-    if (remaining.length !== this.patterns.length) {
-      this.patterns = remaining;
-      this.schedulePersist();
-    }
+    this.patterns = this.patterns.filter((p) => !names.has(p.name));
 
     return this.listPatterns();
   }
@@ -482,7 +390,6 @@ export class Engine {
     }
 
     this.patterns = replacement;
-    this.schedulePersist();
     return this.listPatterns();
   }
 

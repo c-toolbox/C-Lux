@@ -81,14 +81,14 @@ export class BouncePattern extends Pattern {
     const n = this.state.length;
     if (n === 0) return;
     let pos = this.position + this.speed * n * this.direction * dt;
-    const max = n - 1;
-    // Reflect off both ends so the bump ping-pongs instead of wrapping.
-    while (pos < 0 || pos > max) {
+    // Turn around after a full turn in each direction. Both ends are the same light on
+    // the ring, so the bump reverses at the seam rather than stopping short of it.
+    while (pos < 0 || pos > n) {
       if (pos < 0) {
         pos = -pos;
         this.direction = 1;
-      } else if (pos > max) {
-        pos = 2 * max - pos;
+      } else {
+        pos = 2 * n - pos;
         this.direction = -1;
       }
     }
@@ -98,19 +98,12 @@ export class BouncePattern extends Pattern {
 
   private render() {
     const n = this.state.length;
-    const max = n - 1;
     const sigmaLights = this.sigma * n;
     const twoSigmaSq = 2 * sigmaLights * sigmaLights;
-    // Reflect the bump's center about both ends so the gaussian tail folds
-    // back at the walls instead of being clipped at index 0 / n-1.
-    const centers = [this.position, -this.position, 2 * max - this.position];
     for (let i = 0; i < n; i++) {
-      let a = 0;
-      for (const c of centers) {
-        const d = i - c;
-        const g = twoSigmaSq > 0 ? Math.exp(-(d * d) / twoSigmaSq) : d === 0 ? 1 : 0;
-        if (g > a) a = g;
-      }
+      const diff = Math.abs(i - this.position);
+      const d = Math.min(diff, n - diff); // circular distance, so the tail wraps the seam
+      const a = twoSigmaSq > 0 ? Math.exp(-(d * d) / twoSigmaSq) : d === 0 ? 1 : 0;
       this.state[i] = { r: this.r, g: this.g, b: this.b, a };
     }
   }

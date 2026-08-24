@@ -37,7 +37,8 @@ export class AuroraPattern extends Pattern {
       kind: 'number',
       label: 'Curtains',
       default: 2,
-      step: 0.5,
+      // Rounded to whole turns of the ring so the field stays continuous across the seam.
+      step: 1,
       row: 0,
       ...POSITIVE
     },
@@ -120,8 +121,10 @@ export class AuroraPattern extends Pattern {
   }
 }
 
-// Three sines with incommensurable frequencies, so the bands never repeat exactly and
-// drift at different rates. Returns a value in [0, 1].
+// Three sines drifting at different rates, so the bands never repeat exactly. Their
+// wavenumbers are whole turns of the ring so the field is continuous across the seam at
+// x = 0, and their drift rates are incommensurable so the sum still evolves. Returns a
+// value in [0, 1].
 function field(
   x: number,
   t: number,
@@ -129,10 +132,13 @@ function field(
   speed: number,
   phase: number
 ): number {
+  const k1 = Math.max(1, Math.round(scale));
+  const k2 = Math.max(k1 + 1, Math.round(1.7 * scale));
+  const k3 = Math.max(k2 + 1, Math.round(2.9 * scale));
   const w =
-    0.5 * Math.sin(TAU * (scale * x + speed * t) + phase) +
-    0.3 * Math.sin(TAU * (1.7 * scale * x - 0.6 * speed * t) + phase + 1.3) +
-    0.2 * Math.sin(TAU * (2.9 * scale * x + 0.35 * speed * t) + phase + 2.7);
+    0.5 * Math.sin(TAU * (k1 * x + speed * t) + phase) +
+    0.3 * Math.sin(TAU * (k2 * x - 0.6 * speed * t) + phase + 1.3) +
+    0.2 * Math.sin(TAU * (k3 * x + 0.35 * speed * t) + phase + 2.7);
   return 0.5 + 0.5 * w;
 }
 

@@ -3,7 +3,6 @@
   "server": {
     "tickRate": 30,
     "port": 8787,
-    "storage": "patterns.json",
     "scenes": "scenes.json",
     "editPassword": "change-me",
     "pauseTransition": 1.0,

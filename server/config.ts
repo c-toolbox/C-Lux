@@ -9,7 +9,6 @@ const configSchema = z.object({
   server: z.object({
     tickRate: z.number().positive(),
     port: z.int().min(1).max(65535),
-    storage: z.string().min(1),
     scenes: z.string().min(1),
     // Guards the edit page and the endpoints it drives. May be left empty here and
     // supplied through the CLUX_EDIT_PASSWORD environment variable instead.

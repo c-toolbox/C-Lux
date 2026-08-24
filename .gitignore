@@ -24,5 +24,4 @@ dist-server
 *.sln
 *.sw?
 scenes.json
-patterns.json
 config.json
