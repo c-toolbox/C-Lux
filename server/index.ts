@@ -41,6 +41,10 @@ const sceneNameBody = z.object({ name: z.string('must be a string') });
 const renameSceneBody = z.object({
   newName: z.string('must be a string')
 });
+const channel = z.int('must be a whole number').min(0).max(255);
+const solidColorBody = z.object({
+  color: z.object({ r: channel, g: channel, b: channel })
+});
 
 //
 // Route handlers — thin adapters over the engine. Handlers throw `HttpError` on failure;
@@ -63,6 +67,10 @@ function updatePattern(req: express.Request, res: express.Response) {
 
 function removePattern(req: express.Request, res: express.Response) {
   res.json(engine.removePattern(String(req.params.name)));
+}
+
+function clearPatterns(_req: express.Request, res: express.Response) {
+  res.json(engine.clearPatterns());
 }
 
 function setPatternEnabled(req: express.Request, res: express.Response) {
@@ -104,6 +112,17 @@ function setHalfLight(req: express.Request, res: express.Response) {
 
 function getFrame(_req: express.Request, res: express.Response) {
   res.json(engine.blend());
+}
+
+// The color the hardcoded solid-color layer is showing, plus its fade target.
+function getSolidColor(_req: express.Request, res: express.Response) {
+  res.json(engine.solidColorStatus());
+}
+
+// Fade the solid-color layer from its current color to the requested one.
+function setSolidColor(req: express.Request, res: express.Response) {
+  const { color } = parseBody(solidColorBody, req.body);
+  res.json(engine.setSolidColor(color));
 }
 
 // The latest analysis a capture client streamed, for patterns and diagnostics.
@@ -203,6 +222,7 @@ async function main() {
   routes.get('/patterns', listPatterns);
   routes.post('/patterns', addPattern);
   routes.post('/patterns/reorder', reorderPatterns);
+  routes.post('/patterns/clear', clearPatterns);
   routes.patch('/patterns/:name', updatePattern);
   routes.put('/patterns/:name/enabled', setPatternEnabled);
   routes.delete('/patterns/:name', removePattern);
@@ -212,6 +232,8 @@ async function main() {
   routes.put('/blackout', setBlackout);
   routes.get('/half-light', getHalfLight);
   routes.put('/half-light', setHalfLight);
+  routes.get('/solid-color', getSolidColor);
+  routes.put('/solid-color', setSolidColor);
   routes.get('/frame', getFrame);
   routes.get('/audio', getAudio);
   routes.post('/audio', postAudio);

@@ -1,4 +1,4 @@
-import { Pattern } from '../shared/patterns/pattern';
+import { type Color, Pattern } from '../shared/patterns/pattern';
 import {
   patternByType,
   patternFromParameters,
@@ -6,6 +6,7 @@ import {
   type PatternProps,
   type Scene
 } from '../shared/patterns/patterns';
+import { SOLID_COLOR_NAME, StaticPattern } from '../shared/patterns/static';
 
 import { config } from './config';
 import { HttpError } from './errors';
@@ -20,7 +21,19 @@ import {
 // bursts of edits (drag-reorder, slider drags) into a single write.
 const SAVE_DEBOUNCE_MS = 250;
 
+// What the solid color layer shows before anyone sets one: black, which blends the same
+// as having no bottom layer at all.
+const SOLID_COLOR_DEFAULT: Color = { r: 0, g: 0, b: 0 };
+
 type FrameListener = (frame: number[]) => void;
+
+// The color the solid-color layer is showing right now plus, while it is interpolating,
+// where it is heading.
+export interface SolidColorStatus {
+  color: Color;
+  target: Color;
+  fading: boolean;
+}
 
 // Durability of the active pattern list on disk.
 export interface PersistenceStatus {
@@ -35,6 +48,10 @@ export interface PersistenceStatus {
 export class Engine {
   private patterns: Array<Pattern> = [];
   private scenes: Array<Scene> = [];
+
+  // The hardcoded bottom layer; kept in `patterns` too, and re-inserted by
+  // `ensureSolidColor()` whenever a scene operation drops it.
+  private solidColor: StaticPattern | undefined;
 
   // Global pause. `pauseFactor` scales the tick dt and eases between 1 (running) and 0
   // (paused) so animations ramp in and out instead of snapping.
@@ -82,6 +99,26 @@ export class Engine {
   async load(): Promise<void> {
     this.patterns = await loadPatterns();
     this.scenes = await loadScenes();
+    this.ensureSolidColor();
+  }
+
+  // Guarantee the solid color layer exists at the bottom of the stack, adopting a stored
+  // or scene-supplied instance so its color survives a restart or a scene swap.
+  private ensureSolidColor(): void {
+    const index = this.patterns.findIndex((p) => p.name === SOLID_COLOR_NAME);
+    if (index !== -1) {
+      const existing = this.patterns[index];
+      // A pattern of another type squatting on the reserved name would make the
+      // endpoints unusable, so it is dropped rather than adopted.
+      if (existing instanceof StaticPattern) this.solidColor = existing;
+      this.patterns.splice(index, 1);
+    }
+
+    this.solidColor ??= new StaticPattern({
+      name: SOLID_COLOR_NAME,
+      ...SOLID_COLOR_DEFAULT
+    });
+    this.patterns.unshift(this.solidColor);
   }
 
   // Schedule a debounced write, capturing the latest state at flush time and keeping at
@@ -163,12 +200,25 @@ export class Engine {
   }
 
   removePattern(name: string): { name: string } {
+    if (name === SOLID_COLOR_NAME) {
+      throw new HttpError(400, `${SOLID_COLOR_NAME} cannot be removed`);
+    }
+
     const index = this.patterns.findIndex((p) => p.name === name);
     if (index === -1) throw new HttpError(404, `No pattern named: ${name}`);
 
     this.patterns.splice(index, 1);
     this.schedulePersist();
     return { name };
+  }
+
+  // Drop every pattern; the hardcoded solid color layer is re-inserted, so this leaves
+  // the ring showing just that.
+  clearPatterns(): PatternParameters[] {
+    this.patterns = [];
+    this.ensureSolidColor();
+    this.schedulePersist();
+    return this.listPatterns();
   }
 
   updatePattern(name: string, props: Record<string, unknown>): PatternParameters {
@@ -212,8 +262,33 @@ export class Engine {
     }
 
     this.patterns = reordered;
+    this.ensureSolidColor();
     this.schedulePersist();
     return this.patterns.map((p) => p.name);
+  }
+
+  //
+  // Solid color
+  //
+
+  // The hardcoded layer always exists, but only after `load()` has run.
+  private requireSolidColor(): StaticPattern {
+    if (!this.solidColor) throw new HttpError(503, 'Engine is still starting up');
+    return this.solidColor;
+  }
+
+  solidColorStatus(): SolidColorStatus {
+    const pattern = this.requireSolidColor();
+    const { color } = pattern.parameters();
+    return { color: pattern.color(), target: color, fading: pattern.fading() };
+  }
+
+  // Ease the solid color layer from whatever it is showing to `color` over
+  // `solidColorTransition` seconds.
+  setSolidColor(color: Color): SolidColorStatus {
+    this.requireSolidColor().fadeTo(color, config.server.solidColorTransition);
+    this.schedulePersist();
+    return this.solidColorStatus();
   }
 
   //
@@ -290,6 +365,7 @@ export class Engine {
     }
 
     this.sortBySceneOrder();
+    this.ensureSolidColor();
     this.schedulePersist();
     return this.listPatterns();
   }
@@ -324,6 +400,7 @@ export class Engine {
     const remaining = this.patterns.filter((p) => !names.has(p.name));
     if (remaining.length !== this.patterns.length) {
       this.patterns = remaining;
+      this.ensureSolidColor();
       this.schedulePersist();
     }
 
@@ -350,6 +427,7 @@ export class Engine {
     }
 
     this.patterns = replacement;
+    this.ensureSolidColor();
     this.schedulePersist();
     return this.listPatterns();
   }

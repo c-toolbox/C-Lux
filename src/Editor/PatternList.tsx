@@ -10,7 +10,7 @@ import {
   Text
 } from '@mantine/core';
 
-import { patternDisplayName, type PatternParameters } from '../lib/api';
+import { patternDisplayName, type PatternParameters, SOLID_COLOR_NAME } from '../lib/api';
 import { patternSwatchHex } from '../lib/color';
 
 interface PatternListProps {
@@ -129,7 +129,7 @@ export function PatternList({
               size={'xs'}
               color={'red'}
               variant={'light'}
-              disabled={busy}
+              disabled={busy || p.name === SOLID_COLOR_NAME}
               onClick={() => onRemove(p.name)}
             >
               Remove

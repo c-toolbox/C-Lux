@@ -15,11 +15,22 @@ export { PATTERN_TYPES } from '../../shared/patterns/patterns';
 export { patternByType, patternDisplayName } from '../../shared/patterns/patterns';
 
 import type {
+  Color,
   PatternParameters,
   PatternProps,
   PatternType,
   Scene
 } from '../../shared/patterns/patterns';
+
+export { SOLID_COLOR_NAME } from '../../shared/patterns/static';
+
+// Shape of the /api/solid-color responses: what is lit now, and where a running fade is
+// heading.
+export interface SolidColorStatus {
+  color: Color;
+  target: Color;
+  fading: boolean;
+}
 
 async function request<T>(
   url: string,
@@ -66,10 +77,16 @@ export const api = {
   halfLight: () => request<{ halfLight: boolean }>('/half-light'),
   setHalfLight: (halfLight: boolean) =>
     request<{ halfLight: boolean }>('/half-light', 'PUT', { halfLight }),
+  solidColor: () => request<SolidColorStatus>('/solid-color'),
+  // Fades from the color currently lit to `color`; the response reports the fade start.
+  setSolidColor: (color: Color) =>
+    request<SolidColorStatus>('/solid-color', 'PUT', { color }),
   removePattern: (name: string) =>
     request<{ name: string }>(`/patterns/${seg(name)}`, 'DELETE'),
   reorderPatterns: (order: string[]) =>
     request<string[]>('/patterns/reorder', 'POST', { order }),
+  // Leaves only the hardcoded solid-color layer running.
+  clearPatterns: () => request<PatternParameters[]>('/patterns/clear', 'POST'),
   getFrame: () => request<number[]>('/frame'),
   // Force the server's debounced save and surface a disk failure as a rejected promise.
   persistPatterns: () => request<{ ok: boolean; pending: boolean }>('/persist', 'POST'),

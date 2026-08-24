@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Button,
   Checkbox,
+  ColorSwatch,
   Container,
   Group,
   Loader,
@@ -12,12 +13,16 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
-import { api, type PatternParameters, type Scene } from '../lib/api';
+import { api, type PatternParameters, type Scene, SOLID_COLOR_NAME } from '../lib/api';
+import { patternSwatchHex } from '../lib/color';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
 export function HomePage() {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [active, setActive] = useState<string[]>([]);
+  // The hardcoded solid color layer, listed alongside the scenes so it can be switched
+  // off without opening the editor.
+  const [solid, setSolid] = useState<PatternParameters | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -30,6 +35,11 @@ export function HomePage() {
   const isApplied = (scene: Scene) =>
     scene.patterns.length > 0 && scene.patterns.every((p) => activeNames.has(p.name));
 
+  function trackPatterns(patterns: PatternParameters[]) {
+    setActive(names(patterns));
+    setSolid(patterns.find((p) => p.name === SOLID_COLOR_NAME) ?? null);
+  }
+
   async function refresh() {
     try {
       const [sceneList, patterns, { paused }, { blackout }, { halfLight }] =
@@ -41,7 +51,7 @@ export function HomePage() {
           api.halfLight()
         ]);
       setScenes(sceneList);
-      setActive(patterns.map((p) => p.name));
+      trackPatterns(patterns);
       setPaused(paused);
       setBlackout(blackout);
       setHalfLight(halfLight);
@@ -97,7 +107,7 @@ export function HomePage() {
   async function select(scene: Scene) {
     setBusy(true);
     try {
-      setActive(names(await api.replaceWithScene(scene.name)));
+      trackPatterns(await api.replaceWithScene(scene.name));
       notifications.show({
         color: 'green',
         title: 'Scene selected',
@@ -114,11 +124,40 @@ export function HomePage() {
   async function toggle(scene: Scene, applied: boolean) {
     setBusy(true);
     try {
-      setActive(
-        names(
-          applied ? await api.applyScene(scene.name) : await api.unapplyScene(scene.name)
-        )
+      trackPatterns(
+        applied ? await api.applyScene(scene.name) : await api.unapplyScene(scene.name)
       );
+    } catch (e) {
+      showError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // The solid color layer can't be removed, so switching it off means disabling it.
+  async function toggleSolid(enabled: boolean) {
+    setBusy(true);
+    try {
+      setSolid(await api.setPatternEnabled(SOLID_COLOR_NAME, enabled));
+    } catch (e) {
+      showError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // The solid color equivalent of selecting a scene: drop everything else and make sure
+  // the layer itself is on.
+  async function selectSolid() {
+    setBusy(true);
+    try {
+      await api.clearPatterns();
+      trackPatterns([await api.setPatternEnabled(SOLID_COLOR_NAME, true)]);
+      notifications.show({
+        color: 'green',
+        title: 'Scene selected',
+        message: 'Now showing “Solid color”.'
+      });
     } catch (e) {
       showError(e);
     } finally {
@@ -178,15 +217,10 @@ export function HomePage() {
           <Group justify={'center'} py={'xl'}>
             <Loader />
           </Group>
-        ) : scenes.length === 0 ? (
-          <Text c={'dimmed'} ta={'center'} py={'xl'}>
-            No scenes yet. Create and save some in the editor.
-          </Text>
         ) : (
           <Stack gap={'sm'}>
-            {scenes.map((scene) => (
+            {solid && (
               <Group
-                key={scene.name}
                 justify={'space-between'}
                 p={'md'}
                 style={{
@@ -195,19 +229,54 @@ export function HomePage() {
                 }}
               >
                 <Checkbox
-                  checked={isApplied(scene)}
-                  disabled={busy || scene.patterns.length === 0}
-                  onChange={(e) => void toggle(scene, e.currentTarget.checked)}
-                  label={<Text fw={600}>{scene.name}</Text>}
+                  checked={solid.enabled}
+                  disabled={busy}
+                  onChange={(e) => void toggleSolid(e.currentTarget.checked)}
+                  label={<Text fw={600}>Solid color</Text>}
                 />
 
                 <Group gap={'xs'}>
-                  <Button disabled={busy} onClick={() => void select(scene)}>
+                  <ColorSwatch
+                    color={patternSwatchHex(solid)}
+                    opacity={solid.enabled ? 1 : 0.4}
+                  />
+                  <Button disabled={busy} onClick={() => void selectSolid()}>
                     Select
                   </Button>
                 </Group>
               </Group>
-            ))}
+            )}
+
+            {scenes.length === 0 ? (
+              <Text c={'dimmed'} ta={'center'} py={'xl'}>
+                No scenes yet. Create and save some in the editor.
+              </Text>
+            ) : (
+              scenes.map((scene) => (
+                <Group
+                  key={scene.name}
+                  justify={'space-between'}
+                  p={'md'}
+                  style={{
+                    border: '1px solid var(--mantine-color-default-border)',
+                    borderRadius: 8
+                  }}
+                >
+                  <Checkbox
+                    checked={isApplied(scene)}
+                    disabled={busy || scene.patterns.length === 0}
+                    onChange={(e) => void toggle(scene, e.currentTarget.checked)}
+                    label={<Text fw={600}>{scene.name}</Text>}
+                  />
+
+                  <Group gap={'xs'}>
+                    <Button disabled={busy} onClick={() => void select(scene)}>
+                      Select
+                    </Button>
+                  </Group>
+                </Group>
+              ))
+            )}
           </Stack>
         )}
 

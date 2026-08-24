@@ -56,7 +56,7 @@ export class ArtNetSender {
       ((this.config.subnet & 0x0f) << 4) |
       (this.config.universe & 0x0f);
 
-    const universeSize = this.config.universeSize;
+    const { universeSize } = this.config;
     for (let i = 0; i < frame.length; i += universeSize) {
       const slice = frame.slice(i, i + universeSize);
       const portAddress = basePort + i / universeSize;
