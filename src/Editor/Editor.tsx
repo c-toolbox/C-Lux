@@ -12,7 +12,7 @@ import {
 } from '@mantine/core';
 
 import { api, AUDIO_TYPE, type PatternParameters, type Scene } from '../lib/api';
-import { signOut } from '../lib/auth';
+import { authRequired, signOut } from '../lib/auth';
 import { type FormValues, toProps } from '../PatternForm/PatternForm';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
@@ -191,9 +191,11 @@ function Editor() {
         C-Lux
       </Title>
       <Group gap={'xs'} style={{ position: 'fixed', top: 16, right: 16, zIndex: 100 }}>
-        <Button variant={'default'} onClick={() => void lock()}>
-          Lock
-        </Button>
+        {authRequired() && (
+          <Button variant={'default'} onClick={() => void lock()}>
+            Lock
+          </Button>
+        )}
         <Button component={Link} to={'/'} variant={'default'}>
           Home
         </Button>

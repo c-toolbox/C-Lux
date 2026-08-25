@@ -34,6 +34,18 @@ export function authHeaders(): Record<string, string> {
   return token === null ? {} : { Authorization: `Bearer ${token}` };
 }
 
+// Whether the server has an editor password at all. Assumed until /api/auth says
+// otherwise, so nothing renders as unprotected before the answer arrives.
+let required = true;
+
+export function authRequired(): boolean {
+  return required;
+}
+
+export function setAuthRequired(value: boolean): void {
+  required = value;
+}
+
 // Drop the token and let the editor know it has to ask for the password again, either
 // because the user locked it or because the server rejected it.
 export function signOut(): void {

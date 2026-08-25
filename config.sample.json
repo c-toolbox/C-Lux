@@ -4,7 +4,7 @@
     "tickRate": 30,
     "port": 8787,
     "scenes": "scenes.json",
-    "editPassword": "change-me",
+    "editPassword": "",
     "pauseTransition": 1.0,
     "blackoutTransition": 1.0,
     "halfLightTransition": 1.0,
@@ -13,6 +13,7 @@
   },
   "output": {
     "rotation": 180,
+    "remap": {},
     "dmx": {
       "enabled": false,
       "device": "COM3",

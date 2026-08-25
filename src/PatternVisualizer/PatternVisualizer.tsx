@@ -27,9 +27,10 @@ function drawLights(canvas: HTMLCanvasElement, data: number[]) {
   const half = Math.PI / NUM_LIGHTS;
 
   for (let i = 0; i < NUM_LIGHTS; i++) {
-    const a = (2 * Math.PI * i) / NUM_LIGHTS + Math.PI / 2;
-    const start = -a - half;
-    const end = -a + half;
+    // Light 0 sits at the top and indices advance clockwise, matching the dome.
+    const a = (2 * Math.PI * i) / NUM_LIGHTS - Math.PI / 2;
+    const start = a - half;
+    const end = a + half;
     const r = data[i * 3];
     const g = data[i * 3 + 1];
     const b = data[i * 3 + 2];

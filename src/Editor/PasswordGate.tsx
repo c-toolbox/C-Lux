@@ -13,7 +13,7 @@ import {
 } from '@mantine/core';
 
 import { api } from '../lib/api';
-import { editorToken, onSignedOut, setEditorToken } from '../lib/auth';
+import { onSignedOut, setAuthRequired, setEditorToken } from '../lib/auth';
 
 import { describeError } from './utils';
 
@@ -22,7 +22,7 @@ import { describeError } from './utils';
 // server-side, so a user who skips this screen still can't change anything.
 export function PasswordGate({ children }: { children: ReactNode }) {
   const [unlocked, setUnlocked] = useState(false);
-  const [checking, setChecking] = useState(editorToken() !== null);
+  const [checking, setChecking] = useState(true);
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,12 +31,14 @@ export function PasswordGate({ children }: { children: ReactNode }) {
   // leave the editor showing controls that no longer work.
   useEffect(() => onSignedOut(() => setUnlocked(false)), []);
 
-  // A token kept from an earlier visit may have expired or been dropped by a restart.
+  // The server may have no password configured, in which case it lets everyone straight
+  // through; and a token kept from an earlier visit may have expired or been dropped by
+  // a restart.
   useEffect(() => {
-    if (editorToken() === null) return;
     void api
       .authStatus()
-      .then(({ authenticated }) => {
+      .then(({ authenticated, required }) => {
+        setAuthRequired(required);
         if (authenticated) setUnlocked(true);
         else setEditorToken(null);
       })

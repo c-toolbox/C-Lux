@@ -2,10 +2,17 @@ import {
   type Color,
   Pattern,
   type PatternBaseProps,
-  type PatternSchema
+  type PatternSchema,
+  UNIT
 } from './pattern.ts';
 
-export type StaticProps = PatternBaseProps & Color;
+export type StaticProps = PatternBaseProps &
+  Color & {
+    // Fractions of the ring bounding the lit arc. Older saved scenes predate them, so
+    // they are optional and fall back to the full ring.
+    start?: number;
+    end?: number;
+  };
 
 // Reserved name of the fixed solid color layer the server keeps outside the pattern
 // list and drives through the /api/solid-color endpoints.
@@ -15,7 +22,24 @@ export class StaticPattern extends Pattern {
   static readonly Type = 'StaticPattern';
   static readonly DisplayName = 'Static';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } }
+    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    start: {
+      kind: 'number',
+      label: 'Range start (fraction)',
+      default: 0,
+      step: 0.01,
+      row: 0,
+      hint: 'Only lights inside the range are lit; the range wraps when start > end.',
+      ...UNIT
+    },
+    end: {
+      kind: 'number',
+      label: 'Range end (fraction)',
+      default: 1,
+      step: 0.01,
+      row: 0,
+      ...UNIT
+    }
   } satisfies PatternSchema;
 
   // The configured color. While a `fadeTo` is running the lights show a blend of
@@ -23,6 +47,8 @@ export class StaticPattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  start: number = StaticPattern.Fields.start.default;
+  end: number = StaticPattern.Fields.end.default;
 
   private fadeFrom: Color = { r: 0, g: 0, b: 0 };
   private fadeDuration = 0;
@@ -37,6 +63,8 @@ export class StaticPattern extends Pattern {
     name: string;
     type: typeof StaticPattern.Type;
     color: Color;
+    start: number;
+    end: number;
   } {
     return {
       name: this.name,
@@ -45,14 +73,18 @@ export class StaticPattern extends Pattern {
         r: this.r,
         g: this.g,
         b: this.b
-      }
+      },
+      start: this.start,
+      end: this.end
     };
   }
 
-  set({ r, g, b }: Partial<StaticProps>) {
+  set({ r, g, b, start, end }: Partial<StaticProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.start = start ?? this.start;
+    this.end = end ?? this.end;
 
     this.fadeDuration = 0;
     this.fadeElapsed = 0;
@@ -108,11 +140,21 @@ export class StaticPattern extends Pattern {
   }
 
   private paint(r: number, g: number, b: number) {
-    for (const state of this.state) {
+    const n = this.state.length;
+    for (let i = 0; i < n; i++) {
+      const state = this.state[i];
       state.r = r;
       state.g = g;
       state.b = b;
-      state.a = 1;
+      state.a = this.inRange(i / n) ? 1 : 0;
     }
+  }
+
+  // `position` is a light's place on the ring as a fraction. An empty range (start ==
+  // end) covers everything, and a range whose end precedes its start wraps the seam.
+  private inRange(position: number): boolean {
+    if (this.start === this.end) return true;
+    if (this.start < this.end) return position >= this.start && position < this.end;
+    return position >= this.start || position < this.end;
   }
 }

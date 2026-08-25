@@ -77,8 +77,9 @@ async function request<T>(
 const seg = (name: string) => encodeURIComponent(name);
 
 export const api = {
-  // Whether the token this tab is holding still unlocks the editor-only endpoints.
-  authStatus: () => request<{ authenticated: boolean }>('/auth'),
+  // Whether the token this tab is holding still unlocks the editor-only endpoints, and
+  // whether a password is configured at all.
+  authStatus: () => request<{ authenticated: boolean; required: boolean }>('/auth'),
   login: (password: string) =>
     request<{ token: string; expiresAt: number }>('/auth/login', 'POST', { password }),
   logout: () => request<void>('/auth/logout', 'POST'),

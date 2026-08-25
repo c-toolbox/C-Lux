@@ -19,12 +19,17 @@ const loginBody = z.object({ password: z.string('must be a string') });
 
 // The environment wins so a deployment can keep the secret out of config.json entirely.
 const password = (process.env.CLUX_EDIT_PASSWORD ?? config.server.editPassword).trim();
-if (password === '') {
-  console.error(
-    'No editor password configured. Set server.editPassword in config.json or the ' +
-      'CLUX_EDIT_PASSWORD environment variable.'
+
+// Leaving the password empty deliberately opens everything up: the editor endpoints stop
+// asking for a token and the edit page skips its unlock screen. Only sensible on a
+// network where everyone who can reach the box is allowed to drive the lights.
+const authRequired = password !== '';
+if (!authRequired) {
+  console.warn(
+    'No editor password configured: the editor and the endpoints it drives are open to ' +
+      'anyone who can reach this server. Set server.editPassword in config.json or the ' +
+      'CLUX_EDIT_PASSWORD environment variable to protect them.'
   );
-  process.exit(1);
 }
 
 // token -> expiry timestamp.
@@ -45,6 +50,8 @@ function bearerToken(req: express.Request): string | null {
 }
 
 function isAuthenticated(req: express.Request): boolean {
+  if (!authRequired) return true;
+
   const token = bearerToken(req);
   if (!token) return false;
 
@@ -69,14 +76,17 @@ export function requireAuth(
 }
 
 // Lets the edit page find out whether a token it kept from an earlier visit still works
-// before it decides to render the editor or ask for the password again.
+// before it decides to render the editor or ask for the password again. `required` tells
+// it whether there is a password at all, so it can drop the lock button when there isn't.
 export function getAuth(req: express.Request, res: express.Response) {
-  res.json({ authenticated: isAuthenticated(req) });
+  res.json({ authenticated: isAuthenticated(req), required: authRequired });
 }
 
 export function login(req: express.Request, res: express.Response) {
   const { password: candidate } = parseBody(loginBody, req.body);
   const now = Date.now();
+
+  if (!authRequired) throw new HttpError(409, 'No editor password is configured');
 
   if (now < lockedUntil) {
     throw new HttpError(429, 'Too many failed attempts. Try again in a few minutes.');

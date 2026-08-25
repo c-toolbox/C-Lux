@@ -117,6 +117,7 @@ visualizer:
   },
   "output": {
     "rotation": 180,
+    "remap": {},
     "dmx": {
       "enabled": false,
       "device": "COM3",
@@ -143,8 +144,11 @@ visualizer:
 
 The edit page and every endpoint it drives are behind `server.editPassword`. Set it to
 something of your own, or leave it empty and pass the value in the `CLUX_EDIT_PASSWORD`
-environment variable instead — the environment wins when both are present. The server
-refuses to start with no password configured either way.
+environment variable instead — the environment wins when both are present.
+
+With no password configured either way the protection is switched off entirely: the edit
+page opens without an unlock screen and its endpoints accept anyone. Only do that on a
+network where everybody who can reach the server is allowed to drive the lights.
 
 The editor exchanges the password for a token that is good for twelve hours, kept in the
 tab's `sessionStorage`, and forgotten when the server restarts. Repeated bad guesses lock
@@ -163,6 +167,11 @@ second.
   the ring; this compensates for where light 0 physically sits. For example, if light 0 is at
   the back of a dome, `180` puts the pattern's 0 point at the front. Only the outputs are
   affected, the visualizer is not.
+
+- **`output.remap`** — optional per-light address fix-ups for fixtures that are wired out of
+  order. Each entry maps a light index to the index its colour is written to instead, so
+  `{ "5": 3, "3": 5 }` swaps that pair. Lights left out keep their 1:1 mapping, and the
+  default `{}` changes nothing. Applied after `output.rotation`, and only to the outputs.
 
 - **`output.dmx`** — physical DMX-512 through an Enttec-compatible USB widget (e.g. DMX USB
   Pro). Set `device` to the serial port (`COM3` on Windows, `/dev/ttyUSB0` on Linux). One

@@ -13,7 +13,7 @@ export interface Output {
 export async function startOutputs(getFrame: () => number[]): Promise<Output[]> {
   const outputs: Output[] = [];
   const { dmx, artnet } = config.output;
-  const getOutputFrame = withRotation(getFrame);
+  const getOutputFrame = withRemap(withRotation(getFrame));
 
   if (artnet.enabled) {
     const sender = new ArtNetSender(artnet);
@@ -74,5 +74,30 @@ function withRotation(getFrame: () => number[]): () => number[] {
       rotated[dst + 2] = frame[src + 2];
     }
     return rotated;
+  };
+}
+
+// Wrap a frame source so individual lights are re-addressed before they reach the hardware,
+// compensating for fixtures that sit on a different DMX address than their position implies.
+// Lights missing from `output.remap` keep their 1:1 mapping.
+function withRemap(getFrame: () => number[]): () => number[] {
+  const { nLights } = config;
+  const entries = Object.entries(config.output.remap);
+  if (entries.length === 0) return getFrame;
+
+  const targets = Array.from({ length: nLights }, (_, i) => i);
+  for (const [from, to] of entries) targets[Number(from)] = to;
+
+  const remapped = new Array<number>(nLights * 3).fill(0);
+  return () => {
+    const frame = getFrame();
+    for (let i = 0; i < nLights; i++) {
+      const src = i * 3;
+      const dst = targets[i] * 3;
+      remapped[dst] = frame[src];
+      remapped[dst + 1] = frame[src + 1];
+      remapped[dst + 2] = frame[src + 2];
+    }
+    return remapped;
   };
 }

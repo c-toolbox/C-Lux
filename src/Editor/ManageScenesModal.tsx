@@ -68,7 +68,13 @@ export function ManageScenesModal({
 
   return (
     <>
-      <Modal opened={opened} onClose={onClose} title={'Manage scenes'} centered>
+      <Modal
+        opened={opened}
+        onClose={onClose}
+        title={'Manage scenes'}
+        centered
+        size={'xl'}
+      >
         <Stack gap={'md'}>
           <Group align={'flex-end'} gap={'xs'}>
             <TextInput
@@ -77,7 +83,7 @@ export function ManageScenesModal({
               value={newSceneName}
               disabled={busy}
               onChange={(e) => onNewSceneNameChange(e.currentTarget.value)}
-              style={{ flex: 1 }}
+              style={{ flex: 1, minWidth: 220 }}
             />
             <Button
               disabled={busy || patternCount === 0 || newSceneName.trim() === ''}
@@ -221,7 +227,7 @@ function SceneRow({
           : '1px solid var(--mantine-color-default-border)'
       }}
     >
-      <Group align={'flex-end'} gap={4} style={{ flex: 1 }}>
+      <Group align={'flex-end'} gap={4} style={{ flex: '1 1 320px' }}>
         <ActionIcon
           variant={'subtle'}
           color={'gray'}
@@ -260,7 +266,7 @@ function SceneRow({
           value={name}
           disabled={busy}
           onChange={(e) => setName(e.currentTarget.value)}
-          style={{ flex: 1 }}
+          style={{ flex: 1, minWidth: 220 }}
         />
       </Group>
       <Group gap={'xs'}>
