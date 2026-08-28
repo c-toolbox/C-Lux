@@ -30,6 +30,8 @@ export function HomePage() {
   // alongside the saved scenes. `solidHex` follows the picker while it is being dragged.
   const [solid, setSolid] = useState<SolidColorStatus | null>(null);
   const [solidHex, setSolidHex] = useState('#000000');
+  // The picker dropdown is controlled so that clicking the input can also close it again.
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -255,6 +257,11 @@ export function HomePage() {
                     disabled={busy}
                     w={130}
                     aria-label={'Solid color'}
+                    onClick={() => setPickerOpen((open) => !open)}
+                    popoverProps={{
+                      opened: pickerOpen,
+                      onDismiss: () => setPickerOpen(false)
+                    }}
                   />
                   <Button disabled={busy} onClick={() => void selectSolid()}>
                     Select
