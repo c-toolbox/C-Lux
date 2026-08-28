@@ -19,7 +19,8 @@ const configSchema = z
       blackoutTransition: z.number().nonnegative(),
       halfLightTransition: z.number().nonnegative(),
       halfLightFeather: z.number().positive(),
-      solidColorTransition: z.number().nonnegative()
+      solidColorTransition: z.number().nonnegative(),
+      sceneTransition: z.number().nonnegative()
     }),
     output: z.object({
       rotation: z.number(),

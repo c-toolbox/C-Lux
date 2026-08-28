@@ -113,7 +113,8 @@ visualizer:
     "blackoutTransition": 1.0,
     "halfLightTransition": 1.0,
     "halfLightFeather": 0.5,
-    "solidColorTransition": 1.0
+    "solidColorTransition": 1.0,
+    "sceneTransition": 1.0
   },
   "output": {
     "rotation": 180,

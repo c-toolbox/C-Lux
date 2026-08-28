@@ -20,7 +20,20 @@ import {
 // The color the hardcoded layer starts on, until one is set.
 const SOLID_COLOR_DEFAULT: Color = StaticPattern.Fields.color.default;
 
+// Ceiling on how many stacks may dissolve at once. Each one costs a full blend per tick,
+// so a burst of scene changes drops the oldest instead of piling up.
+const MAX_FADING_STACKS = 4;
+
 type FrameListener = (frame: number[]) => void;
+
+// What the lights were showing when a scene change came in: the pattern stack at that
+// moment, plus whether the solid color layer was part of it. It keeps ticking while
+// `weight` — how far the stack that replaced it has faded in — runs from 0 to 1.
+interface FadingStack {
+  patterns: Array<Pattern>;
+  solidEnabled: boolean;
+  weight: number;
+}
 
 // State of the hardcoded solid color layer: whether it is showing, the color on the
 // lights right now and, while it is interpolating, where it is heading.
@@ -43,6 +56,10 @@ export interface SolidColorUpdate {
 export class Engine {
   private patterns: Array<Pattern> = [];
   private scenes: Array<Scene> = [];
+
+  // Stacks an earlier scene change moved away from, oldest first, each dissolving into
+  // the one after it (the current stack for the last of them).
+  private fading: Array<FadingStack> = [];
 
   // The hardcoded bottom layer. It is kept out of `patterns` so it never shows up in
   // the editor or in a saved scene, and is composited under them by `blend()`.
@@ -80,6 +97,7 @@ export class Engine {
   // caller consumes the result synchronously (serializes or copies it) before blend() can
   // be called again, so sharing these buffers across calls is safe.
   private readonly blendAccum: number[] = new Array<number>(config.nLights * 3).fill(0);
+  private readonly blendNext: number[] = new Array<number>(config.nLights * 3).fill(0);
   private readonly blendOut: number[] = new Array<number>(config.nLights * 3).fill(0);
 
   // Restore the scenes saved by a previous run. Scenes saved before the solid color
@@ -132,6 +150,7 @@ export class Engine {
 
   // Drop every pattern, leaving only the hardcoded solid color layer under them.
   clearPatterns(): PatternParameters[] {
+    this.beginTransition();
     this.patterns = [];
     return this.listPatterns();
   }
@@ -196,7 +215,12 @@ export class Engine {
   // seconds; `enabled` switches the whole layer on or off.
   setSolidColor({ color, enabled }: SolidColorUpdate): SolidColorStatus {
     if (color) this.solidColor.fadeTo(color, config.server.solidColorTransition);
-    if (enabled !== undefined) this.solidColor.enabled = enabled;
+    // Switching the layer on or off counts as a scene change, so it dissolves like one
+    // rather than popping in or out under the patterns.
+    if (enabled !== undefined && enabled !== this.solidColor.enabled) {
+      this.beginTransition();
+      this.solidColor.enabled = enabled;
+    }
     return this.solidColorStatus();
   }
 
@@ -320,6 +344,8 @@ export class Engine {
     const scene = this.scenes.find((s) => s.name === name);
     if (!scene) throw new HttpError(404, `No scene named: ${name}`);
 
+    this.beginTransition();
+
     const existing = new Set(this.patterns.map((p) => p.name));
     for (const params of scene.patterns) {
       if (existing.has(params.name)) continue;
@@ -364,6 +390,8 @@ export class Engine {
     const scene = this.scenes.find((s) => s.name === name);
     if (!scene) throw new HttpError(404, `No scene named: ${name}`);
 
+    this.beginTransition();
+
     const names = new Set(scene.patterns.map((p) => p.name));
     this.patterns = this.patterns.filter((p) => !names.has(p.name));
 
@@ -389,6 +417,7 @@ export class Engine {
       replacement.push(instance);
     }
 
+    this.beginTransition();
     this.patterns = replacement;
     return this.listPatterns();
   }
@@ -464,18 +493,51 @@ export class Engine {
   // Animation and output
   //
 
+  // Remember what the lights are showing so that the change the caller is about to make
+  // dissolves out of it instead of cutting. A non-positive `sceneTransition` switches the
+  // dissolve off and every change lands at once.
+  private beginTransition(): void {
+    if (config.server.sceneTransition <= 0) return;
+
+    this.fading.push({
+      patterns: this.patterns.slice(),
+      solidEnabled: this.solidColor.enabled,
+      weight: 0
+    });
+
+    if (this.fading.length > MAX_FADING_STACKS) this.fading.shift();
+  }
+
+  // The stack `index` steps back in the dissolve chain, which is the current one once
+  // past every stack still fading out.
+  private stackAt(index: number): { patterns: Array<Pattern>; solidEnabled: boolean } {
+    return (
+      this.fading[index] ?? {
+        patterns: this.patterns,
+        solidEnabled: this.solidColor.enabled
+      }
+    );
+  }
+
   // Blend the individual patterns into a single flat RGB array using source-over alpha
   // compositing (first pattern on the bottom, last on top), scaled by the master
   // brightness. Returns a buffer reused across calls; consume it before calling again.
   blend(): number[] {
     const { nLights } = config;
     const accum = this.blendAccum;
-    accum.fill(0);
 
-    if (this.solidColor.enabled) this.composite(this.solidColor, accum);
-    for (const p of this.patterns) {
-      if (!p.enabled) continue;
-      this.composite(p, accum);
+    const oldest = this.stackAt(0);
+    this.compositeStack(oldest.patterns, oldest.solidEnabled, accum);
+
+    // Cross-dissolve each newer stack over the one before it, ending at the current one.
+    // Mixing whole stacks rather than fading the individual patterns keeps the lights at
+    // full strength throughout instead of dipping to the background mid-transition.
+    for (const [i, fade] of this.fading.entries()) {
+      const next = this.stackAt(i + 1);
+      this.compositeStack(next.patterns, next.solidEnabled, this.blendNext);
+      for (let j = 0; j < accum.length; j++) {
+        accum[j] += (this.blendNext[j] - accum[j]) * fade.weight;
+      }
     }
 
     const out = this.blendOut;
@@ -493,6 +555,21 @@ export class Engine {
     return out;
   }
 
+  // Composite one stack of patterns into `accum`, the solid color layer underneath them.
+  private compositeStack(
+    patterns: Array<Pattern>,
+    solidEnabled: boolean,
+    accum: number[]
+  ): void {
+    accum.fill(0);
+
+    if (solidEnabled) this.composite(this.solidColor, accum);
+    for (const p of patterns) {
+      if (!p.enabled) continue;
+      this.composite(p, accum);
+    }
+  }
+
   // Source-over composite one pattern's layer onto the accumulator.
   private composite(pattern: Pattern, accum: number[]): void {
     const layer = pattern.data();
@@ -507,6 +584,25 @@ export class Engine {
     }
   }
 
+  // Advance every pattern that is on the lights, whether it belongs to the current stack
+  // or to one still dissolving. Stacks share instances — applying a scene leaves the
+  // patterns already running in place — so each is only ticked once.
+  private tickPatterns(dt: number): void {
+    if (this.fading.length === 0) {
+      for (const p of this.patterns) if (p.enabled) p.tick(dt);
+      return;
+    }
+
+    const ticked = new Set<Pattern>();
+    for (let i = 0; i <= this.fading.length; i++) {
+      for (const p of this.stackAt(i).patterns) {
+        if (!p.enabled || ticked.has(p)) continue;
+        ticked.add(p);
+        p.tick(dt);
+      }
+    }
+  }
+
   // Advance every pattern and ease the pause/brightness factors toward their targets.
   tick(dt: number): void {
     this.pauseFactor = approach(
@@ -517,10 +613,17 @@ export class Engine {
     );
 
     const scaledDt = dt * this.pauseFactor;
-    for (const p of this.patterns) if (p.enabled) p.tick(scaledDt);
+    this.tickPatterns(scaledDt);
 
     // Color fades are transitions rather than animation, so they run even while paused.
     this.solidColor.tick(dt);
+
+    // Likewise for the scene dissolves. Each stack is dropped once the one that replaced
+    // it has fully faded in; later stacks started later, so they can never finish first.
+    for (const fade of this.fading) {
+      fade.weight = approach(fade.weight, 1, dt, config.server.sceneTransition);
+    }
+    while (this.fading.length > 0 && this.fading[0].weight >= 1) this.fading.shift();
 
     this.brightnessFactor = approach(
       this.brightnessFactor,
