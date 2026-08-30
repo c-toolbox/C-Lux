@@ -119,12 +119,6 @@ visualizer:
   "output": {
     "rotation": 180,
     "remap": {},
-    "dmx": {
-      "enabled": false,
-      "device": "COM3",
-      "startChannel": 1,
-      "refreshRate": 40
-    },
     "artnet": {
       "enabled": false,
       "host": "255.255.255.255",
@@ -156,10 +150,10 @@ tab's `sessionStorage`, and forgotten when the server restarts. Repeated bad gue
 logins out for a few minutes. The password travels in the clear unless the app is behind
 HTTPS, so put a TLS-terminating proxy in front of it on an untrusted network.
 
-### Sharing lighting data (DMX-512 & Art-Net)
+### Sharing lighting data (Art-Net)
 
-The blended frame can be streamed live to lighting hardware. Each output is independent and
-disabled by default; set `enabled` to `true` to turn one on. RGB values map to consecutive
+The blended frame can be streamed live to lighting hardware over Art-Net. The output is
+disabled by default; set `enabled` to `true` to turn it on. RGB values map to consecutive
 DMX channels starting at `startChannel`, and `refreshRate` is the send rate in frames per
 second.
 
@@ -174,19 +168,12 @@ second.
   `{ "5": 3, "3": 5 }` swaps that pair. Lights left out keep their 1:1 mapping, and the
   default `{}` changes nothing. Applied after `output.rotation`, and only to the outputs.
 
-- **`output.dmx`** — physical DMX-512 through an Enttec-compatible USB widget (e.g. DMX USB
-  Pro). Set `device` to the serial port (`COM3` on Windows, `/dev/ttyUSB0` on Linux). One
-  universe (512 channels) is sent.
 - **`output.artnet`** — Art-Net over the network. Point `host` at a node's IP or a broadcast
   address, and set the `net`/`subnet`/`universe` addressing. Only channels between
   `startChannel` and `endChannel` (both 1-based and inclusive) are transmitted; set
   `endChannel` to `0` to send the whole frame. Frames longer than `universeSize` channels
   (512 by default, the maximum) are split across consecutive universes automatically. The
   node's DMX output port must be set to the same universe, or it ignores the frames.
-
-> Enabling `output.dmx` loads the native `serialport` binding. If your package manager blocked
-> its install scripts, allow them (e.g. `npm install-scripts approve @serialport/bindings-cpp`)
-> before enabling DMX output.
 
 
 ## Adding a pattern

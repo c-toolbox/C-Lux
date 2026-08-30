@@ -29,12 +29,6 @@ const configSchema = z
       remap: z
         .record(z.string().regex(/^\d+$/, 'must be a light index'), z.int().nonnegative())
         .default({}),
-      dmx: z.object({
-        enabled: z.boolean(),
-        device: z.string().min(1),
-        startChannel: z.int().min(1).max(512),
-        refreshRate: z.number().positive()
-      }),
       artnet: z.object({
         enabled: z.boolean(),
         host: z.string().min(1),

@@ -295,8 +295,8 @@ async function main() {
     engine.tick(dt);
   }, 1000 / config.server.tickRate);
 
-  // Share the blended frame over DMX-512 and/or Art-Net when enabled in config.json.
-  const outputs = await startOutputs(() => engine.blend());
+  // Share the blended frame over Art-Net when enabled in config.json.
+  const outputs = startOutputs(() => engine.blend());
 
   const httpServer = app.listen(config.server.port, () => {
     console.log(`C-Lux listening on http://localhost:${config.server.port}`);
