@@ -6,6 +6,11 @@ Everything is driven from a web UI, so any tablet or laptop on the dome network 
 
 Nothing is locked inside the UI, either. Every function the web interface offers - adding and tuning patterns, recalling or replacing scenes, blackout, half-light, the solid work-light colour - is exposed as a plain HTTP REST API, and the live blended frame can be subscribed to as an event stream. That makes C-Lux straightforward to drive from a custom show application, an automation script, or the same controller that runs your projection system: fire a scene change at a cue point, dim the cove for a fulldome segment, and bring the lights back up when the show ends, all with ordinary HTTP requests.
 
+<p align="center">
+  <img src="docs/hero.png" alt="The C-Lux visualizer: a ring of addressable lights around the C-Lux logo" width="420">
+</p>
+
+
 ## Getting started
 
 Requires Node.js 22 or newer.
@@ -122,7 +127,7 @@ The server validates the file on startup and exits with a message naming the off
 | `tickRate`             | Animation updates per second. 30 looks smooth for cove lighting; higher costs CPU, lower makes fast patterns look steppy.      |
 | `port`                 | TCP port the API — and, in a production run, the built UI — is served on.                                                      |
 | `scenes`               | Path to the JSON file saved scenes are written to, relative to the project root.                                               |
-| `editPassword`         | Password guarding the edit page and the endpoints it drives. Leave empty to supply it in `CLUX_EDIT_PASSWORD` instead; empty in both places switches the protection off. |
+| `editPassword`         | Password guarding the edit page and the endpoints it drives. Leave empty to switch the protection off.                        |
 | `blackoutTransition`   | Seconds the master blackout takes to fade out or back in.                                                                      |
 | `halfLightTransition`  | Seconds half-light mode takes to fade its half out or back in.                                                                 |
 | `halfLightFeather`     | How soft the edge between the dark and lit halves is. Small values give a crisp line, larger ones a wider blend band.          |
