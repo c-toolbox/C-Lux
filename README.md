@@ -1,32 +1,16 @@
 # C-Lux
 
-C-Lux is a small full-stack app for composing and previewing animated lighting patterns
-on a circular display of addressable LEDs. A React + Mantine UI lets you build up a stack
-of individual patterns, tune their parameters, reorder them, and watch the blended result
-render live in a circular visualizer. A lightweight Express backend holds the pattern state,
-advances animations on a fixed tick, and serves the composited frame.
+C-Lux is a lighting console for cove and ring installations built from addressable LEDs - the kind that runs around the spring line of a planetarium dome. Instead of programming cues light by light, you stack ready-made pattern layers (gradients, sunrises, auroras, comets, audio-reactive pulses, and more), tune each one's colours, speed and position from the browser, and let the server blend them into a single live frame.
 
-## Features
+Everything is driven from a web UI, so any tablet or laptop on the dome network becomes a control surface: no software to install at the console, and the show operator gets big, obvious controls (blackout, half-light for the projector side of the dome, and a fixed work-light colour) while the technician keeps the full editor behind a password. Saved scenes recall a whole look instantly, transitions are faded rather than snapped, and the blended frame goes out to your fixtures over Art-Net - with rotation and per-light remapping so the pattern lines up with however the strip was physically installed.
 
-- **Pattern management** — add, edit, remove, and reorder patterns from the UI.
-- **Scenes** — the active pattern stack is held in memory only, so save it as a scene (or
-  export it to a JSON file) to keep it across a restart.
-- **Live blend** — the server alpha-composites all patterns (first is the bottom layer, last
-  on top) and exposes the result as a flat RGB array.
-- **Circular visualizer** — a canvas renders all lights counterclockwise around a ring and
-  receives frames over a Server-Sent Events stream, reconnecting automatically if the
-  backend drops.
-- **Server-driven animation** — a fixed-rate tick advances every pattern so moving patterns
-  animate over time.
-
-## Tech stack
-
-- **Frontend:** Vite, React, TypeScript, Mantine
-- **Backend:** Node.js, Express (run with `tsx`)
+Nothing is locked inside the UI, either. Every function the web interface offers - adding and tuning patterns, recalling or replacing scenes, blackout, half-light, the solid work-light colour - is exposed as a plain HTTP REST API, and the live blended frame can be subscribed to as an event stream. That makes C-Lux straightforward to drive from a custom show application, an automation script, or the same controller that runs your projection system: fire a scene change at a cue point, dim the cove for a fulldome segment, and bring the lights back up when the show ends, all with ordinary HTTP requests.
 
 ## Getting started
 
 Requires Node.js 22 or newer.
+
+### Development
 
 ```powershell
 npm install
@@ -38,65 +22,59 @@ npm run all
 - Web (Vite dev server): http://localhost:5173
 - API (Express): http://localhost:8787
 
-The Vite dev server proxies the pattern endpoints to the API, so the UI works out of the box.
-
-## Scripts
-
-| Script            | Description                                        |
-| ----------------- | -------------------------------------------------- |
-| `npm run all`     | Run the web and API processes concurrently         |
-| `npm run dev`     | Start only the Vite dev server                     |
-| `npm run server`  | Start only the Express API (watch mode)            |
-| `npm run build`   | Type-check and build the frontend and server       |
-| `npm start`       | Run the compiled API (serves the built SPA)        |
-| `npm run preview` | Preview the production build                       |
-| `npm run lint`    | Check formatting and lint                          |
-
-For a production run, build first and then start the server, which serves the built SPA
-from `dist/` on the same origin:
+### Deployment
 
 ```powershell
+npm install
 npm run build
 npm start
 ```
 
 ## API
 
-All endpoints are served by the Express backend under the `/api` prefix and proxied through
-Vite in development. Endpoints marked with a lock require the editor password (see
-[Configuration](#configuration)) and answer `401` without it.
+All endpoints are served by the Express backend under the `/api` prefix and proxied through Vite in development. Endpoints marked with a lock require the editor password (see [Configuration](#configuration)) and answer `401` without it.
 
-| Method | Path                          | Body                    | Description                             |
-| ------ | ----------------------------- | ----------------------- | --------------------------------------- |
-| GET    | `/api/auth`                   | —                       | Whether the caller's token is still valid |
-| POST   | `/api/auth/login`             | `{ password }`          | Exchange the editor password for a token |
-| POST   | `/api/auth/logout`            | —                       | Revoke the caller's token               |
-| GET    | `/api/patterns`               | —                       | List the active patterns' parameters    |
-| POST   | `/api/patterns` 🔒            | `{ type, props }`       | Add a pattern of the given type         |
-| PATCH  | `/api/patterns/:name` 🔒      | `{ props }`             | Update an existing pattern by name      |
-| DELETE | `/api/patterns/:name` 🔒      | —                       | Remove a pattern by name                |
-| POST   | `/api/patterns/reorder` 🔒    | `{ order: string[] }`   | Reorder patterns (controls blend order) |
-| POST   | `/api/patterns/clear`         | —                       | Remove every pattern                    |
-| GET    | `/api/blackout`               | —                       | Whether the master blackout is engaged  |
-| PUT    | `/api/blackout`               | `{ blackout }`          | Fade output to black or restore it      |
-| GET    | `/api/half-light`             | —                       | Whether half-light mode is engaged      |
-| PUT    | `/api/half-light`             | `{ halfLight }`         | Fade the top half out or restore it     |
-| GET    | `/api/solid-color`            | —                       | State of the fixed solid color scene     |
-| PUT    | `/api/solid-color`            | `{ color?, enabled? }`  | Fade it to a color, or switch it on/off |
-| GET    | `/api/stream`                 | —                       | Server-Sent Events stream of frames     |
-| GET    | `/api/scenes`                 | —                       | List the saved scenes                   |
-| POST   | `/api/scenes` 🔒              | `{ name }`              | Save the active patterns as a scene     |
-| POST   | `/api/scenes/:name/apply`     | —                       | Add a scene's patterns to the list      |
-| POST   | `/api/scenes/:name/unapply`   | —                       | Remove a scene's patterns from the list |
-| POST   | `/api/scenes/:name/replace`   | —                       | Replace the active patterns with a scene|
-| POST   | `/api/scenes/reorder` 🔒      | `{ order: string[] }`   | Reorder scenes (controls blend order)   |
-| PATCH  | `/api/scenes/:name` 🔒        | `{ newName }`           | Rename a scene                          |
-| DELETE | `/api/scenes/:name` 🔒        | —                       | Delete a scene                          |
+| Method | Path                             | Body                   | Description                                |
+| ------ | -------------------------------- | ---------------------- | ------------------------------------------ |
+| GET    | `/api/auth`                      | —                      | Whether the caller's token is still valid  |
+| POST   | `/api/auth/login`                | `{ password }`         | Exchange the editor password for a token   |
+| POST   | `/api/auth/logout`               | —                      | Revoke the caller's token                  |
+| GET    | `/api/patterns`                  | —                      | List the active patterns' parameters       |
+| POST   | `/api/patterns` 🔒               | `{ type, props }`      | Add a pattern of the given type            |
+| POST   | `/api/patterns/reorder` 🔒       | `{ order: string[] }`  | Reorder patterns (controls blend order)    |
+| POST   | `/api/patterns/clear`            | —                      | Remove every pattern                       |
+| PATCH  | `/api/patterns/:name` 🔒         | `{ props }`            | Update an existing pattern by name         |
+| PUT    | `/api/patterns/:name/enabled` 🔒 | `{ enabled }`          | Mute or unmute a single pattern            |
+| DELETE | `/api/patterns/:name` 🔒         | —                      | Remove a pattern by name                   |
+| GET    | `/api/blackout`                  | —                      | Whether the master blackout is engaged     |
+| PUT    | `/api/blackout`                  | `{ blackout }`         | Fade output to black or restore it         |
+| GET    | `/api/half-light`                | —                      | Whether half-light mode is engaged         |
+| PUT    | `/api/half-light`                | `{ halfLight }`        | Fade the top half out or restore it        |
+| GET    | `/api/solid-color`               | —                      | State of the fixed solid color layer       |
+| PUT    | `/api/solid-color`               | `{ color?, enabled? }` | Fade it to a color, or switch it on/off    |
+| POST   | `/api/audio` 🔒                  | audio analysis frame   | Feed one frame to audio-reactive patterns  |
+| GET    | `/api/stream`                    | —                      | Server-Sent Events stream of frames        |
+| GET    | `/api/scenes`                    | —                      | List the saved scenes                      |
+| POST   | `/api/scenes` 🔒                 | `{ name }`             | Save the active patterns as a scene        |
+| POST   | `/api/scenes/import` 🔒          | exported scene JSON    | Add a scene from an exported file          |
+| POST   | `/api/scenes/reorder` 🔒         | `{ order: string[] }`  | Reorder scenes (controls blend order)      |
+| POST   | `/api/scenes/:name/apply`        | —                      | Add a scene's patterns to the list         |
+| POST   | `/api/scenes/:name/unapply`      | —                      | Remove a scene's patterns from the list    |
+| POST   | `/api/scenes/:name/replace`      | —                      | Replace the active patterns with a scene   |
+| PATCH  | `/api/scenes/:name` 🔒           | `{ newName }`          | Rename a scene                             |
+| DELETE | `/api/scenes/:name` 🔒           | —                      | Delete a scene                             |
+
+Unknown paths under `/api` answer a JSON `404`, and failures come back as `{ "error": "..." }` with an appropriate status.
 
 ## Configuration
 
-Global settings live in [`config.json`](config.json) and are read by both the server and the
-visualizer:
+Global settings live in `config.json`, which both the server and the visualizer read. The file is not part of the repository, so start from the template [`config.sample.json`](config.sample.json) and fill in the values for your installation:
+
+```powershell
+Copy-Item config.sample.json config.json
+```
+
+The server validates the file on startup and exits with a message naming the offending key if something is missing or out of range, so a typo shows up right away instead of as a dark ring later. Edits take effect on restart.
 
 ```json
 {
@@ -105,7 +83,7 @@ visualizer:
     "tickRate": 30,
     "port": 8787,
     "scenes": "scenes.json",
-    "editPassword": "change-me",
+    "editPassword": "",
     "blackoutTransition": 1.0,
     "halfLightTransition": 1.0,
     "halfLightFeather": 0.5,
@@ -117,7 +95,7 @@ visualizer:
     "remap": {},
     "artnet": {
       "enabled": false,
-      "host": "255.255.255.255",
+      "host": "0.0.0.0",
       "port": 6454,
       "net": 0,
       "subnet": 0,
@@ -131,56 +109,55 @@ visualizer:
 }
 ```
 
-### Editor password
+### Top level
 
-The edit page and every endpoint it drives are behind `server.editPassword`. Set it to
-something of your own, or leave it empty and pass the value in the `CLUX_EDIT_PASSWORD`
-environment variable instead — the environment wins when both are present.
+| Key       | Description                                                                                    |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| `nLights` | Number of addressable lights on the ring. Patterns and the visualizer are all sized from this. |
 
-With no password configured either way the protection is switched off entirely: the edit
-page opens without an unlock screen and its endpoints accept anyone. Only do that on a
-network where everybody who can reach the server is allowed to drive the lights.
+### `server`
 
-The editor exchanges the password for a token that is good for twelve hours, kept in the
-tab's `sessionStorage`, and forgotten when the server restarts. Repeated bad guesses lock
-logins out for a few minutes. The password travels in the clear unless the app is behind
-HTTPS, so put a TLS-terminating proxy in front of it on an untrusted network.
+| Key                    | Description                                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `tickRate`             | Animation updates per second. 30 looks smooth for cove lighting; higher costs CPU, lower makes fast patterns look steppy.      |
+| `port`                 | TCP port the API — and, in a production run, the built UI — is served on.                                                      |
+| `scenes`               | Path to the JSON file saved scenes are written to, relative to the project root.                                               |
+| `editPassword`         | Password guarding the edit page and the endpoints it drives. Leave empty to supply it in `CLUX_EDIT_PASSWORD` instead; empty in both places switches the protection off. |
+| `blackoutTransition`   | Seconds the master blackout takes to fade out or back in.                                                                      |
+| `halfLightTransition`  | Seconds half-light mode takes to fade its half out or back in.                                                                 |
+| `halfLightFeather`     | How soft the edge between the dark and lit halves is. Small values give a crisp line, larger ones a wider blend band.          |
+| `solidColorTransition` | Seconds the solid work-light layer takes to fade to a new color or switch on and off.                                          |
+| `sceneTransition`      | Seconds a scene takes to fade in or out when it is applied, unapplied, or replaced.                                            |
 
-### Sharing lighting data (Art-Net)
+Any transition set to `0` snaps instead of fading.
 
-The blended frame can be streamed live to lighting hardware over Art-Net. The output is
-disabled by default; set `enabled` to `true` to turn it on. RGB values map to consecutive
-DMX channels starting at `startChannel`, and `refreshRate` is the send rate in frames per
-second.
+### `output`
 
-- **`output.rotation`** — how far, in degrees, the frame is rotated around the ring before
-  it is sent to the hardware. Patterns and the visualizer always treat light 0 as the top of
-  the ring; this compensates for where light 0 physically sits. For example, if light 0 is at
-  the back of a dome, `180` puts the pattern's 0 point at the front. Only the outputs are
-  affected, the visualizer is not.
+| Key        | Description                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------- |
+| `rotation` | Degrees the frame is rotated around the ring before it reaches the hardware (see below).            |
+| `remap`    | Per-light address fix-ups for fixtures that were wired or patched out of order (see below).         |
+| `artnet`   | Art-Net transmission settings (see below).                                                          |
 
-- **`output.remap`** — optional per-light address fix-ups for fixtures that are wired out of
-  order. Each entry maps a light index to the index its colour is written to instead, so
-  `{ "5": 3, "3": 5 }` swaps that pair. Lights left out keep their 1:1 mapping, and the
-  default `{}` changes nothing. Applied after `output.rotation`, and only to the outputs.
+### `output.artnet`
 
-- **`output.artnet`** — Art-Net over the network. Point `host` at a node's IP or a broadcast
-  address, and set the `net`/`subnet`/`universe` addressing. Only channels between
-  `startChannel` and `endChannel` (both 1-based and inclusive) are transmitted; set
-  `endChannel` to `0` to send the whole frame. Frames longer than `universeSize` channels
-  (512 by default, the maximum) are split across consecutive universes automatically. The
-  node's DMX output port must be set to the same universe, or it ignores the frames.
+| Key            | Description                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| `enabled`      | Whether frames are transmitted at all. Leave `false` until the rest of the block is filled in.          |
+| `host`         | The node's IP address, or a broadcast address such as `255.255.255.255` to reach every node on the LAN. |
+| `port`         | UDP port to send to. Art-Net's standard port is `6454`.                                                 |
+| `net`          | Art-Net net number, the top level of the address. Usually `0`.                                          |
+| `subnet`       | Art-Net sub-net number. Usually `0`.                                                                    |
+| `universe`     | Universe within that sub-net. Must match the node's DMX output port, or it ignores the frames.          |
+| `startChannel` | First DMX channel written, 1-based. Set it to wherever the strip is patched.                            |
+| `endChannel`   | Last channel written, 1-based and inclusive. `0` sends the whole frame.                                 |
+| `universeSize` | Channels per universe before the frame spills into the next one. 512 is the DMX maximum and the norm.   |
+| `refreshRate`  | Frames sent per second. 40 is typical; check what the node accepts.                                     |
 
 
 ## Adding a pattern
 
-1. Create a class under `shared/patterns/` that extends `Pattern`, with a static `Type`
-   tag, a static `Fields` schema describing its configurable parameters, and a
-   `parameters()` method describing its shape.
-2. Register it in the `PATTERNS` array in
-   [`shared/patterns/patterns.ts`](shared/patterns/patterns.ts).
+1. Create a class under `shared/patterns/` that extends `Pattern`, with a static `Type` tag, a static `DisplayName`, a static `Fields` schema describing its configurable parameters, and `parameters()`, `set()` and `tick()` methods. Export its props interface alongside the class.
+2. Register it in the `PATTERNS` array in [`shared/patterns/patterns.ts`](shared/patterns/patterns.ts), and add its props interface to the `PatternProps` union in the same file.
 
-The available pattern types and their parameter shapes are derived from that list, so the
-UI and shared types pick up the new pattern automatically. `Fields` is the single source
-of truth for each parameter's label, default and allowed range: the server validates
-incoming props against it and the browser generates the edit form from it.
+The available pattern types and their parameter shapes are derived from that list, so the UI and shared types pick up the new pattern automatically. `Fields` is the single source of truth for each parameter's label, default and allowed range: the server validates incoming props against it and the browser generates the edit form from it.
