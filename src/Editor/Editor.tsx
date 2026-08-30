@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Alert,
+  Box,
   Button,
   Container,
   FileButton,
   Group,
   Loader,
+  ScrollArea,
   Stack,
   Text,
   TextInput,
@@ -196,7 +198,14 @@ function Editor() {
   }
 
   return (
-    <Container fluid w={'100%'} px={'5%'} py={'xl'}>
+    <Container
+      fluid
+      w={'100%'}
+      px={'5%'}
+      py={'xl'}
+      h={'100svh'}
+      style={{ display: 'flex', flexDirection: 'column' }}
+    >
       <Group justify={'space-between'} align={'center'} gap={'xs'}>
         <Title order={1} ta={'left'}>
           C-Lux
@@ -212,7 +221,7 @@ function Editor() {
           </Button>
         </Group>
       </Group>
-      <Stack mt={'md'}>
+      <Stack mt={'md'} style={{ flex: 1, minHeight: 0 }}>
         <Group align={'flex-end'} gap={'xs'}>
           <TextInput
             placeholder={'Name'}
@@ -296,29 +305,33 @@ function Editor() {
           </Alert>
         )}
 
-        {loading ? (
-          <Group justify={'center'} py={'xl'}>
-            <Loader />
-          </Group>
-        ) : patterns.length === 0 ? (
-          <Text c={'dimmed'} ta={'center'} py={'xl'}>
-            No patterns yet. Add one to get started.
-          </Text>
-        ) : (
-          <PatternList
-            patterns={patterns}
-            busy={busy}
-            onMove={move}
-            onEdit={setEditing}
-            onToggleEnabled={handleToggleEnabled}
-            onRemove={handleRemove}
-          />
-        )}
+        <ScrollArea type={'auto'} offsetScrollbars style={{ flex: 1, minHeight: 0 }}>
+          {loading ? (
+            <Group justify={'center'} py={'xl'}>
+              <Loader />
+            </Group>
+          ) : patterns.length === 0 ? (
+            <Text c={'dimmed'} ta={'center'} py={'xl'}>
+              No patterns yet. Add one to get started.
+            </Text>
+          ) : (
+            <PatternList
+              patterns={patterns}
+              busy={busy}
+              onMove={move}
+              onEdit={setEditing}
+              onToggleEnabled={handleToggleEnabled}
+              onRemove={handleRemove}
+            />
+          )}
+        </ScrollArea>
 
         {patterns.some((p) => p.type === AUDIO_TYPE && p.enabled) && <AudioCapture />}
       </Stack>
 
-      <PatternVisualizer />
+      <Box mt={'md'} style={{ flexShrink: 0 }}>
+        <PatternVisualizer />
+      </Box>
 
       <AddPatternModal
         opened={addOpen}

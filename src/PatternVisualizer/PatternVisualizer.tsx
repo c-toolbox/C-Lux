@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import config from '../../config.json';
-import logo from '../assets/C_transparent.png';
+import logo from '../assets/c-logo.png';
 import { subscribeFrames } from '../lib/api';
 
 const NUM_LIGHTS = config.nLights;
@@ -46,6 +46,7 @@ function drawLights(canvas: HTMLCanvasElement, data: number[]) {
 
 export function PatternVisualizer() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [spinning, setSpinning] = useState(false);
 
   useEffect(() => {
     // Draw each blended frame pushed by the server; EventSource reconnects on its own if
@@ -60,7 +61,7 @@ export function PatternVisualizer() {
       style={{
         position: 'relative',
         width: '100%',
-        maxWidth: 420,
+        maxWidth: 350,
         aspectRatio: '1 / 1',
         margin: '0 auto'
       }}
@@ -76,14 +77,16 @@ export function PatternVisualizer() {
       <img
         src={logo}
         alt={'C-Lux'}
+        className={spinning ? 'logo-spinning' : undefined}
+        onClick={() => setSpinning(true)}
+        onAnimationEnd={() => setSpinning(false)}
         style={{
           position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-52.5%, -50%)',
+          top: '30%',
+          left: '30%',
           width: '40%',
           height: 'auto',
-          pointerEvents: 'none',
+          cursor: 'pointer',
           filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25))'
         }}
       />

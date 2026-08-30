@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  Box,
   Button,
   Checkbox,
   ColorInput,
   Container,
   Group,
   Loader,
+  ScrollArea,
   Stack,
   Text,
   Title
@@ -170,7 +172,14 @@ export function HomePage() {
   }
 
   return (
-    <Container fluid w={'100%'} px={'5%'} py={'xl'}>
+    <Container
+      fluid
+      w={'100%'}
+      px={'5%'}
+      py={'xl'}
+      h={'100svh'}
+      style={{ display: 'flex', flexDirection: 'column' }}
+    >
       <Group justify={'space-between'} align={'center'} gap={'xs'}>
         <Title order={1} ta={'left'}>
           C-Lux
@@ -179,82 +188,16 @@ export function HomePage() {
           Open editor
         </Button>
       </Group>
-      <Stack mt={'md'}>
-        <Group gap={'xs'} grow>
-          <Button
-            disabled={busy}
-            onClick={() => void toggleBlackout()}
-            variant={blackout ? 'filled' : 'default'}
-            color={blackout ? '#2c5c00' : undefined}
-            px={'xs'}
-            style={toggleTransition}
-          >
-            {blackout ? 'Restore' : 'Fade to black'}
-          </Button>
-          <Button
-            disabled={busy}
-            onClick={() => void toggleHalfLight()}
-            variant={halfLight ? 'filled' : 'default'}
-            color={halfLight ? '#a5145b' : undefined}
-            px={'xs'}
-            style={toggleTransition}
-          >
-            {halfLight ? 'Full lights' : 'Half light'}
-          </Button>
-        </Group>
-
+      <Stack mt={'md'} style={{ flex: 1, minHeight: 0 }}>
         {loading ? (
           <Group justify={'center'} py={'xl'}>
             <Loader />
           </Group>
         ) : (
-          <Stack gap={'sm'}>
-            {solid && (
-              <Group
-                justify={'space-between'}
-                p={'md'}
-                style={{
-                  border: '1px solid var(--mantine-color-default-border)',
-                  borderRadius: 8
-                }}
-              >
-                <Checkbox
-                  checked={solid.enabled}
-                  disabled={busy}
-                  onChange={(e) => void updateSolid({ enabled: e.currentTarget.checked })}
-                  label={<Text fw={600}>Solid color</Text>}
-                />
-
-                <Group gap={'xs'}>
-                  <ColorInput
-                    format={'hex'}
-                    value={solidHex}
-                    onChange={setSolidHex}
-                    onChangeEnd={(hex) => void updateSolid({ color: hexToRgb(hex) })}
-                    disabled={busy}
-                    w={130}
-                    aria-label={'Solid color'}
-                    onClick={() => setPickerOpen((open) => !open)}
-                    popoverProps={{
-                      opened: pickerOpen,
-                      onDismiss: () => setPickerOpen(false)
-                    }}
-                  />
-                  <Button disabled={busy} onClick={() => void selectSolid()}>
-                    Select
-                  </Button>
-                </Group>
-              </Group>
-            )}
-
-            {scenes.length === 0 ? (
-              <Text c={'dimmed'} ta={'center'} py={'xl'}>
-                No scenes yet. Create and save some in the editor.
-              </Text>
-            ) : (
-              scenes.map((scene) => (
+          <ScrollArea type={'auto'} offsetScrollbars style={{ flex: 1, minHeight: 0 }}>
+            <Stack gap={'sm'}>
+              {solid && (
                 <Group
-                  key={scene.name}
                   justify={'space-between'}
                   p={'md'}
                   style={{
@@ -263,25 +206,117 @@ export function HomePage() {
                   }}
                 >
                   <Checkbox
-                    checked={isApplied(scene)}
-                    disabled={busy || scene.patterns.length === 0}
-                    onChange={(e) => void toggle(scene, e.currentTarget.checked)}
-                    label={<Text fw={600}>{scene.name}</Text>}
+                    checked={solid.enabled}
+                    disabled={busy}
+                    onChange={(e) =>
+                      void updateSolid({ enabled: e.currentTarget.checked })
+                    }
+                    label={<Text fw={600}>Solid color</Text>}
                   />
 
                   <Group gap={'xs'}>
-                    <Button disabled={busy} onClick={() => void select(scene)}>
+                    <ColorInput
+                      format={'hex'}
+                      value={solidHex}
+                      onChange={setSolidHex}
+                      onChangeEnd={(hex) => void updateSolid({ color: hexToRgb(hex) })}
+                      disabled={busy}
+                      w={130}
+                      aria-label={'Solid color'}
+                      onClick={() => setPickerOpen((open) => !open)}
+                      popoverProps={{
+                        opened: pickerOpen,
+                        onDismiss: () => setPickerOpen(false)
+                      }}
+                    />
+                    <Button disabled={busy} onClick={() => void selectSolid()}>
                       Select
                     </Button>
                   </Group>
                 </Group>
-              ))
-            )}
-          </Stack>
-        )}
+              )}
 
-        <PatternVisualizer />
+              {scenes.length === 0 ? (
+                <Text c={'dimmed'} ta={'center'} py={'xl'}>
+                  No scenes yet. Create and save some in the editor.
+                </Text>
+              ) : (
+                scenes.map((scene) => (
+                  <Group
+                    key={scene.name}
+                    justify={'space-between'}
+                    p={'md'}
+                    style={{
+                      border: '1px solid var(--mantine-color-default-border)',
+                      borderRadius: 8
+                    }}
+                  >
+                    <Checkbox
+                      checked={isApplied(scene)}
+                      disabled={busy || scene.patterns.length === 0}
+                      onChange={(e) => void toggle(scene, e.currentTarget.checked)}
+                      label={<Text fw={600}>{scene.name}</Text>}
+                    />
+
+                    <Group gap={'xs'}>
+                      <Button disabled={busy} onClick={() => void select(scene)}>
+                        Select
+                      </Button>
+                    </Group>
+                  </Group>
+                ))
+              )}
+            </Stack>
+          </ScrollArea>
+        )}
       </Stack>
+
+      <Group
+        mt={'md'}
+        gap={64}
+        justify={'center'}
+        align={'center'}
+        wrap={'nowrap'}
+        style={{ flexShrink: 0 }}
+      >
+        <Button
+          disabled={busy}
+          onClick={() => void toggleBlackout()}
+          variant={blackout ? 'filled' : 'default'}
+          color={blackout ? '#2c5c00' : undefined}
+          size={'lg'}
+          h={140}
+          px={'xs'}
+          style={{
+            ...toggleTransition,
+            flex: '0 1 175px',
+            whiteSpace: 'normal'
+          }}
+        >
+          {blackout ? 'Restore' : 'Fade to black'}
+        </Button>
+
+        <Box style={{ flex: '0 1 350px' }}>
+          <PatternVisualizer />
+        </Box>
+
+        <Button
+          disabled={busy}
+          onClick={() => void toggleHalfLight()}
+          variant={halfLight ? 'filled' : 'default'}
+          color={halfLight ? '#a5145b' : undefined}
+          size={'lg'}
+          h={140}
+          px={'xs'}
+          style={{
+            ...toggleTransition,
+            flex: '0 1 175px',
+            whiteSpace: 'normal'
+          }}
+        >
+          {halfLight ? 'Full lights' : 'Half light'}
+        </Button>
+      </Group>
     </Container>
   );
 }

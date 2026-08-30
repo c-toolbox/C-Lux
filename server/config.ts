@@ -11,9 +11,8 @@ const configSchema = z
       tickRate: z.number().positive(),
       port: z.int().min(1).max(65535),
       scenes: z.string().min(1),
-      // Guards the edit page and the endpoints it drives. May be left empty here and
-      // supplied through the CLUX_EDIT_PASSWORD environment variable instead; empty in
-      // both places switches the protection off altogether.
+      // Guards the edit page and the endpoints it drives. Empty switches the protection
+      // off altogether.
       editPassword: z.string().default(''),
       blackoutTransition: z.number().nonnegative(),
       halfLightTransition: z.number().nonnegative(),

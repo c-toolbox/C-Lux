@@ -17,8 +17,7 @@ const LOCKOUT_MS = 5 * 60 * 1000;
 
 const loginBody = z.object({ password: z.string('must be a string') });
 
-// The environment wins so a deployment can keep the secret out of config.json entirely.
-const password = (process.env.CLUX_EDIT_PASSWORD ?? config.server.editPassword).trim();
+const password = config.server.editPassword.trim();
 
 // Leaving the password empty deliberately opens everything up: the editor endpoints stop
 // asking for a token and the edit page skips its unlock screen. Only sensible on a
@@ -27,8 +26,8 @@ const authRequired = password !== '';
 if (!authRequired) {
   console.warn(
     'No editor password configured: the editor and the endpoints it drives are open to ' +
-      'anyone who can reach this server. Set server.editPassword in config.json or the ' +
-      'CLUX_EDIT_PASSWORD environment variable to protect them.'
+      'anyone who can reach this server. Set server.editPassword in config.json to ' +
+      'protect them.'
   );
 }
 
