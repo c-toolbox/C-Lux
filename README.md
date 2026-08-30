@@ -13,7 +13,7 @@ Nothing is locked inside the UI, either. Every function the web interface offers
 
 ## Getting started
 
-Requires Node.js 22 or newer.
+Requires Node.js 22 or newer. See the Wiki page for more detailed explanations of the available patterns.
 
 ### Development
 
