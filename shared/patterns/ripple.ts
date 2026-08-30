@@ -120,9 +120,8 @@ export class RipplePattern extends Pattern {
     this.render();
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     const n = this.state.length;
-    if (n === 0) return;
 
     const fade = Math.exp(-this.decay * dt);
     // A front is done once it has faded out or its two halves have met on the far side.
@@ -144,7 +143,6 @@ export class RipplePattern extends Pattern {
 
   private spawn() {
     const n = this.state.length;
-    if (n === 0) return;
     this.waves.push({
       position: mod(this.origin * n, n),
       radius: 0,

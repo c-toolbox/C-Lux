@@ -1,5 +1,4 @@
 import {
-  ANY,
   type Color,
   Pattern,
   type PatternBaseProps,
@@ -30,8 +29,7 @@ export class AuroraPattern extends Pattern {
       label: 'Drift (turns/s)',
       default: 0.05,
       step: 0.01,
-      row: 0,
-      ...ANY
+      row: 0
     },
     scale: {
       kind: 'number',
@@ -98,7 +96,7 @@ export class AuroraPattern extends Pattern {
     this.render();
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     this.time += dt;
     this.render();
   }

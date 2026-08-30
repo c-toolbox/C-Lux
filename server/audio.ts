@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { AUDIO_BANDS, type AudioFrame, setAudioFrame } from '../shared/audio';
+import { AUDIO_BANDS, setAudioFrame } from '../shared/audio';
 
 import { HttpError } from './errors';
 
@@ -16,11 +16,11 @@ const audioBodySchema = z.object({
 });
 
 // Validate and accept one analysis frame from a capture client.
-export function publishAudioFrame(body: unknown): AudioFrame {
+export function publishAudioFrame(body: unknown): void {
   const result = audioBodySchema.safeParse(body ?? {});
   if (!result.success) {
     throw new HttpError(400, result.error.issues[0].message);
   }
   const { bands, level } = result.data;
-  return setAudioFrame(bands.map(clampUnit), clampUnit(level));
+  setAudioFrame(bands.map(clampUnit), clampUnit(level));
 }

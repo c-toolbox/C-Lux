@@ -15,6 +15,7 @@ import {
 
 import { api, AUDIO_TYPE, type PatternParameters, type Scene } from '../lib/api';
 import { authRequired, signOut } from '../lib/auth';
+import { describeError } from '../lib/errors';
 import { type FormValues, toProps } from '../PatternForm/PatternForm';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
@@ -23,7 +24,7 @@ import { AudioCapture } from './AudioCapture';
 import { EditPatternModal } from './EditPatternModal';
 import { ManageScenesModal } from './ManageScenesModal';
 import { PatternList } from './PatternList';
-import { describeError, downloadJson, randomName, readJsonFile } from './utils';
+import { downloadJson, randomName, readJsonFile } from './utils';
 
 function Editor() {
   const [patterns, setPatterns] = useState<PatternParameters[]>([]);
@@ -331,7 +332,6 @@ function Editor() {
       <EditPatternModal
         editing={editing}
         onClose={() => setEditing(null)}
-        existingNames={existingNames}
         busy={busy}
         onSubmit={(values) => void handleEdit(values)}
       />

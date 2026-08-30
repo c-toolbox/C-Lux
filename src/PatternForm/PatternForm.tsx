@@ -133,27 +133,23 @@ function Field({ spec, value, onChange }: FieldProps) {
   );
 }
 
-interface PatternSubFormProps {
-  mode: 'add' | 'edit';
+// The name is fixed once a pattern exists, so only the add form needs a placeholder and
+// the list of names to reject.
+type PatternSubFormProps = {
   initial: FormValues;
-  namePlaceholder: string;
-  existingNames: string[];
   busy: boolean;
   onSubmit: (values: FormValues) => void;
-}
+} & (
+  { mode: 'add'; namePlaceholder: string; existingNames: string[] } | { mode: 'edit' }
+);
 
 // Renders the inputs for a pattern's parameters straight from its `Fields` schema.
-export function PatternSubForm({
-  mode,
-  initial,
-  namePlaceholder,
-  existingNames,
-  busy,
-  onSubmit
-}: PatternSubFormProps) {
+export function PatternSubForm(props: PatternSubFormProps) {
+  const { initial, busy, onSubmit } = props;
   const [values, setValues] = useState<FormValues>(initial);
 
-  const nameTaken = mode === 'add' && existingNames.includes(values.name.trim());
+  const nameTaken =
+    props.mode === 'add' && props.existingNames.includes(values.name.trim());
   const nameError =
     values.name.trim() === ''
       ? 'Name is required'
@@ -168,10 +164,10 @@ export function PatternSubForm({
     <Stack gap={'md'}>
       <TextInput
         label={'Name'}
-        placeholder={namePlaceholder}
+        placeholder={props.mode === 'add' ? props.namePlaceholder : undefined}
         value={values.name}
         error={nameError}
-        disabled={mode === 'edit'}
+        disabled={props.mode === 'edit'}
         onChange={(e) => {
           // Read the value now: React nulls out `currentTarget` before the lazy
           // updater below runs.
@@ -202,7 +198,7 @@ export function PatternSubForm({
         loading={busy}
         disabled={nameError !== null}
       >
-        {mode === 'add' ? 'Add pattern' : 'Save changes'}
+        {props.mode === 'add' ? 'Add pattern' : 'Save changes'}
       </Button>
     </Stack>
   );

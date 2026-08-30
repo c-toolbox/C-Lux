@@ -1,5 +1,4 @@
 import {
-  ANY,
   type Color,
   Pattern,
   type PatternBaseProps,
@@ -32,8 +31,7 @@ export class BouncePattern extends Pattern {
       label: 'Speed (turns/s)',
       default: 0.1,
       step: 0.05,
-      row: 0,
-      ...ANY
+      row: 0
     }
   } satisfies PatternSchema;
 
@@ -77,9 +75,8 @@ export class BouncePattern extends Pattern {
     this.render();
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     const n = this.state.length;
-    if (n === 0) return;
     let pos = this.position + this.speed * n * this.direction * dt;
     // Turn around after a full turn in each direction. Both ends are the same light on
     // the ring, so the bump reverses at the seam rather than stopping short of it.

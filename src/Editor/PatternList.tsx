@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import {
-  ActionIcon,
-  Badge,
-  Button,
-  Group,
-  Stack,
-  Switch,
-  Text
-} from '@mantine/core';
+import { ActionIcon, Badge, Button, Group, Stack, Switch, Text } from '@mantine/core';
 
 import { patternDisplayName, type PatternParameters } from '../lib/api';
 

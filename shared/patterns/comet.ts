@@ -1,5 +1,4 @@
 import {
-  ANY,
   type Color,
   Pattern,
   type PatternBaseProps,
@@ -28,8 +27,7 @@ export class CometPattern extends Pattern {
       label: 'Speed (turns/s)',
       default: 0.1,
       step: 0.05,
-      row: 0,
-      ...ANY
+      row: 0
     },
     tail: {
       kind: 'number',
@@ -121,9 +119,8 @@ export class CometPattern extends Pattern {
     this.render();
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     const n = this.state.length;
-    if (n === 0) return;
     this.progress = mod(this.progress + this.speed * n * dt, this.cycle());
     this.render();
   }

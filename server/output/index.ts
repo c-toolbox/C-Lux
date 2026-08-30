@@ -3,7 +3,7 @@ import { config } from '../config';
 import { ArtNetSender } from './artnet';
 
 // A running output that periodically pushes the current frame and can be stopped.
-export interface Output {
+interface Output {
   stop(): void;
 }
 

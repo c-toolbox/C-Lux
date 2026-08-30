@@ -83,7 +83,6 @@ Vite in development. Endpoints marked with a lock require the editor password (s
 | PUT    | `/api/half-light`             | `{ halfLight }`         | Fade the top half out or restore it     |
 | GET    | `/api/solid-color`            | —                       | State of the fixed solid color scene     |
 | PUT    | `/api/solid-color`            | `{ color?, enabled? }`  | Fade it to a color, or switch it on/off |
-| GET    | `/api/frame`                  | —                       | The blended frame as a flat RGB array   |
 | GET    | `/api/stream`                 | —                       | Server-Sent Events stream of frames     |
 | GET    | `/api/scenes`                 | —                       | List the saved scenes                   |
 | POST   | `/api/scenes` 🔒              | `{ name }`              | Save the active patterns as a scene     |

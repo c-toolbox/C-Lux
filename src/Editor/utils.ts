@@ -5,10 +5,6 @@ export function randomName(): string {
   return `${pick(names.adjectives)}-${pick(names.nouns)}`;
 }
 
-export function describeError(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
-}
-
 // Turn a scene name into a safe file name for the exported JSON.
 function fileNameFor(name: string): string {
   const base = name.replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '');

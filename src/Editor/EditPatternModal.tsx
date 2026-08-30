@@ -10,7 +10,6 @@ import {
 interface EditPatternModalProps {
   editing: PatternParameters | null;
   onClose: () => void;
-  existingNames: string[];
   busy: boolean;
   onSubmit: (values: FormValues) => void;
 }
@@ -18,7 +17,6 @@ interface EditPatternModalProps {
 export function EditPatternModal({
   editing,
   onClose,
-  existingNames,
   busy,
   onSubmit
 }: EditPatternModalProps) {
@@ -33,8 +31,6 @@ export function EditPatternModal({
         <PatternSubForm
           mode={'edit'}
           initial={fromParameters(editing)}
-          namePlaceholder={editing.name}
-          existingNames={existingNames}
           busy={busy}
           onSubmit={onSubmit}
         />

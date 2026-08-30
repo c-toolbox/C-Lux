@@ -80,7 +80,7 @@ export class SparklePattern extends Pattern {
     this.render();
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     const n = this.state.length;
 
     // Fade every active sparkle toward zero.

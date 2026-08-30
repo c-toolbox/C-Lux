@@ -41,18 +41,11 @@ export function validateName(value: unknown, label: string): string {
   return trimmed;
 }
 
-// Fields with a well-defined 0-255 range (RGB channels), validated more strictly than
-// the generic finite-number check below.
-const BYTE_FIELDS = new Set(['r', 'g', 'b']);
-
 // Recursively verify every leaf value of a pattern's props is a finite number (color
 // sub-objects like `color2` are checked the same way), so malformed client input -
 // missing fields, strings, NaN - fails fast with a clear 400 instead of silently
 // corrupting pattern state with NaN.
-export function validatePatternProps(
-  props: unknown,
-  path = 'props'
-): Record<string, unknown> {
+function validatePatternProps(props: unknown, path = 'props'): Record<string, unknown> {
   if (typeof props !== 'object' || props === null || Array.isArray(props)) {
     throw new HttpError(400, `${path} must be an object`);
   }
@@ -64,9 +57,6 @@ export function validatePatternProps(
     if (typeof value === 'number') {
       if (!Number.isFinite(value)) {
         throw new HttpError(400, `${fieldPath} must be a finite number`);
-      }
-      if (BYTE_FIELDS.has(key) && (value < 0 || value > 255)) {
-        throw new HttpError(400, `${fieldPath} must be between 0 and 255`);
       }
     } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       validatePatternProps(value, fieldPath);

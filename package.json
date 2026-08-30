@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@mantine/core": "^9.5.1",
-    "@mantine/hooks": "^9.5.1",
     "@mantine/notifications": "^9.5.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
@@ -29,6 +28,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.9.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^24.13.3",

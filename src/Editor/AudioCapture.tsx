@@ -6,8 +6,7 @@ import {
   type AudioSource,
   startAudioCapture
 } from '../lib/audio';
-
-import { describeError } from './utils';
+import { describeError } from '../lib/errors';
 
 const SOURCES = [
   { value: 'system', label: 'System audio' },

@@ -27,7 +27,7 @@ export interface AudioCaptureHandle {
   stop: () => void;
 }
 
-export interface AudioCaptureOptions {
+interface AudioCaptureOptions {
   source: AudioSource;
   // Called every analysis frame with the current loudness in [0, 1], for a meter.
   onLevel: (level: number) => void;

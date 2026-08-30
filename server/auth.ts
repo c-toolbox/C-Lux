@@ -107,9 +107,8 @@ export function login(req: express.Request, res: express.Response) {
   }
 
   const token = randomBytes(32).toString('base64url');
-  const expiresAt = now + SESSION_TTL_MS;
-  sessions.set(token, expiresAt);
-  res.json({ token, expiresAt });
+  sessions.set(token, now + SESSION_TTL_MS);
+  res.json({ token });
 }
 
 export function logout(req: express.Request, res: express.Response) {

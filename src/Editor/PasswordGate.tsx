@@ -14,8 +14,7 @@ import {
 
 import { api } from '../lib/api';
 import { onSignedOut, setAuthRequired, setEditorToken } from '../lib/auth';
-
-import { describeError } from './utils';
+import { describeError } from '../lib/errors';
 
 // Renders its children only once the editor password has been accepted. The gate is a
 // convenience, not the protection itself: the endpoints the editor drives are guarded

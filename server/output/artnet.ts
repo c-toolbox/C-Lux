@@ -1,7 +1,6 @@
 import dgram from 'node:dgram';
 
-export interface ArtNetConfig {
-  enabled: boolean;
+interface ArtNetConfig {
   host: string;
   port: number;
   net: number;

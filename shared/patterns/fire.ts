@@ -75,7 +75,7 @@ export class FirePattern extends Pattern {
     this.render();
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     this.accumulator += dt;
     while (this.accumulator >= STEP) {
       this.step();
@@ -87,7 +87,6 @@ export class FirePattern extends Pattern {
   // One iteration of the classic Fire2012 heat simulation.
   private step() {
     const n = this.heat.length;
-    if (n === 0) return;
 
     // Cool every cell by a random amount.
     for (let i = 0; i < n; i++) {

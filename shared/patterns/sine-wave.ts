@@ -1,5 +1,4 @@
 import {
-  ANY,
   type Color,
   Pattern,
   type PatternBaseProps,
@@ -35,8 +34,7 @@ export class SineWavePattern extends Pattern {
       label: 'Speed (turns/s)',
       default: 0.07,
       step: 0.05,
-      row: 0,
-      ...ANY
+      row: 0
     },
     min: { kind: 'number', label: 'Min', default: 0, step: 0.05, row: 1, ...UNIT },
     max: { kind: 'number', label: 'Max', default: 1, step: 0.05, row: 1, ...UNIT }
@@ -89,7 +87,7 @@ export class SineWavePattern extends Pattern {
     this.render();
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     this.phase += this.speed * this.state.length * dt;
     this.render();
   }

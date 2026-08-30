@@ -1,5 +1,4 @@
 import {
-  ANY,
   type Color,
   Pattern,
   type PatternBaseProps,
@@ -32,8 +31,7 @@ export class TheaterChasePattern extends Pattern {
       label: 'Speed (turns/s)',
       default: 0.05,
       step: 0.05,
-      row: 0,
-      ...ANY
+      row: 0
     }
   } satisfies PatternSchema;
 
@@ -77,7 +75,7 @@ export class TheaterChasePattern extends Pattern {
     this.render();
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     this.remainder += this.speed * this.state.length * dt;
     const steps = Math.trunc(this.remainder);
     if (steps !== 0) {

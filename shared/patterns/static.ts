@@ -18,6 +18,19 @@ export type StaticProps = PatternBaseProps &
 // list and drives through the /api/solid-color endpoints.
 export const SOLID_COLOR_NAME = 'solid-color';
 
+// Shape of the /api/solid-color responses: whether the layer is showing and the color
+// it is on, or heading for while it interpolates.
+export interface SolidColorStatus {
+  enabled: boolean;
+  target: Color;
+}
+
+// A change to that layer; omitted fields are left alone.
+export interface SolidColorUpdate {
+  color?: Color;
+  enabled?: boolean;
+}
+
 export class StaticPattern extends Pattern {
   static readonly Type = 'StaticPattern';
   static readonly DisplayName = 'Static';
@@ -95,7 +108,7 @@ export class StaticPattern extends Pattern {
    * The color currently on the lights, which differs from the configured color while a
    * fade started by `fadeTo` is still running.
    */
-  color(): Color {
+  private color(): Color {
     const t = this.progress();
     return {
       r: Math.round(this.fadeFrom.r + (this.r - this.fadeFrom.r) * t),
@@ -122,11 +135,11 @@ export class StaticPattern extends Pattern {
     this.fadeElapsed = 0;
   }
 
-  fading(): boolean {
+  private fading(): boolean {
     return this.fadeElapsed < this.fadeDuration;
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     if (!this.fading()) return;
 
     this.fadeElapsed += dt;

@@ -17,17 +17,17 @@ import { TheaterChasePattern, type TheaterChaseProps } from './theater-chase.ts'
 
 // The static metadata every pattern class carries: its `Type` tag, a user-facing
 // `DisplayName` and the `Fields` describing its configurable parameters.
-export interface PatternStatics {
+interface PatternStatics {
   Type: string;
   DisplayName: string;
   Fields: PatternSchema;
 }
 
 // A concrete pattern class: constructable and tagged with the static metadata above.
-export type PatternClass = (new (props: PatternProps) => Pattern) & PatternStatics;
+type PatternClass = (new (props: PatternProps) => Pattern) & PatternStatics;
 
 // The list of all available patterns. Register a new pattern by adding its class here
-export const PATTERNS = [
+const PATTERNS = [
   StaticPattern,
   MovingGaussianPattern,
   SparklePattern,
@@ -71,26 +71,8 @@ export function patternDisplayName(type: string): string {
   return patternByType(type)?.DisplayName ?? type;
 }
 
-export type {
-  AudioProps,
-  AuroraProps,
-  BounceProps,
-  Color,
-  ColorCycleProps,
-  CometProps,
-  FieldSpec,
-  FireProps,
-  GradientProps,
-  MovingGaussianProps,
-  PatternSchema,
-  PulseProps,
-  RainbowProps,
-  RippleProps,
-  SineWaveProps,
-  SparkleProps,
-  StaticProps,
-  TheaterChaseProps
-};
+export type { Color, FieldSpec, PatternSchema };
+
 export type PatternProps =
   | StaticProps
   | MovingGaussianProps

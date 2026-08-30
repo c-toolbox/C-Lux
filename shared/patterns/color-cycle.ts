@@ -1,5 +1,4 @@
 import {
-  ANY,
   hsvToRgb,
   Pattern,
   type PatternBaseProps,
@@ -17,7 +16,7 @@ export class ColorCyclePattern extends Pattern {
   static readonly Type = 'ColorCycle';
   static readonly DisplayName = 'Color Cycle';
   static readonly Fields = {
-    speed: { kind: 'number', label: 'Speed (°/s)', default: 30, step: 5, ...ANY },
+    speed: { kind: 'number', label: 'Speed (°/s)', default: 30, step: 5 },
     saturation: {
       kind: 'number',
       label: 'Saturation',
@@ -64,7 +63,7 @@ export class ColorCyclePattern extends Pattern {
     this.render();
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     this.hue += this.speed * dt;
     this.render();
   }

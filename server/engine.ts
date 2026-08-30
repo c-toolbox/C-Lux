@@ -6,7 +6,12 @@ import {
   type PatternProps,
   type Scene
 } from '../shared/patterns/patterns';
-import { SOLID_COLOR_NAME, StaticPattern } from '../shared/patterns/static';
+import {
+  SOLID_COLOR_NAME,
+  type SolidColorStatus,
+  type SolidColorUpdate,
+  StaticPattern
+} from '../shared/patterns/static';
 
 import { config } from './config';
 import { HttpError } from './errors';
@@ -33,21 +38,6 @@ interface FadingStack {
   patterns: Array<Pattern>;
   solidEnabled: boolean;
   weight: number;
-}
-
-// State of the hardcoded solid color layer: whether it is showing, the color on the
-// lights right now and, while it is interpolating, where it is heading.
-export interface SolidColorStatus {
-  enabled: boolean;
-  color: Color;
-  target: Color;
-  fading: boolean;
-}
-
-// A change to that layer; omitted fields are left alone.
-export interface SolidColorUpdate {
-  color?: Color;
-  enabled?: boolean;
 }
 
 // Owns all mutable server state (patterns, scenes, blackout) and the logic that
@@ -169,17 +159,14 @@ export class Engine {
     return instance.serialize() as PatternParameters;
   }
 
-  reorderPatterns(order: unknown): string[] {
-    if (!Array.isArray(order) || order.length !== this.patterns.length) {
+  reorderPatterns(order: string[]): string[] {
+    if (order.length !== this.patterns.length) {
       throw new HttpError(400, 'order must list every existing pattern name once');
     }
 
     const byName = new Map(this.patterns.map((p) => [p.name, p]));
     const reordered: Array<Pattern> = [];
     for (const name of order) {
-      if (typeof name !== 'string') {
-        throw new HttpError(400, 'order must contain only pattern names');
-      }
       const instance = byName.get(name);
       if (!instance) {
         throw new HttpError(400, `Unknown or duplicate pattern name: ${name}`);
@@ -198,12 +185,7 @@ export class Engine {
 
   solidColorStatus(): SolidColorStatus {
     const { color } = this.solidColor.parameters();
-    return {
-      enabled: this.solidColor.enabled,
-      color: this.solidColor.color(),
-      target: color,
-      fading: this.solidColor.fading()
-    };
+    return { enabled: this.solidColor.enabled, target: color };
   }
 
   // A new color eases in from whatever is currently lit over `solidColorTransition`
@@ -408,17 +390,14 @@ export class Engine {
     return this.listPatterns();
   }
 
-  async reorderScenes(order: unknown): Promise<Scene[]> {
-    if (!Array.isArray(order) || order.length !== this.scenes.length) {
+  async reorderScenes(order: string[]): Promise<Scene[]> {
+    if (order.length !== this.scenes.length) {
       throw new HttpError(400, 'order must list every existing scene name once');
     }
 
     const byName = new Map(this.scenes.map((s) => [s.name, s]));
     const reordered: Scene[] = [];
     for (const name of order) {
-      if (typeof name !== 'string') {
-        throw new HttpError(400, 'order must contain only scene names');
-      }
       const scene = byName.get(name);
       if (!scene) {
         throw new HttpError(400, `Unknown or duplicate scene name: ${name}`);

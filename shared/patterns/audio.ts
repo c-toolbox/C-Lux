@@ -13,8 +13,8 @@ import {
 // Exported so the browser can tell whether a capture panel needs to be offered.
 export const AUDIO_TYPE = 'Audio';
 
-export const AUDIO_MODE_SPECTRUM = 0;
-export const AUDIO_MODE_VU = 1;
+const AUDIO_MODE_SPECTRUM = 0;
+const AUDIO_MODE_VU = 1;
 
 const DEGREES: NumberRange = { min: 0, max: 360 };
 const SIGNED_DEGREES: NumberRange = { min: -360, max: 360 };
@@ -140,7 +140,7 @@ export class AudioPattern extends Pattern {
     this.render();
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     const frame = audioFrame();
     const falloff = Math.exp(-this.decay * dt);
 
@@ -160,7 +160,6 @@ export class AudioPattern extends Pattern {
 
   private render() {
     const n = this.state.length;
-    if (n === 0) return;
 
     // Light 0 sits at the top of the ring, so both halves are drawn from there downward,
     // mirrored around the vertical axis.

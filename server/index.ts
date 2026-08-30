@@ -5,8 +5,6 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
-import { audioFrame } from '../shared/audio';
-
 import { publishAudioFrame } from './audio';
 import { getAuth, login, logout, requireAuth } from './auth';
 import { config } from './config';
@@ -102,10 +100,6 @@ function setHalfLight(req: express.Request, res: express.Response) {
   res.json({ halfLight: engine.setHalfLight(halfLight) });
 }
 
-function getFrame(_req: express.Request, res: express.Response) {
-  res.json(engine.blend());
-}
-
 // The color the hardcoded solid-color layer is showing, plus its fade target.
 function getSolidColor(_req: express.Request, res: express.Response) {
   res.json(engine.solidColorStatus());
@@ -116,21 +110,11 @@ function setSolidColor(req: express.Request, res: express.Response) {
   res.json(engine.setSolidColor(parseBody(solidColorBody, req.body)));
 }
 
-// The latest analysis a capture client streamed, for patterns and diagnostics.
-function getAudio(_req: express.Request, res: express.Response) {
-  res.json(audioFrame());
-}
-
 // Ingest one analysis frame from a browser capturing the sound card. Answers 204 so a
 // client posting tens of times a second doesn't have to read a body it ignores.
 function postAudio(req: express.Request, res: express.Response) {
   publishAudioFrame(req.body);
   res.status(204).end();
-}
-
-// Liveness probe for a monitor or reverse proxy.
-function getHealth(_req: express.Request, res: express.Response) {
-  res.json({ ok: true });
 }
 
 // Stream the blended frame to the client on every tick via Server-Sent Events.
@@ -226,11 +210,8 @@ async function main() {
   routes.put('/half-light', setHalfLight);
   routes.get('/solid-color', getSolidColor);
   routes.put('/solid-color', setSolidColor);
-  routes.get('/frame', getFrame);
-  routes.get('/audio', getAudio);
   routes.post('/audio', requireAuth, postAudio);
   routes.get('/stream', streamFrames);
-  routes.get('/health', getHealth);
   routes.get('/scenes', listScenes);
   routes.post('/scenes', requireAuth, saveScene);
   routes.post('/scenes/import', requireAuth, importScene);

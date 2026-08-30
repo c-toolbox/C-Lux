@@ -7,7 +7,7 @@ export interface Color {
 }
 
 // Internal per-light color carrying an alpha channel in [0, 1] used for blending.
-export interface ColorAlpha extends Color {
+interface ColorAlpha extends Color {
   a: number;
 }
 
@@ -45,7 +45,6 @@ export type FieldSpec =
 // (so `color` / `color2` rather than the flat r/g/b constructor props).
 export type PatternSchema = Record<string, FieldSpec>;
 
-export const ANY: NumberRange = {};
 export const UNIT: NumberRange = { min: 0, max: 1 };
 export const NON_NEGATIVE: NumberRange = { min: 0 };
 export const POSITIVE: NumberRange = { exclusiveMin: 0 };
@@ -82,9 +81,6 @@ export abstract class Pattern {
   name: string;
   enabled: boolean;
   state: Array<ColorAlpha>;
-
-  previous_time: number = 0;
-  current_time: number = 0;
 
   constructor({ name, enabled }: PatternBaseProps) {
     this.name = name;
@@ -131,22 +127,12 @@ export abstract class Pattern {
   }
 
   /**
-   * Perform a single tick to support animations.
-   *
-   * @param dt The frame time, so how much time has passed (in seconds) since the previous
-   *           update
-   */
-  tick(dt: number): void {
-    this.advance(dt);
-  }
-
-  /**
    * Advance the animation by one frame. Subclasses implement their motion here.
    *
    * @param dt The frame time, so how much time has passed (in seconds) since the previous
    *           update
    */
-  protected abstract advance(dt: number): void;
+  abstract tick(dt: number): void;
 
   // Flat per-light values as [r, g, b, a, ...]; alpha lets the server blend layers.
   data(): Array<number> {
@@ -160,14 +146,8 @@ export abstract class Pattern {
     return res;
   }
 
-  protected updateTime(dt: number) {
-    this.previous_time = this.current_time;
-    this.current_time += dt;
-  }
-
   protected rotate(steps: number) {
     if (steps == 0) return;
-    if (this.state.length == 0) return;
 
     const reverse = steps < 0;
     if (steps < 0) {

@@ -1,5 +1,4 @@
 import {
-  ANY,
   type Color,
   Pattern,
   type PatternBaseProps,
@@ -34,8 +33,7 @@ export class MovingGaussianPattern extends Pattern {
       label: 'Speed (turns/s)',
       default: 0.07,
       step: 0.05,
-      row: 0,
-      ...ANY
+      row: 0
     },
     origin: {
       kind: 'number',
@@ -94,7 +92,7 @@ export class MovingGaussianPattern extends Pattern {
     // Gaussian bump centered on the origin index; rotation moves it around the ring.
     const n = this.state.length;
     const sigmaLights = this.sigma * n;
-    const originLights = n > 0 ? (((this.origin * n) % n) + n) % n : 0;
+    const originLights = (((this.origin * n) % n) + n) % n;
     const twoSigmaSq = 2 * sigmaLights * sigmaLights;
     for (let i = 0; i < n; i++) {
       const diff = Math.abs(i - originLights);
@@ -110,7 +108,7 @@ export class MovingGaussianPattern extends Pattern {
     }
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     this.offset += this.speed * this.state.length * dt;
     const steps = Math.trunc(this.offset);
     if (steps !== 0) {

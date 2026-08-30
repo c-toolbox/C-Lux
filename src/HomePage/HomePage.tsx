@@ -21,6 +21,7 @@ import {
   type SolidColorUpdate
 } from '../lib/api';
 import { hexToRgb, rgbToHex } from '../lib/color';
+import { describeError } from '../lib/errors';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
 // Mantine swaps the button variant when a toggle flips, so ease the resulting colors.
@@ -283,10 +284,6 @@ export function HomePage() {
       </Stack>
     </Container>
   );
-}
-
-function describeError(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
 }
 
 function names(patterns: PatternParameters[]): string[] {

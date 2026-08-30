@@ -2,42 +2,25 @@ export { AUDIO_TYPE } from '../../shared/patterns/audio';
 export type {
   Color,
   FieldSpec,
-  MovingGaussianProps,
   PatternParameters,
   PatternProps,
   PatternSchema,
   PatternType,
-  Scene,
-  SparkleProps,
-  StaticProps
+  Scene
 } from '../../shared/patterns/patterns';
 export { PATTERN_TYPES } from '../../shared/patterns/patterns';
 export { patternByType, patternDisplayName } from '../../shared/patterns/patterns';
+export type { SolidColorStatus, SolidColorUpdate } from '../../shared/patterns/static';
 
 import type {
-  Color,
   PatternParameters,
   PatternProps,
   PatternType,
   Scene
 } from '../../shared/patterns/patterns';
+import type { SolidColorStatus, SolidColorUpdate } from '../../shared/patterns/static';
 
 import { authHeaders, editorToken, signOut } from './auth';
-
-// Shape of the /api/solid-color responses: what is lit now, and where a running fade is
-// heading.
-export interface SolidColorStatus {
-  enabled: boolean;
-  color: Color;
-  target: Color;
-  fading: boolean;
-}
-
-// A change to that layer; omitted fields are left alone.
-export interface SolidColorUpdate {
-  color?: Color;
-  enabled?: boolean;
-}
 
 async function request<T>(
   url: string,
@@ -81,7 +64,7 @@ export const api = {
   // whether a password is configured at all.
   authStatus: () => request<{ authenticated: boolean; required: boolean }>('/auth'),
   login: (password: string) =>
-    request<{ token: string; expiresAt: number }>('/auth/login', 'POST', { password }),
+    request<{ token: string }>('/auth/login', 'POST', { password }),
   logout: () => request<void>('/auth/logout', 'POST'),
   listPatterns: () => request<PatternParameters[]>('/patterns'),
   addPattern: (type: PatternType, props: PatternProps) =>
@@ -97,7 +80,7 @@ export const api = {
   setHalfLight: (halfLight: boolean) =>
     request<{ halfLight: boolean }>('/half-light', 'PUT', { halfLight }),
   solidColor: () => request<SolidColorStatus>('/solid-color'),
-  // A new color eases in from the one currently lit; the response reports the fade start.
+  // A new color eases in from the one currently lit; the response reports the target.
   setSolidColor: (update: SolidColorUpdate) =>
     request<SolidColorStatus>('/solid-color', 'PUT', update),
   removePattern: (name: string) =>
@@ -106,7 +89,6 @@ export const api = {
     request<string[]>('/patterns/reorder', 'POST', { order }),
   // Leaves only the hardcoded solid-color layer running.
   clearPatterns: () => request<PatternParameters[]>('/patterns/clear', 'POST'),
-  getFrame: () => request<number[]>('/frame'),
   listScenes: () => request<Scene[]>('/scenes'),
   saveScene: (name: string) => request<Scene[]>('/scenes', 'POST', { name }),
   // Add a scene read from a JSON file; the server re-validates it and renames it if the

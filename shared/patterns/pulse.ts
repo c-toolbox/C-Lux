@@ -72,7 +72,7 @@ export class PulsePattern extends Pattern {
     this.render();
   }
 
-  advance(dt: number) {
+  tick(dt: number) {
     this.phase += dt;
     this.render();
   }

@@ -54,7 +54,7 @@ const configSchema = z
     }
   });
 
-export type Config = z.infer<typeof configSchema>;
+type Config = z.infer<typeof configSchema>;
 
 function loadConfig(): Config {
   const result = configSchema.safeParse(rawConfig);

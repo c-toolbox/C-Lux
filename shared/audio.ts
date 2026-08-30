@@ -11,17 +11,15 @@ export const AUDIO_BANDS = 32;
 // fall dark instead of freezing on the last frame when capture stops.
 const STALE_MS = 750;
 
-export interface AudioFrame {
+interface AudioFrame {
   // Per-band magnitude in [0, 1], lowest frequency first.
   bands: number[];
   // Overall loudness in [0, 1].
   level: number;
-  // False when nothing is currently streaming.
-  live: boolean;
 }
 
 function silence(): AudioFrame {
-  return { bands: new Array<number>(AUDIO_BANDS).fill(0), level: 0, live: false };
+  return { bands: new Array<number>(AUDIO_BANDS).fill(0), level: 0 };
 }
 
 let latest = silence();
@@ -29,10 +27,9 @@ let latestAt = 0;
 
 // Record an already-validated frame from a capture client (the server ingest endpoint
 // is responsible for validating and clamping the raw request body first).
-export function setAudioFrame(bands: number[], level: number): AudioFrame {
-  latest = { bands, level, live: true };
+export function setAudioFrame(bands: number[], level: number): void {
+  latest = { bands, level };
   latestAt = Date.now();
-  return latest;
 }
 
 // The most recent frame, or silence when nothing has arrived recently.
