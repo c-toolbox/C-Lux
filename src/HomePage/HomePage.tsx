@@ -112,11 +112,6 @@ export function HomePage() {
     try {
       setActive(names(await api.replaceWithScene(scene.name)));
       trackSolid(await api.setSolidColor({ enabled: false }));
-      notifications.show({
-        color: 'green',
-        title: 'Scene selected',
-        message: `Now showing “${scene.name}”.`
-      });
     } catch (e) {
       showError(e);
     } finally {
@@ -159,11 +154,6 @@ export function HomePage() {
     try {
       setActive(names(await api.clearPatterns()));
       trackSolid(await api.setSolidColor({ enabled: true }));
-      notifications.show({
-        color: 'green',
-        title: 'Scene selected',
-        message: 'Now showing “Solid color”.'
-      });
     } catch (e) {
       showError(e);
     } finally {
@@ -175,8 +165,8 @@ export function HomePage() {
     <Container
       fluid
       w={'100%'}
-      px={'5%'}
-      py={'xl'}
+      px={'2%'}
+      py={'2%'}
       h={'100svh'}
       style={{ display: 'flex', flexDirection: 'column' }}
     >
@@ -195,11 +185,12 @@ export function HomePage() {
           </Group>
         ) : (
           <ScrollArea type={'auto'} offsetScrollbars style={{ flex: 1, minHeight: 0 }}>
-            <Stack gap={'sm'}>
+            <Stack gap={'xs'}>
               {solid && (
                 <Group
                   justify={'space-between'}
-                  p={'md'}
+                  px={'md'}
+                  py={'xs'}
                   style={{
                     border: '1px solid var(--mantine-color-default-border)',
                     borderRadius: 8
@@ -245,7 +236,8 @@ export function HomePage() {
                   <Group
                     key={scene.name}
                     justify={'space-between'}
-                    p={'md'}
+                    px={'md'}
+                    py={'xs'}
                     style={{
                       border: '1px solid var(--mantine-color-default-border)',
                       borderRadius: 8

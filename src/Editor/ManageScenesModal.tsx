@@ -167,7 +167,7 @@ function SceneRow({
 
   return (
     <Group
-      align={'flex-end'}
+      align={'center'}
       justify={'space-between'}
       gap={'xs'}
       p={'sm'}
@@ -181,7 +181,7 @@ function SceneRow({
           : '1px solid var(--mantine-color-default-border)'
       }}
     >
-      <Group align={'flex-end'} gap={4} style={{ flex: '1 1 320px' }}>
+      <Group align={'center'} gap={4} style={{ flex: '1 1 320px' }}>
         <ActionIcon
           variant={'subtle'}
           color={'gray'}
@@ -216,7 +216,7 @@ function SceneRow({
           </ActionIcon>
         </Stack>
         <TextInput
-          label={`${scene.patterns.length} pattern(s)`}
+          aria-label={'Scene name'}
           value={name}
           disabled={busy}
           onChange={(e) => setName(e.currentTarget.value)}

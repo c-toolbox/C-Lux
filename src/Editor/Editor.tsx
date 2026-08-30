@@ -201,8 +201,8 @@ function Editor() {
     <Container
       fluid
       w={'100%'}
-      px={'5%'}
-      py={'xl'}
+      px={'2%'}
+      py={'2%'}
       h={'100svh'}
       style={{ display: 'flex', flexDirection: 'column' }}
     >

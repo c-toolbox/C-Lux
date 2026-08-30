@@ -30,12 +30,13 @@ export function PatternList({
   }
 
   return (
-    <Stack gap={'sm'}>
+    <Stack gap={'xs'}>
       {patterns.map((p, i) => (
         <Group
           key={p.name}
           justify={'space-between'}
-          p={'md'}
+          px={'md'}
+          py={'xs'}
           onDragOver={(e) => {
             if (dragIndex === null) return;
             e.preventDefault();
@@ -66,11 +67,11 @@ export function PatternList({
             >
               ⠿
             </ActionIcon>
-            <Stack gap={2}>
+            <Stack gap={0}>
               <ActionIcon
                 variant={'subtle'}
                 color={'gray'}
-                size={'sm'}
+                size={'xs'}
                 disabled={busy || i === 0}
                 onClick={() => onMove(i, i - 1)}
                 aria-label={'Move pattern up'}
@@ -80,7 +81,7 @@ export function PatternList({
               <ActionIcon
                 variant={'subtle'}
                 color={'gray'}
-                size={'sm'}
+                size={'xs'}
                 disabled={busy || i === patterns.length - 1}
                 onClick={() => onMove(i, i + 1)}
                 aria-label={'Move pattern down'}
@@ -88,19 +89,20 @@ export function PatternList({
                 ▼
               </ActionIcon>
             </Stack>
-            <div style={{ opacity: p.enabled ? 1 : 0.5 }}>
-              <Text fw={600}>{p.name}</Text>
-              <Group gap={'xs'} mt={4}>
-                <Badge variant={'light'} size={'sm'}>
-                  {patternDisplayName(p.type)}
+            <Group gap={'xs'} wrap={'nowrap'} style={{ opacity: p.enabled ? 1 : 0.5 }}>
+              {/* Fixed width so the type badges line up down the list. */}
+              <Text fw={600} w={180} truncate>
+                {p.name}
+              </Text>
+              <Badge variant={'light'} size={'sm'}>
+                {patternDisplayName(p.type)}
+              </Badge>
+              {!p.enabled && (
+                <Badge variant={'light'} color={'gray'} size={'sm'}>
+                  Disabled
                 </Badge>
-                {!p.enabled && (
-                  <Badge variant={'light'} color={'gray'} size={'sm'}>
-                    Disabled
-                  </Badge>
-                )}
-              </Group>
-            </div>
+              )}
+            </Group>
           </Group>
 
           <Group gap={'xs'}>
