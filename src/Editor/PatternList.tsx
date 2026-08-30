@@ -3,7 +3,6 @@ import {
   ActionIcon,
   Badge,
   Button,
-  ColorSwatch,
   Group,
   Stack,
   Switch,
@@ -11,7 +10,6 @@ import {
 } from '@mantine/core';
 
 import { patternDisplayName, type PatternParameters } from '../lib/api';
-import { patternSwatchHex } from '../lib/color';
 
 interface PatternListProps {
   patterns: PatternParameters[];
@@ -98,7 +96,6 @@ export function PatternList({
                 ▼
               </ActionIcon>
             </Stack>
-            <ColorSwatch color={patternSwatchHex(p)} opacity={p.enabled ? 1 : 0.4} />
             <div style={{ opacity: p.enabled ? 1 : 0.5 }}>
               <Text fw={600}>{p.name}</Text>
               <Group gap={'xs'} mt={4}>

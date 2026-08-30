@@ -50,7 +50,7 @@ export interface SolidColorUpdate {
   enabled?: boolean;
 }
 
-// Owns all mutable server state (patterns, scenes, pause/blackout) and the logic that
+// Owns all mutable server state (patterns, scenes, blackout) and the logic that
 // ticks animations, blends layers, and broadcasts frames. The active pattern list is
 // deliberately not persisted: it only outlives a restart once saved as a scene.
 export class Engine {
@@ -68,11 +68,6 @@ export class Engine {
     enabled: false,
     ...SOLID_COLOR_DEFAULT
   });
-
-  // Global pause. `pauseFactor` scales the tick dt and eases between 1 (running) and 0
-  // (paused) so animations ramp in and out instead of snapping.
-  private serverPaused = false;
-  private pauseFactor = 1;
 
   // Master blackout. `brightnessFactor` scales the output and eases between 1 (full) and
   // 0 (black) so the lights fade rather than snap.
@@ -225,17 +220,8 @@ export class Engine {
   }
 
   //
-  // Pause / blackout
+  // Blackout
   //
-
-  isPaused(): boolean {
-    return this.serverPaused;
-  }
-
-  setPaused(paused: boolean): boolean {
-    this.serverPaused = paused;
-    return this.serverPaused;
-  }
 
   isBlackout(): boolean {
     return this.blackout;
@@ -603,19 +589,9 @@ export class Engine {
     }
   }
 
-  // Advance every pattern and ease the pause/brightness factors toward their targets.
+  // Advance every pattern and ease the brightness factors toward their targets.
   tick(dt: number): void {
-    this.pauseFactor = approach(
-      this.pauseFactor,
-      this.serverPaused ? 0 : 1,
-      dt,
-      config.server.pauseTransition
-    );
-
-    const scaledDt = dt * this.pauseFactor;
-    this.tickPatterns(scaledDt);
-
-    // Color fades are transitions rather than animation, so they run even while paused.
+    this.tickPatterns(dt);
     this.solidColor.tick(dt);
 
     // Likewise for the scene dissolves. Each stack is dropped once the one that replaced

@@ -31,7 +31,6 @@ const updatePatternBody = z.object({
 });
 const orderBody = z.object({ order: z.array(z.string()) });
 const enabledBody = z.object({ enabled: z.boolean('must be true or false') });
-const pausedBody = z.object({ paused: z.boolean('must be true or false') });
 const blackoutBody = z.object({
   blackout: z.boolean('must be true or false')
 });
@@ -83,15 +82,6 @@ function setPatternEnabled(req: express.Request, res: express.Response) {
 function reorderPatterns(req: express.Request, res: express.Response) {
   const { order } = parseBody(orderBody, req.body);
   res.json(engine.reorderPatterns(order));
-}
-
-function getPause(_req: express.Request, res: express.Response) {
-  res.json({ paused: engine.isPaused() });
-}
-
-function setPause(req: express.Request, res: express.Response) {
-  const { paused } = parseBody(pausedBody, req.body);
-  res.json({ paused: engine.setPaused(paused) });
 }
 
 function getBlackout(_req: express.Request, res: express.Response) {
@@ -230,8 +220,6 @@ async function main() {
   routes.patch('/patterns/:name', requireAuth, updatePattern);
   routes.put('/patterns/:name/enabled', requireAuth, setPatternEnabled);
   routes.delete('/patterns/:name', requireAuth, removePattern);
-  routes.get('/pause', getPause);
-  routes.put('/pause', setPause);
   routes.get('/blackout', getBlackout);
   routes.put('/blackout', setBlackout);
   routes.get('/half-light', getHalfLight);

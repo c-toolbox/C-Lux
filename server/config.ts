@@ -15,7 +15,6 @@ const configSchema = z
       // supplied through the CLUX_EDIT_PASSWORD environment variable instead; empty in
       // both places switches the protection off altogether.
       editPassword: z.string().default(''),
-      pauseTransition: z.number().nonnegative(),
       blackoutTransition: z.number().nonnegative(),
       halfLightTransition: z.number().nonnegative(),
       halfLightFeather: z.number().positive(),

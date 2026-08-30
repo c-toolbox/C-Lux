@@ -5,7 +5,6 @@
     "port": 8787,
     "scenes": "scenes.json",
     "editPassword": "",
-    "pauseTransition": 1.0,
     "blackoutTransition": 1.0,
     "halfLightTransition": 1.0,
     "halfLightFeather": 0.5,

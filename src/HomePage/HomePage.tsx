@@ -23,6 +23,11 @@ import {
 import { hexToRgb, rgbToHex } from '../lib/color';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
+// Mantine swaps the button variant when a toggle flips, so ease the resulting colors.
+const toggleTransition = {
+  transition: 'background-color 300ms ease, border-color 300ms ease, color 300ms ease'
+};
+
 export function HomePage() {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [active, setActive] = useState<string[]>([]);
@@ -34,7 +39,6 @@ export function HomePage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [paused, setPaused] = useState(false);
   const [blackout, setBlackout] = useState(false);
   const [halfLight, setHalfLight] = useState(false);
 
@@ -51,19 +55,17 @@ export function HomePage() {
 
   async function refresh() {
     try {
-      const [sceneList, patterns, solidColor, { paused }, { blackout }, { halfLight }] =
+      const [sceneList, patterns, solidColor, { blackout }, { halfLight }] =
         await Promise.all([
           api.listScenes(),
           api.listPatterns(),
           api.solidColor(),
-          api.serverPaused(),
           api.blackout(),
           api.halfLight()
         ]);
       setScenes(sceneList);
       setActive(names(patterns));
       trackSolid(solidColor);
-      setPaused(paused);
       setBlackout(blackout);
       setHalfLight(halfLight);
     } catch (e) {
@@ -74,19 +76,6 @@ export function HomePage() {
   useEffect(() => {
     void refresh().finally(() => setLoading(false));
   }, []);
-
-  // Pause or resume all pattern output on the server.
-  async function togglePaused() {
-    setBusy(true);
-    try {
-      const { paused: next } = await api.setServerPaused(!paused);
-      setPaused(next);
-    } catch (e) {
-      showError(e);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   // Fade the output to black or restore it.
   async function toggleBlackout() {
@@ -114,11 +103,12 @@ export function HomePage() {
     }
   }
 
-  // Replace the active patterns with the chosen scene.
+  // Replace the active patterns with the chosen scene, so it is all that is left showing.
   async function select(scene: Scene) {
     setBusy(true);
     try {
       setActive(names(await api.replaceWithScene(scene.name)));
+      trackSolid(await api.setSolidColor({ enabled: false }));
       notifications.show({
         color: 'green',
         title: 'Scene selected',
@@ -199,19 +189,11 @@ export function HomePage() {
         <Group gap={'xs'} grow>
           <Button
             disabled={busy}
-            onClick={() => void togglePaused()}
-            variant={paused ? 'filled' : 'default'}
-            color={paused ? 'orange' : undefined}
-            px={'xs'}
-          >
-            {paused ? 'Resume' : 'Pause'}
-          </Button>
-          <Button
-            disabled={busy}
             onClick={() => void toggleBlackout()}
             variant={blackout ? 'filled' : 'default'}
-            color={blackout ? 'blue' : undefined}
+            color={blackout ? '#2c5c00' : undefined}
             px={'xs'}
+            style={toggleTransition}
           >
             {blackout ? 'Restore' : 'Fade to black'}
           </Button>
@@ -219,8 +201,9 @@ export function HomePage() {
             disabled={busy}
             onClick={() => void toggleHalfLight()}
             variant={halfLight ? 'filled' : 'default'}
-            color={halfLight ? 'grape' : undefined}
+            color={halfLight ? '#a5145b' : undefined}
             px={'xs'}
+            style={toggleTransition}
           >
             {halfLight ? 'Full lights' : 'Half light'}
           </Button>

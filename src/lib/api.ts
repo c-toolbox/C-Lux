@@ -90,9 +90,6 @@ export const api = {
     request<PatternParameters>(`/patterns/${seg(name)}`, 'PATCH', { props }),
   setPatternEnabled: (name: string, enabled: boolean) =>
     request<PatternParameters>(`/patterns/${seg(name)}/enabled`, 'PUT', { enabled }),
-  serverPaused: () => request<{ paused: boolean }>('/pause'),
-  setServerPaused: (paused: boolean) =>
-    request<{ paused: boolean }>('/pause', 'PUT', { paused }),
   blackout: () => request<{ blackout: boolean }>('/blackout'),
   setBlackout: (blackout: boolean) =>
     request<{ blackout: boolean }>('/blackout', 'PUT', { blackout }),

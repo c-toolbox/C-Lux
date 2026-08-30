@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Alert,
   Button,
   Container,
+  FileButton,
   Group,
   Loader,
   Stack,
   Text,
+  TextInput,
   Title
 } from '@mantine/core';
 
@@ -33,13 +35,14 @@ function Editor() {
   const [editing, setEditing] = useState<PatternParameters | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
   const [scenes, setScenes] = useState<Scene[]>([]);
-  const [newSceneName, setNewSceneName] = useState('');
-  const [serverPaused, setServerPaused] = useState(false);
+  const [newSceneName, setNewSceneName] = useState(randomName());
+  // The scene the pattern list was loaded from, if the user is editing one in place.
+  const [editingScene, setEditingScene] = useState<string | null>(null);
+  const resetFile = useRef<() => void>(null);
 
   async function refresh() {
     try {
       setPatterns(await api.listPatterns());
-      setServerPaused((await api.serverPaused()).paused);
       setError(null);
     } catch (e) {
       setError(describeError(e));
@@ -86,14 +89,6 @@ function Editor() {
     void run(() => api.setPatternEnabled(name, enabled));
   }
 
-  function handleToggleServerPause() {
-    void run(async () => {
-      const next = !serverPaused;
-      const res = await api.setServerPaused(next);
-      setServerPaused(res.paused);
-    });
-  }
-
   async function refreshScenes() {
     setScenes(await api.listScenes());
   }
@@ -110,10 +105,28 @@ function Editor() {
     void run(() => api.applyScene(scene.name));
   }
 
+  // Load a scene's patterns as the working list so it can be changed and saved back.
+  function handleEditScene(scene: Scene) {
+    void run(async () => {
+      await api.replaceWithScene(scene.name);
+      setEditingScene(scene.name);
+      setManageOpen(false);
+    });
+  }
+
+  function handleUpdateScene(name: string) {
+    void run(async () => {
+      await api.saveScene(name);
+      await refreshScenes();
+      setEditingScene(null);
+    });
+  }
+
   function handleDeleteScene(name: string) {
     void run(async () => {
       await api.deleteScene(name);
       await refreshScenes();
+      if (editingScene === name) setEditingScene(null);
     });
   }
 
@@ -121,6 +134,7 @@ function Editor() {
     void run(async () => {
       await api.renameScene(name, newName);
       await refreshScenes();
+      if (editingScene === name) setEditingScene(newName);
     });
   }
 
@@ -154,7 +168,6 @@ function Editor() {
     setError(null);
     try {
       await refreshScenes();
-      setNewSceneName(randomName());
       setManageOpen(true);
     } catch (e) {
       setError(describeError(e));
@@ -201,19 +214,42 @@ function Editor() {
         </Button>
       </Group>
       <Stack mt={'xl'}>
-        <Group grow>
-          <Button
-            variant={serverPaused ? 'filled' : 'default'}
-            color={serverPaused ? 'yellow' : undefined}
+        <Group align={'flex-end'} gap={'xs'}>
+          <TextInput
+            placeholder={'Name'}
+            value={newSceneName}
             disabled={busy}
-            onClick={handleToggleServerPause}
-            px={'xs'}
+            onChange={(e) => setNewSceneName(e.currentTarget.value)}
+            style={{ flex: 1, minWidth: 200 }}
+          />
+          <Button
+            disabled={busy || patterns.length === 0 || newSceneName.trim() === ''}
+            onClick={() => handleSaveScene(newSceneName.trim())}
           >
-            {serverPaused ? 'Resume all' : 'Pause all'}
+            Save patterns as scene
           </Button>
-          <Button variant={'default'} onClick={() => void openManage()} px={'xs'}>
+          <FileButton
+            resetRef={resetFile}
+            accept={'application/json,.json'}
+            onChange={(file) => {
+              if (!file) return;
+              handleImportScene(file);
+              // Clear the input so picking the same file again still fires onChange.
+              resetFile.current?.();
+            }}
+          >
+            {(props) => (
+              <Button {...props} variant={'default'} disabled={busy}>
+                Import scene…
+              </Button>
+            )}
+          </FileButton>
+          <Button variant={'default'} onClick={() => void openManage()}>
             Manage scenes
           </Button>
+        </Group>
+
+        <Group grow>
           <Button
             onClick={() => {
               setNamePlaceholder(randomName());
@@ -224,6 +260,31 @@ function Editor() {
             Add pattern
           </Button>
         </Group>
+
+        {editingScene !== null && (
+          <Alert color={'blue'} title={`Editing scene “${editingScene}”`}>
+            <Group justify={'space-between'} gap={'xs'}>
+              <Text size={'sm'}>Saving overwrites it with the patterns below.</Text>
+              <Group gap={'xs'}>
+                <Button
+                  size={'xs'}
+                  variant={'default'}
+                  disabled={busy}
+                  onClick={() => setEditingScene(null)}
+                >
+                  Stop editing
+                </Button>
+                <Button
+                  size={'xs'}
+                  disabled={busy || patterns.length === 0}
+                  onClick={() => handleUpdateScene(editingScene)}
+                >
+                  Save changes
+                </Button>
+              </Group>
+            </Group>
+          </Alert>
+        )}
 
         {error && (
           <Alert
@@ -281,17 +342,14 @@ function Editor() {
         opened={manageOpen}
         onClose={() => setManageOpen(false)}
         scenes={scenes}
-        patternCount={patterns.length}
         busy={busy}
-        newSceneName={newSceneName}
-        onNewSceneNameChange={setNewSceneName}
-        onSave={handleSaveScene}
+        editing={editingScene}
         onApply={handleApplyScene}
+        onEdit={handleEditScene}
         onRename={handleRenameScene}
         onMove={moveScene}
         onDelete={handleDeleteScene}
         onExport={handleExportScene}
-        onImport={handleImportScene}
       />
     </Container>
   );

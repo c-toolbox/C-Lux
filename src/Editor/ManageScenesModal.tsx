@@ -1,14 +1,5 @@
-import { useRef, useState } from 'react';
-import {
-  ActionIcon,
-  Button,
-  FileButton,
-  Group,
-  Modal,
-  Stack,
-  Text,
-  TextInput
-} from '@mantine/core';
+import { useState } from 'react';
+import { ActionIcon, Button, Group, Modal, Stack, Text, TextInput } from '@mantine/core';
 
 import { type Scene } from '../lib/api';
 
@@ -16,39 +7,32 @@ interface ManageScenesModalProps {
   opened: boolean;
   onClose: () => void;
   scenes: Scene[];
-  patternCount: number;
   busy: boolean;
-  newSceneName: string;
-  onNewSceneNameChange: (name: string) => void;
-  onSave: (name: string) => void;
+  editing: string | null;
   onApply: (scene: Scene) => void;
+  onEdit: (scene: Scene) => void;
   onRename: (name: string, newName: string) => void;
   onMove: (from: number, to: number) => void;
   onDelete: (name: string) => void;
   onExport: (scene: Scene) => void;
-  onImport: (file: File) => void;
 }
 
 export function ManageScenesModal({
   opened,
   onClose,
   scenes,
-  patternCount,
   busy,
-  newSceneName,
-  onNewSceneNameChange,
-  onSave,
+  editing,
   onApply,
+  onEdit,
   onRename,
   onMove,
   onDelete,
-  onExport,
-  onImport
+  onExport
 }: ManageScenesModalProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
-  const resetFile = useRef<() => void>(null);
 
   function clearDrag() {
     setDragIndex(null);
@@ -76,45 +60,9 @@ export function ManageScenesModal({
         size={'xl'}
       >
         <Stack gap={'md'}>
-          <Group align={'flex-end'} gap={'xs'}>
-            <TextInput
-              label={'Save current patterns as a scene'}
-              placeholder={'Name'}
-              value={newSceneName}
-              disabled={busy}
-              onChange={(e) => onNewSceneNameChange(e.currentTarget.value)}
-              style={{ flex: 1, minWidth: 220 }}
-            />
-            <Button
-              disabled={busy || patternCount === 0 || newSceneName.trim() === ''}
-              onClick={() => onSave(newSceneName.trim())}
-            >
-              Save {patternCount} pattern(s)
-            </Button>
-          </Group>
-
-          <Group justify={'flex-end'}>
-            <FileButton
-              resetRef={resetFile}
-              accept={'application/json,.json'}
-              onChange={(file) => {
-                if (!file) return;
-                onImport(file);
-                // Clear the input so picking the same file again still fires onChange.
-                resetFile.current?.();
-              }}
-            >
-              {(props) => (
-                <Button {...props} size={'xs'} variant={'default'} disabled={busy}>
-                  Import scene…
-                </Button>
-              )}
-            </FileButton>
-          </Group>
-
           {scenes.length === 0 ? (
             <Text c={'dimmed'} ta={'center'} py={'md'}>
-              No scenes yet. Use the field above to save the current pattern list.
+              No scenes yet. Save or import one from the editor page.
             </Text>
           ) : (
             <Stack gap={'sm'}>
@@ -125,6 +73,7 @@ export function ManageScenesModal({
                   index={i}
                   count={scenes.length}
                   busy={busy}
+                  editing={editing === scene.name}
                   dragging={dragIndex === i}
                   dropTarget={dragOverIndex === i}
                   onDragStart={() => setDragIndex(i)}
@@ -137,6 +86,7 @@ export function ManageScenesModal({
                   onDrop={() => handleDrop(i)}
                   onMove={onMove}
                   onApply={onApply}
+                  onEdit={onEdit}
                   onRename={onRename}
                   onDelete={setConfirming}
                   onExport={onExport}
@@ -175,6 +125,7 @@ interface SceneRowProps {
   index: number;
   count: number;
   busy: boolean;
+  editing: boolean;
   dragging: boolean;
   dropTarget: boolean;
   onDragStart: () => void;
@@ -183,18 +134,20 @@ interface SceneRowProps {
   onDrop: () => void;
   onMove: (from: number, to: number) => void;
   onApply: (scene: Scene) => void;
+  onEdit: (scene: Scene) => void;
   onRename: (name: string, newName: string) => void;
   onDelete: (name: string) => void;
   onExport: (scene: Scene) => void;
 }
 
-// A single editable row in the manage-scenes modal: reorder, apply, rename, export, or
-// delete a scene.
+// A single editable row in the manage-scenes modal: reorder, apply, edit, rename,
+// export, or delete a scene.
 function SceneRow({
   scene,
   index,
   count,
   busy,
+  editing,
   dragging,
   dropTarget,
   onDragStart,
@@ -203,6 +156,7 @@ function SceneRow({
   onDrop,
   onMove,
   onApply,
+  onEdit,
   onRename,
   onDelete,
   onExport
@@ -277,6 +231,15 @@ function SceneRow({
           onClick={() => onApply(scene)}
         >
           Apply
+        </Button>
+        <Button
+          size={'xs'}
+          variant={editing ? 'filled' : 'light'}
+          color={'blue'}
+          disabled={busy}
+          onClick={() => onEdit(scene)}
+        >
+          Edit
         </Button>
         <Button
           size={'xs'}

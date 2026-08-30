@@ -77,8 +77,6 @@ Vite in development. Endpoints marked with a lock require the editor password (s
 | DELETE | `/api/patterns/:name` 🔒      | —                       | Remove a pattern by name                |
 | POST   | `/api/patterns/reorder` 🔒    | `{ order: string[] }`   | Reorder patterns (controls blend order) |
 | POST   | `/api/patterns/clear`         | —                       | Remove every pattern                    |
-| GET    | `/api/pause`                  | —                       | Whether the server is paused            |
-| PUT    | `/api/pause`                  | `{ paused }`            | Pause or resume all patterns            |
 | GET    | `/api/blackout`               | —                       | Whether the master blackout is engaged  |
 | PUT    | `/api/blackout`               | `{ blackout }`          | Fade output to black or restore it      |
 | GET    | `/api/half-light`             | —                       | Whether half-light mode is engaged      |
@@ -109,7 +107,6 @@ visualizer:
     "port": 8787,
     "scenes": "scenes.json",
     "editPassword": "change-me",
-    "pauseTransition": 1.0,
     "blackoutTransition": 1.0,
     "halfLightTransition": 1.0,
     "halfLightFeather": 0.5,
