@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (error === null) return this.props.children;
 
     return (
-      <Container size={'sm'} py={'xl'}>
+      <Container fluid px={'5%'} py={'xl'}>
         <Stack>
           <Title order={2}>Something went wrong</Title>
           <Text>The interface hit an unexpected error and could not continue.</Text>

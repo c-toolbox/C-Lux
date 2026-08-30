@@ -64,22 +64,15 @@ export function PasswordGate({ children }: { children: ReactNode }) {
   if (unlocked) return <>{children}</>;
 
   return (
-    <Container size={'sm'} w={'100%'} py={'xl'}>
-      <Title
-        order={1}
-        ta={'left'}
-        style={{ position: 'fixed', top: 16, left: 16, right: 0, zIndex: 100 }}
-      >
-        C-Lux
-      </Title>
-      <Button
-        component={Link}
-        to={'/'}
-        variant={'default'}
-        style={{ position: 'fixed', top: 16, right: 16, zIndex: 100 }}
-      >
-        Home
-      </Button>
+    <Container fluid w={'100%'} px={'5%'} py={'xl'}>
+      <Group justify={'space-between'} align={'center'} gap={'xs'}>
+        <Title order={1} ta={'left'}>
+          C-Lux
+        </Title>
+        <Button component={Link} to={'/'} variant={'default'}>
+          Home
+        </Button>
+      </Group>
 
       {checking ? (
         <Group justify={'center'} py={'xl'}>

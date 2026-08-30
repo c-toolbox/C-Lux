@@ -195,25 +195,23 @@ function Editor() {
   }
 
   return (
-    <Container size={'sm'} w={'100%'} py={'xl'}>
-      <Title
-        order={1}
-        ta={'left'}
-        style={{ position: 'fixed', top: 16, left: 16, right: 0, zIndex: 100 }}
-      >
-        C-Lux
-      </Title>
-      <Group gap={'xs'} style={{ position: 'fixed', top: 16, right: 16, zIndex: 100 }}>
-        {authRequired() && (
-          <Button variant={'default'} onClick={() => void lock()}>
-            Lock
+    <Container fluid w={'100%'} px={'5%'} py={'xl'}>
+      <Group justify={'space-between'} align={'center'} gap={'xs'}>
+        <Title order={1} ta={'left'}>
+          C-Lux
+        </Title>
+        <Group gap={'xs'}>
+          {authRequired() && (
+            <Button variant={'default'} onClick={() => void lock()}>
+              Lock
+            </Button>
+          )}
+          <Button component={Link} to={'/'} variant={'default'}>
+            Home
           </Button>
-        )}
-        <Button component={Link} to={'/'} variant={'default'}>
-          Home
-        </Button>
+        </Group>
       </Group>
-      <Stack mt={'xl'}>
+      <Stack mt={'md'}>
         <Group align={'flex-end'} gap={'xs'}>
           <TextInput
             placeholder={'Name'}
