@@ -17,7 +17,6 @@ import { notifications } from '@mantine/notifications';
 
 import {
   api,
-  type PatternParameters,
   type Scene,
   type SolidColorStatus,
   type SolidColorUpdate
@@ -33,7 +32,7 @@ const toggleTransition = {
 
 export function HomePage() {
   const [scenes, setScenes] = useState<Scene[]>([]);
-  const [active, setActive] = useState<string[]>([]);
+  const [applied, setApplied] = useState<string[]>([]);
   // The fixed solid color scene, which lives outside the pattern list and is listed
   // alongside the saved scenes. `solidHex` follows the picker while it is being dragged.
   const [solid, setSolid] = useState<SolidColorStatus | null>(null);
@@ -45,11 +44,9 @@ export function HomePage() {
   const [blackout, setBlackout] = useState(false);
   const [halfLight, setHalfLight] = useState(false);
 
-  const activeNames = new Set(active);
+  const appliedNames = new Set(applied);
 
-  // A scene counts as applied once every pattern it holds is running.
-  const isApplied = (scene: Scene) =>
-    scene.patterns.length > 0 && scene.patterns.every((p) => activeNames.has(p.name));
+  const isApplied = (scene: Scene) => appliedNames.has(scene.name);
 
   function trackSolid(status: SolidColorStatus) {
     setSolid(status);
@@ -58,16 +55,16 @@ export function HomePage() {
 
   async function refresh() {
     try {
-      const [sceneList, patterns, solidColor, { blackout }, { halfLight }] =
+      const [sceneList, appliedList, solidColor, { blackout }, { halfLight }] =
         await Promise.all([
           api.listScenes(),
-          api.listPatterns(),
+          api.appliedScenes(),
           api.solidColor(),
           api.blackout(),
           api.halfLight()
         ]);
       setScenes(sceneList);
-      setActive(names(patterns));
+      setApplied(appliedList);
       trackSolid(solidColor);
       setBlackout(blackout);
       setHalfLight(halfLight);
@@ -110,7 +107,7 @@ export function HomePage() {
   async function select(scene: Scene) {
     setBusy(true);
     try {
-      setActive(names(await api.replaceWithScene(scene.name)));
+      setApplied(await api.replaceWithScene(scene.name));
       trackSolid(await api.setSolidColor({ enabled: false }));
     } catch (e) {
       showError(e);
@@ -123,10 +120,8 @@ export function HomePage() {
   async function toggle(scene: Scene, applied: boolean) {
     setBusy(true);
     try {
-      setActive(
-        names(
-          applied ? await api.applyScene(scene.name) : await api.unapplyScene(scene.name)
-        )
+      setApplied(
+        applied ? await api.applyScene(scene.name) : await api.unapplyScene(scene.name)
       );
     } catch (e) {
       showError(e);
@@ -152,7 +147,8 @@ export function HomePage() {
   async function selectSolid() {
     setBusy(true);
     try {
-      setActive(names(await api.clearPatterns()));
+      await api.clearPatterns();
+      setApplied([]);
       trackSolid(await api.setSolidColor({ enabled: true }));
     } catch (e) {
       showError(e);
@@ -311,10 +307,6 @@ export function HomePage() {
       </Group>
     </Container>
   );
-}
-
-function names(patterns: PatternParameters[]): string[] {
-  return patterns.map((p) => p.name);
 }
 
 function showError(e: unknown): void {

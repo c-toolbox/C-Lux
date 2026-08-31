@@ -60,6 +60,7 @@ All endpoints are served by the Express backend under the `/api` prefix and prox
 | POST   | `/api/audio` 🔒                  | audio analysis frame   | Feed one frame to audio-reactive patterns  |
 | GET    | `/api/stream`                    | —                      | Server-Sent Events stream of frames        |
 | GET    | `/api/scenes`                    | —                      | List the saved scenes                      |
+| GET    | `/api/scenes/applied`            | —                      | Names of the scenes currently switched on  |
 | POST   | `/api/scenes` 🔒                 | `{ name }`             | Save the active patterns as a scene        |
 | POST   | `/api/scenes/import` 🔒          | exported scene JSON    | Add a scene from an exported file          |
 | POST   | `/api/scenes/reorder` 🔒         | `{ order: string[] }`  | Reorder scenes (controls blend order)      |

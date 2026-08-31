@@ -165,6 +165,11 @@ function listScenes(_req: express.Request, res: express.Response) {
   res.json(engine.listScenes());
 }
 
+// The names of the scenes currently switched on.
+function appliedScenes(_req: express.Request, res: express.Response) {
+  res.json(engine.appliedScenes());
+}
+
 async function saveScene(req: express.Request, res: express.Response) {
   const { name } = parseBody(sceneNameBody, req.body);
   res.json(await engine.saveScene(name));
@@ -236,6 +241,7 @@ async function main() {
   routes.post('/audio', requireAuth, postAudio);
   routes.get('/stream', streamFrames);
   routes.get('/scenes', listScenes);
+  routes.get('/scenes/applied', appliedScenes);
   routes.post('/scenes', requireAuth, saveScene);
   routes.post('/scenes/import', requireAuth, importScene);
   routes.post('/scenes/reorder', requireAuth, reorderScenes);

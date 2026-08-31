@@ -48,6 +48,10 @@ export class Engine {
   private patterns: Array<Pattern> = [];
   private scenes: Array<Scene> = [];
 
+  // Which scenes are switched on, by name. Tracked explicitly rather than inferred from
+  // the running patterns, so two scenes that share patterns don't toggle each other.
+  private applied = new Set<string>();
+
   // Stacks an earlier scene change moved away from, oldest first, each dissolving into
   // the one after it (the current stack for the last of them).
   private fading: Array<FadingStack> = [];
@@ -140,6 +144,10 @@ export class Engine {
     if (index === -1) throw new HttpError(404, `No pattern named: ${name}`);
 
     this.patterns.splice(index, 1);
+    // Any scene that needed this pattern is no longer fully applied.
+    for (const scene of this.scenes) {
+      if (scene.patterns.some((p) => p.name === name)) this.applied.delete(scene.name);
+    }
     return { name };
   }
 
@@ -147,6 +155,7 @@ export class Engine {
   clearPatterns(): PatternParameters[] {
     this.beginTransition();
     this.patterns = [];
+    this.applied.clear();
     return this.listPatterns();
   }
 
@@ -256,6 +265,11 @@ export class Engine {
     return this.scenes;
   }
 
+  // The names of the scenes currently switched on, in scene-list order.
+  appliedScenes(): string[] {
+    return this.scenes.filter((s) => this.applied.has(s.name)).map((s) => s.name);
+  }
+
   async saveScene(rawName: unknown): Promise<Scene[]> {
     const name = validateName(rawName, 'scene name');
 
@@ -267,6 +281,9 @@ export class Engine {
     const index = this.scenes.findIndex((s) => s.name === name);
     if (index === -1) this.scenes.push(scene);
     else this.scenes[index] = scene;
+
+    // The saved scene is exactly what is running, so it counts as applied.
+    this.applied.add(name);
 
     await this.persistScenes('save');
     return this.scenes;
@@ -333,7 +350,7 @@ export class Engine {
     }
   }
 
-  applyScene(name: string): PatternParameters[] {
+  applyScene(name: string): string[] {
     const scene = this.scenes.find((s) => s.name === name);
     if (!scene) throw new HttpError(404, `No scene named: ${name}`);
 
@@ -353,8 +370,9 @@ export class Engine {
       existing.add(instance.name);
     }
 
+    this.applied.add(name);
     this.sortBySceneOrder();
-    return this.listPatterns();
+    return this.appliedScenes();
   }
 
   // Composite applied scenes in the order they appear in the scene list rather than the
@@ -379,22 +397,32 @@ export class Engine {
   }
 
   // Drop the patterns belonging to a scene, leaving any other active pattern running.
-  unapplyScene(name: string): PatternParameters[] {
+  // Patterns another applied scene also holds stay put, so switching one scene off can't
+  // tear a hole in the ones still on.
+  unapplyScene(name: string): string[] {
     const scene = this.scenes.find((s) => s.name === name);
     if (!scene) throw new HttpError(404, `No scene named: ${name}`);
 
     this.beginTransition();
 
-    const names = new Set(scene.patterns.map((p) => p.name));
-    this.patterns = this.patterns.filter((p) => !names.has(p.name));
+    this.applied.delete(name);
 
-    return this.listPatterns();
+    const keep = new Set<string>();
+    for (const other of this.scenes) {
+      if (!this.applied.has(other.name)) continue;
+      for (const params of other.patterns) keep.add(params.name);
+    }
+
+    const drop = new Set(scene.patterns.map((p) => p.name).filter((n) => !keep.has(n)));
+    this.patterns = this.patterns.filter((p) => !drop.has(p.name));
+
+    return this.appliedScenes();
   }
 
   // Swap the active list for a scene. Every pattern is built before anything is
   // discarded, so a missing scene or an unusable entry leaves the current list untouched
   // instead of half-cleared.
-  replaceWithScene(name: string): PatternParameters[] {
+  replaceWithScene(name: string): string[] {
     const scene = this.scenes.find((s) => s.name === name);
     if (!scene) throw new HttpError(404, `No scene named: ${name}`);
 
@@ -412,7 +440,8 @@ export class Engine {
 
     this.beginTransition();
     this.patterns = replacement;
-    return this.listPatterns();
+    this.applied = new Set([name]);
+    return this.appliedScenes();
   }
 
   async reorderScenes(order: string[]): Promise<Scene[]> {
@@ -447,6 +476,7 @@ export class Engine {
     }
 
     this.scenes[index] = { ...this.scenes[index], name: trimmed };
+    if (this.applied.delete(name)) this.applied.add(trimmed);
 
     await this.persistScenes('rename');
     return this.scenes;
@@ -457,6 +487,7 @@ export class Engine {
     if (index === -1) throw new HttpError(404, `No scene named: ${name}`);
 
     this.scenes.splice(index, 1);
+    this.applied.delete(name);
 
     await this.persistScenes('delete');
     return { name };

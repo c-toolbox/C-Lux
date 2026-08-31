@@ -95,18 +95,20 @@ export const api = {
   // Leaves only the hardcoded solid-color layer running.
   clearPatterns: () => request<PatternParameters[]>('/patterns/clear', 'POST'),
   listScenes: () => request<Scene[]>('/scenes'),
+  // The names of the scenes currently switched on.
+  appliedScenes: () => request<string[]>('/scenes/applied'),
   saveScene: (name: string) => request<Scene[]>('/scenes', 'POST', { name }),
   // Add a scene read from a JSON file; the server re-validates it and renames it if the
   // name is already taken.
   importScene: (scene: unknown) => request<Scene[]>('/scenes/import', 'POST', scene),
-  applyScene: (name: string) =>
-    request<PatternParameters[]>(`/scenes/${seg(name)}/apply`, 'POST'),
-  // Remove just this scene's patterns, leaving any other active pattern running.
+  // The scene endpoints below all answer with the applied scene names after the change.
+  applyScene: (name: string) => request<string[]>(`/scenes/${seg(name)}/apply`, 'POST'),
+  // Remove just this scene's patterns, leaving any other applied scene intact.
   unapplyScene: (name: string) =>
-    request<PatternParameters[]>(`/scenes/${seg(name)}/unapply`, 'POST'),
+    request<string[]>(`/scenes/${seg(name)}/unapply`, 'POST'),
   // Swap the active patterns for a scene in a single, all-or-nothing request.
   replaceWithScene: (name: string) =>
-    request<PatternParameters[]>(`/scenes/${seg(name)}/replace`, 'POST'),
+    request<string[]>(`/scenes/${seg(name)}/replace`, 'POST'),
   reorderScenes: (order: string[]) =>
     request<Scene[]>('/scenes/reorder', 'POST', { order }),
   renameScene: (name: string, newName: string) =>
