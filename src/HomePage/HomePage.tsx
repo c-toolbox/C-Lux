@@ -48,6 +48,10 @@ export function HomePage() {
 
   const isApplied = (scene: Scene) => appliedNames.has(scene.name);
 
+  // True when the scene is the only thing lighting the ring, so selecting it again is a no-op.
+  const isOnlyActive = (scene: Scene) =>
+    applied.length === 1 && applied[0] === scene.name && !solid?.enabled;
+
   function trackSolid(status: SolidColorStatus) {
     setSolid(status);
     setSolidHex(rgbToHex(status.target));
@@ -247,9 +251,24 @@ export function HomePage() {
                     />
 
                     <Group gap={'xs'}>
-                      <Button disabled={busy} onClick={() => void select(scene)}>
-                        Select
-                      </Button>
+                      {isOnlyActive(scene) ? (
+                        <Button
+                          disabled={busy}
+                          variant={'default'}
+                          style={toggleTransition}
+                          onClick={() => void toggle(scene, false)}
+                        >
+                          Unselect
+                        </Button>
+                      ) : (
+                        <Button
+                          disabled={busy}
+                          style={toggleTransition}
+                          onClick={() => void select(scene)}
+                        >
+                          Select
+                        </Button>
+                      )}
                     </Group>
                   </Group>
                 ))
