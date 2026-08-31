@@ -12,6 +12,7 @@ export type {
 export { PATTERN_TYPES } from '../../shared/patterns/patterns';
 export { patternByType, patternDisplayName } from '../../shared/patterns/patterns';
 export type { SolidColorStatus, SolidColorUpdate } from '../../shared/patterns/static';
+export { VIDEO_TYPE } from '../../shared/patterns/video';
 
 import type { DebugStatus, DebugUpdate } from '../../shared/debug';
 import type {

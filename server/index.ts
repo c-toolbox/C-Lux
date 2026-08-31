@@ -12,11 +12,16 @@ import { Engine } from './engine';
 import { HttpError } from './errors';
 import { startOutputs } from './output';
 import { parseBody } from './validation';
+import { publishVideoStrip } from './video';
 
 const engine = new Engine();
 
 // How often to send an SSE keep-alive comment so idle proxies don't close the stream.
 const SSE_HEARTBEAT_MS = 15000;
+
+// A strip is 2 header bytes plus 3 per color, so this covers the widest strip the
+// shared contract allows with room to spare, and rejects anything larger outright.
+const VIDEO_BODY_LIMIT = '8kb';
 
 // Request-body shapes. `parseBody` turns a mismatch into a 400 before a handler runs,
 // so the casts scattered over the handlers below can't hide a malformed body.
@@ -137,6 +142,13 @@ function postAudio(req: express.Request, res: express.Response) {
   res.status(204).end();
 }
 
+// Ingest one strip from a browser sampling a video feed. Answers 204 for the same
+// reason the audio endpoint does.
+function postVideo(req: express.Request, res: express.Response) {
+  publishVideoStrip(req.body);
+  res.status(204).end();
+}
+
 // Stream the blended frame to the client on every tick via Server-Sent Events.
 function streamFrames(req: express.Request, res: express.Response) {
   res.writeHead(200, {
@@ -239,6 +251,12 @@ async function main() {
   routes.get('/debug', requireAuth, getDebug);
   routes.put('/debug', requireAuth, setDebug);
   routes.post('/audio', requireAuth, postAudio);
+  routes.post(
+    '/video',
+    requireAuth,
+    express.raw({ type: 'application/octet-stream', limit: VIDEO_BODY_LIMIT }),
+    postVideo
+  );
   routes.get('/stream', streamFrames);
   routes.get('/scenes', listScenes);
   routes.get('/scenes/applied', appliedScenes);

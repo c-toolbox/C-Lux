@@ -15,7 +15,13 @@ import {
   Title
 } from '@mantine/core';
 
-import { api, AUDIO_TYPE, type PatternParameters, type Scene } from '../lib/api';
+import {
+  api,
+  AUDIO_TYPE,
+  type PatternParameters,
+  type Scene,
+  VIDEO_TYPE
+} from '../lib/api';
 import { authRequired, signOut } from '../lib/auth';
 import { describeError } from '../lib/errors';
 import { type FormValues, toProps } from '../PatternForm/PatternForm';
@@ -27,6 +33,7 @@ import { EditPatternModal } from './EditPatternModal';
 import { ManageScenesModal } from './ManageScenesModal';
 import { PatternList } from './PatternList';
 import { downloadJson, randomName, readJsonFile } from './utils';
+import { VideoCapture } from './VideoCapture';
 
 function Editor() {
   const [patterns, setPatterns] = useState<PatternParameters[]>([]);
@@ -327,6 +334,7 @@ function Editor() {
         </ScrollArea>
 
         {patterns.some((p) => p.type === AUDIO_TYPE && p.enabled) && <AudioCapture />}
+        {patterns.some((p) => p.type === VIDEO_TYPE && p.enabled) && <VideoCapture />}
       </Stack>
 
       <Box mt={'md'} style={{ flexShrink: 0 }}>

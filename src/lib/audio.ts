@@ -1,14 +1,12 @@
 import { AUDIO_BANDS, AUDIO_MAX_HZ, AUDIO_MIN_HZ } from '../../shared/audio';
 
 import { authHeaders } from './auth';
+import { startTicker } from './ticker';
 
 // Where the audio the browser captures is sent so the server-side pattern can read it.
 const ENDPOINT = '/api/audio';
 
 const FFT_SIZE = 2048;
-
-// Matches the server tick rate; posting faster only adds requests the engine never sees.
-const POST_INTERVAL_MS = 1000 / 30;
 
 // Typical music sits well below full scale, so the RMS is scaled to make a VU meter
 // span most of the ring at a normal listening level.
@@ -43,64 +41,6 @@ async function openStream(source: AudioSource): Promise<MediaStream> {
   // Chromium only hands out the system/tab audio track alongside a video track, so one
   // has to be requested even though it is never rendered.
   return navigator.mediaDevices.getDisplayMedia({ video: true, audio: RAW });
-}
-
-// A metronome living on the audio rendering thread. Browsers throttle timers in hidden
-// tabs down to about one tick a second, which starves the server of frames and makes the
-// lights pulse; the audio thread keeps its own clock and is never throttled. It passes
-// its input through untouched so it can sit in the graph without colouring the signal.
-const TICKER_NAME = 'capture-ticker';
-const TICKER_MODULE = `
-registerProcessor('${TICKER_NAME}', class extends AudioWorkletProcessor {
-  constructor(options) {
-    super();
-    this.period = options.processorOptions.period;
-    this.next = 0;
-  }
-  process() {
-    if (currentTime >= this.next) {
-      this.next = currentTime + this.period;
-      this.port.postMessage(0);
-    }
-    return true;
-  }
-});
-`;
-
-// Call `onTick` about every `POST_INTERVAL_MS`, from the audio thread where possible and
-// from a timer where the worklet cannot be loaded (no support, or a CSP blocking blobs).
-async function startTicker(
-  context: AudioContext,
-  onTick: () => void
-): Promise<() => void> {
-  const period = POST_INTERVAL_MS / 1000;
-
-  try {
-    const url = URL.createObjectURL(
-      new Blob([TICKER_MODULE], { type: 'text/javascript' })
-    );
-    try {
-      await context.audioWorklet.addModule(url);
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-
-    const ticker = new AudioWorkletNode(context, TICKER_NAME, {
-      processorOptions: { period }
-    });
-    // A node is only rendered while it reaches the destination; the processor writes
-    // nothing, so what arrives there is silence.
-    ticker.connect(context.destination);
-    ticker.port.onmessage = onTick;
-
-    return () => {
-      ticker.port.onmessage = null;
-      ticker.disconnect();
-    };
-  } catch {
-    const timer = setInterval(onTick, POST_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }
 }
 
 // Capture audio in this tab, analyse it, and stream the result to the server until the

@@ -14,6 +14,7 @@ import { SineWavePattern, type SineWaveProps } from './sine-wave.ts';
 import { SparklePattern, type SparkleProps } from './sparkle.ts';
 import { StaticPattern, type StaticProps } from './static.ts';
 import { TheaterChasePattern, type TheaterChaseProps } from './theater-chase.ts';
+import { VideoPattern, type VideoProps } from './video.ts';
 
 // The static metadata every pattern class carries: its `Type` tag, a user-facing
 // `DisplayName` and the `Fields` describing its configurable parameters.
@@ -42,7 +43,8 @@ const PATTERNS = [
   TheaterChasePattern,
   AuroraPattern,
   RipplePattern,
-  AudioPattern
+  AudioPattern,
+  VideoPattern
 ] as const satisfies readonly PatternStatics[];
 
 export type PatternType = (typeof PATTERNS)[number]['Type'];
@@ -88,7 +90,8 @@ export type PatternProps =
   | TheaterChaseProps
   | AuroraProps
   | RippleProps
-  | AudioProps;
+  | AudioProps
+  | VideoProps;
 
 // Union of every pattern's `parameters()` shape, derived from the registry, plus the
 // shared state `Pattern.serialize()` adds on top.
