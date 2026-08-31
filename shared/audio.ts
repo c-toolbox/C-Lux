@@ -7,6 +7,19 @@
 // the pattern agree on the layout without having to negotiate one.
 export const AUDIO_BANDS = 32;
 
+// Bands are spread logarithmically over the range that carries musical content; below
+// and above this the analyser mostly reports rumble and hiss.
+export const AUDIO_MIN_HZ = 30;
+export const AUDIO_MAX_HZ = 16000;
+
+// Fractional band index of a frequency, where whole numbers land on band centres. Values
+// outside the captured range fall outside [0, AUDIO_BANDS - 1] and are left to the caller
+// to clamp.
+export function audioBandIndex(hz: number): number {
+  const ratio = Math.log(hz / AUDIO_MIN_HZ) / Math.log(AUDIO_MAX_HZ / AUDIO_MIN_HZ);
+  return ratio * AUDIO_BANDS - 0.5;
+}
+
 // Treat the stream as silent once no client has published for this long, so the lights
 // fall dark instead of freezing on the last frame when capture stops.
 const STALE_MS = 750;

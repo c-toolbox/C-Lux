@@ -1,4 +1,4 @@
-import { AUDIO_BANDS } from '../../shared/audio';
+import { AUDIO_BANDS, AUDIO_MAX_HZ, AUDIO_MIN_HZ } from '../../shared/audio';
 
 import { authHeaders } from './auth';
 
@@ -6,11 +6,6 @@ import { authHeaders } from './auth';
 const ENDPOINT = '/api/audio';
 
 const FFT_SIZE = 2048;
-
-// Bands are spread logarithmically over the range that carries musical content; below
-// and above this the analyser mostly reports rumble and hiss.
-const MIN_HZ = 30;
-const MAX_HZ = 16000;
 
 // Matches the server tick rate; posting faster only adds requests the engine never sees.
 const POST_INTERVAL_MS = 1000 / 30;
@@ -50,6 +45,64 @@ async function openStream(source: AudioSource): Promise<MediaStream> {
   return navigator.mediaDevices.getDisplayMedia({ video: true, audio: RAW });
 }
 
+// A metronome living on the audio rendering thread. Browsers throttle timers in hidden
+// tabs down to about one tick a second, which starves the server of frames and makes the
+// lights pulse; the audio thread keeps its own clock and is never throttled. It passes
+// its input through untouched so it can sit in the graph without colouring the signal.
+const TICKER_NAME = 'capture-ticker';
+const TICKER_MODULE = `
+registerProcessor('${TICKER_NAME}', class extends AudioWorkletProcessor {
+  constructor(options) {
+    super();
+    this.period = options.processorOptions.period;
+    this.next = 0;
+  }
+  process() {
+    if (currentTime >= this.next) {
+      this.next = currentTime + this.period;
+      this.port.postMessage(0);
+    }
+    return true;
+  }
+});
+`;
+
+// Call `onTick` about every `POST_INTERVAL_MS`, from the audio thread where possible and
+// from a timer where the worklet cannot be loaded (no support, or a CSP blocking blobs).
+async function startTicker(
+  context: AudioContext,
+  onTick: () => void
+): Promise<() => void> {
+  const period = POST_INTERVAL_MS / 1000;
+
+  try {
+    const url = URL.createObjectURL(
+      new Blob([TICKER_MODULE], { type: 'text/javascript' })
+    );
+    try {
+      await context.audioWorklet.addModule(url);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+
+    const ticker = new AudioWorkletNode(context, TICKER_NAME, {
+      processorOptions: { period }
+    });
+    // A node is only rendered while it reaches the destination; the processor writes
+    // nothing, so what arrives there is silence.
+    ticker.connect(context.destination);
+    ticker.port.onmessage = onTick;
+
+    return () => {
+      ticker.port.onmessage = null;
+      ticker.disconnect();
+    };
+  } catch {
+    const timer = setInterval(onTick, POST_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }
+}
+
 // Capture audio in this tab, analyse it, and stream the result to the server until the
 // returned handle is stopped.
 export async function startAudioCapture({
@@ -84,7 +137,7 @@ export async function startAudioCapture({
   const bands = new Array<number>(AUDIO_BANDS).fill(0);
   let posting = false;
 
-  const timer = setInterval(() => {
+  const stopTicker = await startTicker(context, () => {
     analyser.getByteFrequencyData(spectrum);
     analyser.getByteTimeDomainData(waveform);
     fillBands(spectrum, context.sampleRate, bands);
@@ -104,13 +157,13 @@ export async function startAudioCapture({
       .finally(() => {
         posting = false;
       });
-  }, POST_INTERVAL_MS);
+  });
 
   let stopped = false;
   const stop = () => {
     if (stopped) return;
     stopped = true;
-    clearInterval(timer);
+    stopTicker();
     stream.getTracks().forEach((t) => t.stop());
     void context.close();
   };
@@ -128,11 +181,11 @@ export async function startAudioCapture({
 // the ear splits up a spectrum than the raw bins are.
 function fillBands(spectrum: Uint8Array, sampleRate: number, out: number[]): void {
   const binHz = sampleRate / 2 / spectrum.length;
-  const ratio = MAX_HZ / MIN_HZ;
+  const ratio = AUDIO_MAX_HZ / AUDIO_MIN_HZ;
 
   for (let i = 0; i < out.length; i++) {
-    const low = MIN_HZ * Math.pow(ratio, i / out.length);
-    const high = MIN_HZ * Math.pow(ratio, (i + 1) / out.length);
+    const low = AUDIO_MIN_HZ * Math.pow(ratio, i / out.length);
+    const high = AUDIO_MIN_HZ * Math.pow(ratio, (i + 1) / out.length);
 
     const first = Math.min(spectrum.length - 1, Math.floor(low / binHz));
     const last = Math.max(first, Math.min(spectrum.length - 1, Math.ceil(high / binHz)));

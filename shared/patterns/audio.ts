@@ -1,4 +1,10 @@
-import { AUDIO_BANDS, audioFrame } from '../audio.ts';
+import {
+  AUDIO_BANDS,
+  AUDIO_MAX_HZ,
+  AUDIO_MIN_HZ,
+  audioBandIndex,
+  audioFrame
+} from '../audio.ts';
 
 import {
   hsvToRgb,
@@ -19,6 +25,9 @@ const AUDIO_MODE_VU = 1;
 const DEGREES: NumberRange = { min: 0, max: 360 };
 const SIGNED_DEGREES: NumberRange = { min: -360, max: 360 };
 
+// Anything outside the captured range reads as silence, so the endpoints are pinned to it.
+const HERTZ: NumberRange = { min: AUDIO_MIN_HZ, max: AUDIO_MAX_HZ };
+
 export type AudioProps = PatternBaseProps & {
   mode: number;
   gain: number;
@@ -26,6 +35,8 @@ export type AudioProps = PatternBaseProps & {
   decay: number;
   hue: number;
   hueSpan: number;
+  frontHz?: number;
+  backHz?: number;
 };
 
 const clampUnit = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
@@ -87,6 +98,24 @@ export class AudioPattern extends Pattern {
       step: 10,
       row: 2,
       ...SIGNED_DEGREES
+    },
+    frontHz: {
+      kind: 'number',
+      label: 'Front frequency',
+      default: AUDIO_MIN_HZ,
+      step: 10,
+      row: 3,
+      hint: 'Frequency shown at the top of the ring.',
+      ...HERTZ
+    },
+    backHz: {
+      kind: 'number',
+      label: 'Back frequency',
+      default: AUDIO_MAX_HZ,
+      step: 100,
+      row: 3,
+      hint: 'Frequency shown at the bottom of the ring.',
+      ...HERTZ
     }
   } satisfies PatternSchema;
 
@@ -96,6 +125,9 @@ export class AudioPattern extends Pattern {
   decay!: number;
   hue!: number;
   hueSpan!: number;
+  // Defaulted rather than required so scenes saved before these existed still load.
+  frontHz: number = AudioPattern.Fields.frontHz.default;
+  backHz: number = AudioPattern.Fields.backHz.default;
 
   // Peak-following band magnitudes in [0, 1]: they jump straight to a new peak and then
   // fall off at `decay`, so the lights track transients without flickering.
@@ -116,6 +148,8 @@ export class AudioPattern extends Pattern {
     decay: number;
     hue: number;
     hueSpan: number;
+    frontHz: number;
+    backHz: number;
   } {
     return {
       name: this.name,
@@ -125,17 +159,21 @@ export class AudioPattern extends Pattern {
       floor: this.floor,
       decay: this.decay,
       hue: this.hue,
-      hueSpan: this.hueSpan
+      hueSpan: this.hueSpan,
+      frontHz: this.frontHz,
+      backHz: this.backHz
     };
   }
 
-  set({ mode, gain, floor, decay, hue, hueSpan }: Partial<AudioProps>) {
+  set({ mode, gain, floor, decay, hue, hueSpan, frontHz, backHz }: Partial<AudioProps>) {
     this.mode = mode ?? this.mode;
     this.gain = gain ?? this.gain;
     this.floor = floor ?? this.floor;
     this.decay = decay ?? this.decay;
     this.hue = hue ?? this.hue;
     this.hueSpan = hueSpan ?? this.hueSpan;
+    this.frontHz = frontHz ?? this.frontHz;
+    this.backHz = backHz ?? this.backHz;
 
     this.render();
   }
@@ -179,10 +217,13 @@ export class AudioPattern extends Pattern {
     }
   }
 
-  // Band magnitude at a normalized position across the spectrum, interpolated between
-  // neighbouring bands so 142 lights don't show 32 hard steps.
+  // Band magnitude at a normalized position across the ring, where 0 is the front and 1
+  // the back. The position is swept logarithmically between the two configured
+  // frequencies and interpolated between neighbouring bands so 142 lights don't show 32
+  // hard steps.
   private bandAt(t: number): number {
-    const x = t * (AUDIO_BANDS - 1);
+    const hz = this.frontHz * Math.pow(this.backHz / this.frontHz, t);
+    const x = Math.max(0, Math.min(AUDIO_BANDS - 1, audioBandIndex(hz)));
     const index = Math.floor(x);
     const low = this.levels[index] ?? 0;
     const high = this.levels[index + 1] ?? low;
