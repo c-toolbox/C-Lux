@@ -44,6 +44,16 @@ const solidColorBody = z.object({
   color: z.object({ r: channel, g: channel, b: channel }).optional(),
   enabled: z.boolean('must be true or false').optional()
 });
+const debugBody = z.object({
+  suspended: z.boolean('must be true or false').optional(),
+  light: z
+    .int('must be a whole number')
+    .min(0)
+    .max(config.nLights - 1)
+    .nullable()
+    .optional(),
+  color: z.object({ r: channel, g: channel, b: channel }).optional()
+});
 
 //
 // Route handlers — thin adapters over the engine. Handlers throw `HttpError` on failure;
@@ -108,6 +118,16 @@ function getSolidColor(_req: express.Request, res: express.Response) {
 // Fade the solid-color layer to a new color and/or switch the layer on or off.
 function setSolidColor(req: express.Request, res: express.Response) {
   res.json(engine.setSolidColor(parseBody(solidColorBody, req.body)));
+}
+
+// The debug page's temporary overrides on the output: whether the scene is suspended,
+// and which single light is being driven directly.
+function getDebug(_req: express.Request, res: express.Response) {
+  res.json(engine.debugStatus());
+}
+
+function setDebug(req: express.Request, res: express.Response) {
+  res.json(engine.setDebug(parseBody(debugBody, req.body)));
 }
 
 // Ingest one analysis frame from a browser capturing the sound card. Answers 204 so a
@@ -210,6 +230,9 @@ async function main() {
   routes.put('/half-light', setHalfLight);
   routes.get('/solid-color', getSolidColor);
   routes.put('/solid-color', setSolidColor);
+  // The debug page overrides what the lights show, so it sits behind the edit password.
+  routes.get('/debug', requireAuth, getDebug);
+  routes.put('/debug', requireAuth, setDebug);
   routes.post('/audio', requireAuth, postAudio);
   routes.get('/stream', streamFrames);
   routes.get('/scenes', listScenes);

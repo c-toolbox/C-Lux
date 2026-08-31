@@ -1,3 +1,4 @@
+export type { DebugStatus, DebugUpdate } from '../../shared/debug';
 export { AUDIO_TYPE } from '../../shared/patterns/audio';
 export type {
   Color,
@@ -12,6 +13,7 @@ export { PATTERN_TYPES } from '../../shared/patterns/patterns';
 export { patternByType, patternDisplayName } from '../../shared/patterns/patterns';
 export type { SolidColorStatus, SolidColorUpdate } from '../../shared/patterns/static';
 
+import type { DebugStatus, DebugUpdate } from '../../shared/debug';
 import type {
   PatternParameters,
   PatternProps,
@@ -83,6 +85,9 @@ export const api = {
   // A new color eases in from the one currently lit; the response reports the target.
   setSolidColor: (update: SolidColorUpdate) =>
     request<SolidColorStatus>('/solid-color', 'PUT', update),
+  // The debug page's overrides on the output. Editor-only, and never persisted.
+  debug: () => request<DebugStatus>('/debug'),
+  setDebug: (update: DebugUpdate) => request<DebugStatus>('/debug', 'PUT', update),
   removePattern: (name: string) =>
     request<{ name: string }>(`/patterns/${seg(name)}`, 'DELETE'),
   reorderPatterns: (order: string[]) =>

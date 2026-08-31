@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { createTheme, MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 
+import { DebugPage } from './Debug/DebugPage.tsx';
 import Editor from './Editor/Editor.tsx';
 import { PasswordGate } from './Editor/PasswordGate.tsx';
 import { HomePage } from './HomePage/HomePage.tsx';
@@ -28,6 +29,16 @@ const router = createBrowserRouter([
     element: (
       <PasswordGate>
         <Editor />
+      </PasswordGate>
+    )
+  },
+  // Deliberately unlinked: reachable only by typing the URL, and behind the same password
+  // as the editor.
+  {
+    path: '/debug',
+    element: (
+      <PasswordGate>
+        <DebugPage />
       </PasswordGate>
     )
   }

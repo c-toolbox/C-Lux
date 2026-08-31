@@ -1,3 +1,4 @@
+import type { DebugStatus, DebugUpdate } from '../shared/debug';
 import { type Color, Pattern } from '../shared/patterns/pattern';
 import {
   patternByType,
@@ -71,6 +72,15 @@ export class Engine {
   private halfLight = false;
   private halfLightFactor = 0;
   private readonly halfLightMask: number[] = buildHalfLightMask();
+
+  // Overrides the debug page sets while checking the wiring. They short-circuit `blend()`
+  // and so affect the live preview and the Art-Net output alike. Nothing here is
+  // persisted; a restart clears them.
+  private debug: DebugStatus = {
+    suspended: false,
+    light: null,
+    color: { r: 255, g: 255, b: 255 }
+  };
 
   // Serialized disk writer for the scenes; scene edits are rare, so they're written
   // immediately instead of debounced.
@@ -221,6 +231,21 @@ export class Engine {
   setHalfLight(halfLight: boolean): boolean {
     this.halfLight = halfLight;
     return this.halfLight;
+  }
+
+  //
+  // Debug overrides
+  //
+
+  debugStatus(): DebugStatus {
+    return { ...this.debug, color: { ...this.debug.color } };
+  }
+
+  setDebug({ suspended, light, color }: DebugUpdate): DebugStatus {
+    if (suspended !== undefined) this.debug.suspended = suspended;
+    if (light !== undefined) this.debug.light = light;
+    if (color) this.debug.color = { ...color };
+    return this.debugStatus();
   }
 
   //
@@ -489,6 +514,12 @@ export class Engine {
   // brightness. Returns a buffer reused across calls; consume it before calling again.
   blend(): number[] {
     const { nLights } = config;
+
+    // The debug overrides replace the frame outright rather than layering over it: with a
+    // light selected only that one is lit, and while suspended nothing is. Both bypass
+    // the blackout and half-light masks so what the debug page asks for is what ships.
+    if (this.debug.light !== null || this.debug.suspended) return this.debugFrame();
+
     const accum = this.blendAccum;
 
     const oldest = this.stackAt(0);
@@ -516,6 +547,22 @@ export class Engine {
       out[dst] = Math.round(accum[dst] * mul);
       out[dst + 1] = Math.round(accum[dst + 1] * mul);
       out[dst + 2] = Math.round(accum[dst + 2] * mul);
+    }
+    return out;
+  }
+
+  // The frame the debug overrides ask for: everything dark, except the selected light if
+  // there is one.
+  private debugFrame(): number[] {
+    const out = this.blendOut;
+    out.fill(0);
+
+    const { light, color } = this.debug;
+    if (light !== null) {
+      const dst = light * 3;
+      out[dst] = color.r;
+      out[dst + 1] = color.g;
+      out[dst + 2] = color.b;
     }
     return out;
   }
