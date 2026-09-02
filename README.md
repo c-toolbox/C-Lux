@@ -1,10 +1,10 @@
 # C-Lux
 
-C-Lux is a lighting console for cove and ring installations built from addressable LEDs - the kind that runs around the spring line of a planetarium dome. Instead of programming cues light by light, you stack ready-made pattern layers (gradients, sunrises, auroras, comets, audio-reactive pulses, and more), tune each one's colours, speed and position from the browser, and let the server blend them into a single live frame.
+C-Lux is a lighting console for cove and ring installations built from addressable LEDs - the kind that runs around the spring line of a planetarium dome. Instead of programming cues light by light, you stack ready-made pattern layers (gradients, sunrises, auroras, comets, audio-reactive pulses, and more), tune each one's colors, speed and position from the browser, and let the server blend them into a single live frame.
 
-Everything is driven from a web UI, so any tablet or laptop on the dome network becomes a control surface: no software to install at the console, and the show operator gets big, obvious controls (blackout, half-light for the projector side of the dome, and a fixed work-light colour) while the technician keeps the full editor behind a password. Saved scenes recall a whole look instantly, transitions are faded rather than snapped, and the blended frame goes out to your fixtures over Art-Net - with rotation and per-light remapping so the pattern lines up with however the strip was physically installed.
+Everything is driven from a web UI, so any tablet or laptop on the dome network becomes a control surface: no software to install at the console, and the show operator gets big, obvious controls (blackout, half-light for the projector side of the dome, and a fixed work-light color) while the technician keeps the full editor behind a password. Saved scenes recall a whole look instantly, transitions are faded rather than snapped, and the blended frame goes out to your fixtures over Art-Net - with rotation and per-light remapping so the pattern lines up with however the strip was physically installed.
 
-Nothing is locked inside the UI, either. Every function the web interface offers - adding and tuning patterns, recalling or replacing scenes, blackout, half-light, the solid work-light colour - is exposed as a plain HTTP REST API, and the live blended frame can be subscribed to as an event stream. That makes C-Lux straightforward to drive from a custom show application, an automation script, or the same controller that runs your projection system: fire a scene change at a cue point, dim the cove for a fulldome segment, and bring the lights back up when the show ends, all with ordinary HTTP requests.
+Nothing is locked inside the UI, either. Every function the web interface offers - adding and tuning patterns, recalling or replacing scenes, blackout, half-light, the solid work-light color - is exposed as a plain HTTP REST API, and the live blended frame can be subscribed to as an event stream. That makes C-Lux straightforward to drive from a custom show application, an automation script, or the same controller that runs your projection system: fire a scene change at a cue point, dim the cove for a fulldome segment, and bring the lights back up when the show ends, all with ordinary HTTP requests.
 
 <p align="center">
   <img src="docs/hero.png" alt="The C-Lux visualizer: a ring of addressable lights around the C-Lux logo" width="420">
@@ -34,6 +34,8 @@ npm install
 npm run build
 npm start
 ```
+
+`config.json` is read from disk each time the server starts, so changes to it — including `output` fix-ups — need only a restart. `nLights` is the exception: the browser bundle is sized from it at build time, so changing it needs `npm run build` as well.
 
 ## API
 
@@ -145,7 +147,23 @@ Any transition set to `0` snaps instead of fading.
 | `remap`    | Per-light address fix-ups for fixtures that were wired or patched out of order (see below).         |
 | `artnet`   | Art-Net transmission settings (see below).                                                          |
 
-### `output.artnet`
+#### `output.rotation`
+
+Degrees the frame is turned around the ring before it is sent, for installations where light 0 isn't where you'd like the pattern to start. The visualizer always keeps light 0 at the top; rotation is what lines that up with the hardware. It is applied before `remap`, so remap indices are physical positions on the ring.
+
+#### `output.remap`
+
+Per-light address fix-ups, written as `"position": address` — the color computed for a position on the ring is sent to a different light instead. So a light that physically sits at position 14 but answers to ID 0 needs `"14": 0`.
+
+The lights listed have to be shuffled amongst themselves: every position that gives its color away must also be given one, or it would go dark while another light was sent two colors. For a straight pair that means both directions:
+
+```json
+"remap": { "14": 0, "0": 14 }
+```
+
+Lights left out of the map keep their 1:1 mapping. A remap that isn't a closed shuffle is rejected at startup.
+
+#### `output.artnet`
 
 | Key            | Description                                                                                            |
 | -------------- | ------------------------------------------------------------------------------------------------------ |

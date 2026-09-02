@@ -4,7 +4,7 @@ export const CAPTURE_INTERVAL_MS = 1000 / 30;
 // A metronome living on the audio rendering thread. Browsers throttle timers in hidden
 // tabs down to about one tick a second, which starves the server of frames and makes the
 // lights stall; the audio thread keeps its own clock and is never throttled. It passes
-// its input through untouched so it can sit in the graph without colouring the signal.
+// its input through untouched so it can sit in the graph without coloring the signal.
 const TICKER_NAME = 'capture-ticker';
 const TICKER_MODULE = `
 registerProcessor('${TICKER_NAME}', class extends AudioWorkletProcessor {
