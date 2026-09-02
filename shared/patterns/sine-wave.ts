@@ -27,6 +27,7 @@ export class SineWavePattern extends Pattern {
       default: 0.14,
       step: 0.01,
       row: 0,
+      hint: 'Rounded to fit a whole number of waves around the ring.',
       ...POSITIVE_UNIT
     },
     speed: {
@@ -88,13 +89,17 @@ export class SineWavePattern extends Pattern {
   }
 
   tick(dt: number) {
-    this.phase += this.speed * this.state.length * dt;
+    const n = this.state.length;
+    this.phase = (((this.phase + this.speed * n * dt) % n) + n) % n;
     this.render();
   }
 
   private render() {
     const n = this.state.length;
-    const wl = this.wavelength > 0 ? this.wavelength * n : 1;
+    // Snap to a whole number of waves around the ring, otherwise the wave is cut off
+    // where the last light meets the first one.
+    const cycles = this.wavelength > 0 ? Math.max(1, Math.round(1 / this.wavelength)) : 1;
+    const wl = n / cycles;
     for (let i = 0; i < n; i++) {
       const wave = 0.5 + 0.5 * Math.sin((2 * Math.PI * (i - this.phase)) / wl);
       const a = this.min + (this.max - this.min) * wave;
