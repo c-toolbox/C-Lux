@@ -64,7 +64,7 @@ export class RipplePattern extends Pattern {
       row: 1,
       ...POSITIVE
     },
-    origin: { kind: 'number', label: 'Origin', default: 0.5, step: 0.05, row: 1, ...UNIT }
+    origin: { kind: 'number', label: 'Origin', default: 0, step: 0.05, row: 1, ...UNIT }
   } satisfies PatternSchema;
 
   r!: number;

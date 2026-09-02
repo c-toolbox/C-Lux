@@ -174,6 +174,10 @@ export function VideoCapture() {
   const fisheye = mode === 'fisheye';
   const sliders = fisheye ? RIM_SLIDERS : STRIP_SLIDERS;
 
+  // A square box cropping to fill shows exactly what the rim sampler reads; strip mode
+  // keeps the stream's own shape so the band overlay lines up.
+  const ratio = fisheye ? 1 : aspect;
+
   // Same clamping the sampler applies, so the band drawn here is the one being read.
   const bandHeight = Math.min(1, Math.max(0.005, geometry.stripHeight));
   const bandTop = Math.min(1 - bandHeight, Math.max(0, geometry.stripY - bandHeight / 2));
@@ -214,10 +218,8 @@ export function VideoCapture() {
             style={{
               position: 'relative',
               flex: 'none',
-              width: PREVIEW_WIDTH,
-              // A square box cropping to fill shows exactly what the rim sampler reads;
-              // strip mode keeps the stream's own shape so the band overlay lines up.
-              aspectRatio: fisheye ? '1 / 1' : `${aspect}`,
+              width: `min(${PREVIEW_WIDTH}px, 100%)`,
+              aspectRatio: `${ratio}`,
               background: 'black',
               borderRadius: 'var(--mantine-radius-sm)',
               overflow: 'hidden',
