@@ -17,13 +17,20 @@ const LOCKOUT_MS = 5 * 60 * 1000;
 
 const loginBody = z.object({ password: z.string('must be a string') });
 
-const password = config.server.editPassword.trim();
+// Read on every use rather than captured: the config page can change the password while
+// the server is running, and a save takes effect on the next request.
+function editPassword(): string {
+  return config.server.editPassword.trim();
+}
 
 // Leaving the password empty deliberately opens everything up: the editor endpoints stop
 // asking for a token and the edit page skips its unlock screen. Only sensible on a
 // network where everyone who can reach the box is allowed to drive the lights.
-const authRequired = password !== '';
-if (!authRequired) {
+function authRequired(): boolean {
+  return editPassword() !== '';
+}
+
+if (!authRequired()) {
   console.warn(
     'No editor password configured: the editor and the endpoints it drives are open to ' +
       'anyone who can reach this server. Set server.editPassword in config.json to ' +
@@ -40,7 +47,7 @@ let lockedUntil = 0;
 // `timingSafeEqual` never throws and the password's length isn't leaked by the failure.
 function matches(candidate: string): boolean {
   const hash = (value: string) => createHash('sha256').update(value, 'utf8').digest();
-  return timingSafeEqual(hash(candidate), hash(password));
+  return timingSafeEqual(hash(candidate), hash(editPassword()));
 }
 
 function bearerToken(req: express.Request): string | null {
@@ -49,7 +56,7 @@ function bearerToken(req: express.Request): string | null {
 }
 
 function isAuthenticated(req: express.Request): boolean {
-  if (!authRequired) return true;
+  if (!authRequired()) return true;
 
   const token = bearerToken(req);
   if (!token) return false;
@@ -78,14 +85,14 @@ export function requireAuth(
 // before it decides to render the editor or ask for the password again. `required` tells
 // it whether there is a password at all, so it can drop the lock button when there isn't.
 export function getAuth(req: express.Request, res: express.Response) {
-  res.json({ authenticated: isAuthenticated(req), required: authRequired });
+  res.json({ authenticated: isAuthenticated(req), required: authRequired() });
 }
 
 export function login(req: express.Request, res: express.Response) {
   const { password: candidate } = parseBody(loginBody, req.body);
   const now = Date.now();
 
-  if (!authRequired) throw new HttpError(409, 'No editor password is configured');
+  if (!authRequired()) throw new HttpError(409, 'No editor password is configured');
 
   if (now < lockedUntil) {
     throw new HttpError(429, 'Too many failed attempts. Try again in a few minutes.');
@@ -114,4 +121,10 @@ export function logout(req: express.Request, res: express.Response) {
   const token = bearerToken(req);
   if (token) sessions.delete(token);
   res.status(204).end();
+}
+
+// Drop every session. Called when the password is changed from the config page, so a
+// token handed out under the old password stops working.
+export function signOutEveryone(): void {
+  sessions.clear();
 }

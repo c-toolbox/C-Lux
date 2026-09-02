@@ -71,6 +71,8 @@ All endpoints are served by the Express backend under the `/api` prefix and prox
 | POST   | `/api/scenes/:name/replace`      | —                      | Replace the active patterns with a scene   |
 | PATCH  | `/api/scenes/:name` 🔒           | `{ newName }`          | Rename a scene                             |
 | DELETE | `/api/scenes/:name` 🔒           | —                      | Delete a scene                             |
+| GET    | `/api/config` 🔒                 | —                      | `config.json`, without the edit password   |
+| PUT    | `/api/config` 🔒                 | `{ settings, editPassword? }` | Rewrite `config.json` and adopt it   |
 
 Unknown paths under `/api` answer a JSON `404`, and failures come back as `{ "error": "..." }` with an appropriate status.
 
@@ -83,6 +85,8 @@ Copy-Item config.sample.json config.json
 ```
 
 The server validates the file on startup and exits with a message naming the offending key if something is missing or out of range, so a typo shows up right away instead of as a dark ring later. Edits take effect on restart.
+
+The same settings can be edited from the browser at `/config`, behind the editor password. Saving there rewrites `config.json` and the server adopts everything it reads live — the transitions and the edit password — while the page names the settings that are waiting for a restart. The password is never sent to the browser: the page only shows whether one is set, and changing it signs every editor out.
 
 ```json
 {

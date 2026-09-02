@@ -6,8 +6,14 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
 import { publishAudioFrame } from './audio';
-import { getAuth, login, logout, requireAuth } from './auth';
-import { config } from './config';
+import { getAuth, login, logout, requireAuth, signOutEveryone } from './auth';
+import {
+  config,
+  configUpdateSchema,
+  currentSettings,
+  editPasswordSet,
+  saveConfig
+} from './config';
 import { Engine } from './engine';
 import { HttpError } from './errors';
 import { startOutputs } from './output';
@@ -219,6 +225,29 @@ async function deleteScene(req: express.Request, res: express.Response) {
   res.json(await engine.deleteScene(String(req.params.name)));
 }
 
+// The contents of config.json, minus the edit password.
+function getConfig(_req: express.Request, res: express.Response) {
+  res.json({ settings: currentSettings(), editPasswordSet: editPasswordSet() });
+}
+
+// Write the config page's changes to config.json and adopt them. Only the settings read
+// on every use change the running server; the rest wait for a restart and are reported
+// back so the page can say so.
+async function putConfig(req: express.Request, res: express.Response) {
+  const update = parseBody(configUpdateSchema, req.body);
+  const restartRequired = await saveConfig(update);
+
+  // A new password invalidates the tokens handed out under the old one, this tab's
+  // included: whoever is holding one has to unlock again.
+  if (update.editPassword !== undefined) signOutEveryone();
+
+  res.json({
+    settings: currentSettings(),
+    editPasswordSet: editPasswordSet(),
+    restartRequired
+  });
+}
+
 async function main() {
   await engine.load();
 
@@ -269,6 +298,9 @@ async function main() {
   routes.post('/scenes/:name/replace', replaceWithScene);
   routes.patch('/scenes/:name', requireAuth, renameScene);
   routes.delete('/scenes/:name', requireAuth, deleteScene);
+  // The config page rewrites config.json, so it sits behind the edit password too.
+  routes.get('/config', requireAuth, getConfig);
+  routes.put('/config', requireAuth, putConfig);
   app.use('/api', routes);
 
   // Unknown API routes get a JSON 404 instead of falling through to the SPA.

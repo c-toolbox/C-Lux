@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { createTheme, MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 
+import { ConfigPage } from './Config/ConfigPage.tsx';
 import { DebugPage } from './Debug/DebugPage.tsx';
 import Editor from './Editor/Editor.tsx';
 import { PasswordGate } from './Editor/PasswordGate.tsx';
@@ -39,6 +40,14 @@ const router = createBrowserRouter([
     element: (
       <PasswordGate>
         <DebugPage />
+      </PasswordGate>
+    )
+  },
+  {
+    path: '/config',
+    element: (
+      <PasswordGate>
+        <ConfigPage />
       </PasswordGate>
     )
   }

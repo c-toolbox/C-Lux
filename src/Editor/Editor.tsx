@@ -223,6 +223,9 @@ function Editor() {
               Lock
             </Button>
           )}
+          <Button component={Link} to={'/config'} variant={'default'}>
+            Config
+          </Button>
           <Button component={Link} to={'/'} variant={'default'}>
             Home
           </Button>

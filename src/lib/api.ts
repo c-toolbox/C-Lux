@@ -1,3 +1,12 @@
+export type {
+  ArtNetSettings,
+  ConfigSaved,
+  ConfigStatus,
+  ConfigUpdate,
+  OutputSettings,
+  ServerSettings,
+  Settings
+} from '../../shared/config';
 export type { DebugStatus, DebugUpdate } from '../../shared/debug';
 export { AUDIO_TYPE } from '../../shared/patterns/audio';
 export type {
@@ -14,6 +23,7 @@ export { patternByType, patternDisplayName } from '../../shared/patterns/pattern
 export type { SolidColorStatus, SolidColorUpdate } from '../../shared/patterns/static';
 export { VIDEO_TYPE } from '../../shared/patterns/video';
 
+import type { ConfigSaved, ConfigStatus, ConfigUpdate } from '../../shared/config';
 import type { DebugStatus, DebugUpdate } from '../../shared/debug';
 import type {
   PatternParameters,
@@ -115,7 +125,12 @@ export const api = {
   renameScene: (name: string, newName: string) =>
     request<Scene[]>(`/scenes/${seg(name)}`, 'PATCH', { newName }),
   deleteScene: (name: string) =>
-    request<{ name: string }>(`/scenes/${seg(name)}`, 'DELETE')
+    request<{ name: string }>(`/scenes/${seg(name)}`, 'DELETE'),
+  // config.json, minus the edit password. Editor-only.
+  config: () => request<ConfigStatus>('/config'),
+  // Rewrite config.json. The server adopts what it can read live and reports the settings
+  // that are waiting for a restart.
+  saveConfig: (update: ConfigUpdate) => request<ConfigSaved>('/config', 'PUT', update)
 };
 
 // Subscribe to the live blended frame over Server-Sent Events. Calls `onFrame` with each
