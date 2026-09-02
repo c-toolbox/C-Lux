@@ -374,8 +374,8 @@ export function ConfigPage() {
                   <Textarea
                     label={'Remap'}
                     description={
-                      'Lights patched to the wrong address, as { "from": to }. The ' +
-                      'listed lights have to swap amongst themselves.'
+                      'Lights patched to the wrong address, as { "from": to }. Entries ' +
+                      'are one-way; no two may point at the same light.'
                     }
                     value={remapText}
                     onChange={(e) => changeRemap(e.currentTarget.value)}

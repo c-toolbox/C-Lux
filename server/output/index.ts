@@ -62,21 +62,34 @@ function withRotation(getFrame: () => number[]): () => number[] {
 
 // Wrap a frame source so individual lights are re-addressed before they reach the hardware,
 // compensating for fixtures that sit on a different DMX address than their position implies.
-// Lights missing from `output.remap` keep their 1:1 mapping.
+// Lights missing from `output.remap` keep their 1:1 mapping. Entries may be one-way: an
+// explicit entry outranks the 1:1 mapping of the light it lands on, and a light whose color
+// was sent elsewhere goes dark unless another entry fills its place.
 function withRemap(getFrame: () => number[]): () => number[] {
   const { nLights } = config;
   const entries = Object.entries(config.output.remap);
   if (entries.length === 0) return getFrame;
 
-  const targets = Array.from({ length: nLights }, (_, i) => i);
-  for (const [from, to] of entries) targets[Number(from)] = to;
+  const moved = new Set(entries.map(([from]) => Number(from)));
+  const sources = new Array<number | null>(nLights).fill(null);
+  for (const [from, to] of entries) sources[to] = Number(from);
+  for (let i = 0; i < nLights; i++) {
+    if (sources[i] === null && !moved.has(i)) sources[i] = i;
+  }
 
   const remapped = new Array<number>(nLights * 3).fill(0);
   return () => {
     const frame = getFrame();
     for (let i = 0; i < nLights; i++) {
-      const src = i * 3;
-      const dst = targets[i] * 3;
+      const source = sources[i];
+      const dst = i * 3;
+      if (source === null) {
+        remapped[dst] = 0;
+        remapped[dst + 1] = 0;
+        remapped[dst + 2] = 0;
+        continue;
+      }
+      const src = source * 3;
       remapped[dst] = frame[src];
       remapped[dst + 1] = frame[src + 1];
       remapped[dst + 2] = frame[src + 2];

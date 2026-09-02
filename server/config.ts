@@ -33,8 +33,8 @@ const serverSchema = z.object({
 const outputSchema = z.object({
   rotation: z.number(),
   // Fix-ups for lights that were patched to the wrong address: `"5": 3` sends the color
-  // computed for light 5 to light 3 instead. Lights left out keep their 1:1 mapping, so
-  // the lights that are listed have to be a closed shuffle (see the check below).
+  // computed for light 5 to light 3 instead. Lights left out keep their 1:1 mapping;
+  // entries may be one-way, but no two of them may land on the same light.
   remap: z
     .record(z.string().regex(/^\d+$/, 'must be a light index'), z.int().nonnegative())
     .default({}),
@@ -58,13 +58,12 @@ const baseConfigSchema = z.object({
   output: outputSchema
 });
 
-// The remap has to shuffle a set of lights amongst themselves; a one-way entry would
-// leave one light dark and another one fought over by two colors.
+// Entries may be one-way; the only thing that cannot be resolved is two of them fighting
+// over the same destination light.
 function checkRemap(
   cfg: { nLights: number; output: { remap: Record<string, number> } },
   ctx: z.RefinementCtx
 ): void {
-  const sources = new Set<number>();
   const destinations = new Set<number>();
 
   for (const [from, to] of Object.entries(cfg.output.remap)) {
@@ -84,31 +83,7 @@ function checkRemap(
       });
       continue;
     }
-    sources.add(Number(from));
     destinations.add(to);
-  }
-
-  for (const light of sources) {
-    if (!destinations.has(light)) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['output', 'remap', String(light)],
-        message:
-          `light ${light} gives its color away but is not given one back, ` +
-          `so it would go dark - add an entry that lands on ${light}`
-      });
-    }
-  }
-  for (const light of destinations) {
-    if (!sources.has(light)) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['output', 'remap'],
-        message:
-          `light ${light} is given another light's color but keeps its own too - ` +
-          `add an entry sending light ${light} somewhere else`
-      });
-    }
   }
 }
 

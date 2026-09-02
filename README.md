@@ -159,13 +159,13 @@ Degrees the frame is turned around the ring before it is sent, for installations
 
 Per-light address fix-ups, written as `"position": address` — the color computed for a position on the ring is sent to a different light instead. So a light that physically sits at position 14 but answers to ID 0 needs `"14": 0`.
 
-The lights listed have to be shuffled amongst themselves: every position that gives its color away must also be given one, or it would go dark while another light was sent two colors. For a straight pair that means both directions:
+Entries are one-way, and can be paired up when two lights need to trade places:
 
 ```json
 "remap": { "14": 0, "0": 14 }
 ```
 
-Lights left out of the map keep their 1:1 mapping. A remap that isn't a closed shuffle is rejected at startup.
+Lights left out of the map keep their 1:1 mapping. An entry outranks the 1:1 mapping of the light it lands on, so `{ "0": 14 }` on its own sends position 0's color to light 14 and leaves light 0 dark. Two entries pointing at the same light are rejected at startup, since only one color can be sent there.
 
 #### `output.artnet`
 

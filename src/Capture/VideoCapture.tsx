@@ -51,7 +51,9 @@ const RIM_SLIDERS: readonly SliderSpec[] = [
   { key: 'centerX', label: 'Center X', min: 0, max: 1 },
   { key: 'centerY', label: 'Center Y', min: 0, max: 1 },
   { key: 'radius', label: 'Radius', min: 0, max: 1.4 },
-  { key: 'ringWidth', label: 'Ring width', min: 0, max: 1 }
+  { key: 'ringWidth', label: 'Ring width', min: 0, max: 1 },
+  // A full turn, so the feed's "up" can be dragged onto the top of the light ring.
+  { key: 'rotation', label: 'Rotation', min: 0, max: 1, step: 0.005 }
 ];
 
 const STRIP_SLIDERS: readonly SliderSpec[] = [
@@ -128,10 +130,11 @@ export function VideoCapture() {
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Where the first light reads from, so the pattern's rotation can be lined up.
+    // Where the first light reads from, so the rotation can be lined up with the ring.
+    const angle = geometry.rotation * Math.PI * 2 - Math.PI / 2;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.beginPath();
-    ctx.arc(cx, cy - r, 3, 0, Math.PI * 2);
+    ctx.arc(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r, 3, 0, Math.PI * 2);
     ctx.fill();
   }, [geometry, mode, capturing]);
 

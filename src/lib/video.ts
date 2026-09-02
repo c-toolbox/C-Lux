@@ -18,13 +18,15 @@ export type VideoMode = 'strip' | 'fisheye';
 
 // Which part of the frame each mode reads, all as fractions so the numbers survive a
 // change of resolution. `radius` is the ring's radius as a fraction of half the frame
-// and `ringWidth` its thickness as a fraction of that; the strip band is a fraction of
+// and `ringWidth` its thickness as a fraction of that; `rotation` is where light 0 reads
+// from, as a fraction of a turn clockwise from the top; the strip band is a fraction of
 // the frame height.
 export interface VideoGeometry {
   centerX: number;
   centerY: number;
   radius: number;
   ringWidth: number;
+  rotation: number;
   stripY: number;
   stripHeight: number;
 }
@@ -35,6 +37,7 @@ export const DEFAULT_VIDEO_GEOMETRY: VideoGeometry = {
   radius: 1,
   // A zero-width ring by default: every light reads a single circle of pixels.
   ringWidth: 0,
+  rotation: 0,
   stripY: 0.5,
   stripHeight: 0.025
 };
@@ -105,9 +108,10 @@ function buildRimLut(lights: number, g: VideoGeometry): Int32Array {
   let n = 0;
   for (let i = 0; i < lights; i++) {
     for (let a = 0; a < ARC_SAMPLES; a++) {
-      // Light 0 reads the top of the frame and the rest run clockwise from there, which
-      // is what the y-down canvas axis makes of an increasing angle.
-      const turn = (i + (a + 0.5) / ARC_SAMPLES) / lights;
+      // Light 0 reads `rotation` of a turn clockwise from the top of the frame and the
+      // rest follow it, which is what the y-down canvas axis makes of an increasing
+      // angle. The offset lines the feed's own "up" up with the top of the ring.
+      const turn = (i + (a + 0.5) / ARC_SAMPLES) / lights + g.rotation;
       const angle = turn * Math.PI * 2 - Math.PI / 2;
       const dx = Math.cos(angle);
       const dy = Math.sin(angle);
@@ -214,7 +218,7 @@ export async function startVideoCapture({
     );
 
     const g = geometry();
-    const key = `${g.centerX}|${g.centerY}|${g.radius}|${g.ringWidth}`;
+    const key = `${g.centerX}|${g.centerY}|${g.radius}|${g.ringWidth}|${g.rotation}`;
     if (key !== lutKey) {
       lut = buildRimLut(lights, g);
       lutKey = key;
