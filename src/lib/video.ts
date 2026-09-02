@@ -17,14 +17,14 @@ export type VideoSource = 'camera' | 'screen';
 export type VideoMode = 'strip' | 'fisheye';
 
 // Which part of the frame each mode reads, all as fractions so the numbers survive a
-// change of resolution. `radius` is a fraction of half the frame; the ring bounds are
-// fractions of that radius; the strip band is a fraction of the frame height.
+// change of resolution. `radius` is the ring's radius as a fraction of half the frame
+// and `ringWidth` its thickness as a fraction of that; the strip band is a fraction of
+// the frame height.
 export interface VideoGeometry {
   centerX: number;
   centerY: number;
   radius: number;
-  ringInner: number;
-  ringOuter: number;
+  ringWidth: number;
   stripY: number;
   stripHeight: number;
 }
@@ -33,8 +33,8 @@ export const DEFAULT_VIDEO_GEOMETRY: VideoGeometry = {
   centerX: 0.5,
   centerY: 0.5,
   radius: 1,
-  ringInner: 0.95,
-  ringOuter: 1,
+  // A zero-width ring by default: every light reads a single circle of pixels.
+  ringWidth: 0,
   stripY: 0.5,
   stripHeight: 0.025
 };
@@ -113,8 +113,7 @@ function buildRimLut(lights: number, g: VideoGeometry): Int32Array {
       const dy = Math.sin(angle);
 
       for (let k = 0; k < RADIAL_SAMPLES; k++) {
-        const f =
-          g.ringInner + (g.ringOuter - g.ringInner) * ((k + 0.5) / RADIAL_SAMPLES);
+        const f = 1 + g.ringWidth * ((k + 0.5) / RADIAL_SAMPLES - 0.5);
         const x = clamp(Math.round(cx + dx * rmax * f));
         const y = clamp(Math.round(cy + dy * rmax * f));
         lut[n++] = (y * SAMPLE_SIZE + x) * 4;
@@ -215,7 +214,7 @@ export async function startVideoCapture({
     );
 
     const g = geometry();
-    const key = `${g.centerX}|${g.centerY}|${g.radius}|${g.ringInner}|${g.ringOuter}`;
+    const key = `${g.centerX}|${g.centerY}|${g.radius}|${g.ringWidth}`;
     if (key !== lutKey) {
       lut = buildRimLut(lights, g);
       lutKey = key;

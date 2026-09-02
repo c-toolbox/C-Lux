@@ -15,11 +15,16 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
+import { AudioCapture } from '../Capture/AudioCapture';
+import { VideoCapture } from '../Capture/VideoCapture';
 import {
   api,
+  AUDIO_TYPE,
+  type PatternParameters,
   type Scene,
   type SolidColorStatus,
-  type SolidColorUpdate
+  type SolidColorUpdate,
+  VIDEO_TYPE
 } from '../lib/api';
 import { hexToRgb, rgbToHex } from '../lib/color';
 import { describeError } from '../lib/errors';
@@ -33,6 +38,9 @@ const toggleTransition = {
 export function HomePage() {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [applied, setApplied] = useState<string[]>([]);
+  // Whatever is running right now, so the capture widgets can be offered for the audio
+  // and video patterns the selected scenes brought in.
+  const [patterns, setPatterns] = useState<PatternParameters[]>([]);
   // The fixed solid color scene, which lives outside the pattern list and is listed
   // alongside the saved scenes. `solidHex` follows the picker while it is being dragged.
   const [solid, setSolid] = useState<SolidColorStatus | null>(null);
@@ -57,18 +65,30 @@ export function HomePage() {
     setSolidHex(rgbToHex(status.target));
   }
 
+  async function syncPatterns() {
+    setPatterns(await api.listPatterns());
+  }
+
   async function refresh() {
     try {
-      const [sceneList, appliedList, solidColor, { blackout }, { halfLight }] =
-        await Promise.all([
-          api.listScenes(),
-          api.appliedScenes(),
-          api.solidColor(),
-          api.blackout(),
-          api.halfLight()
-        ]);
+      const [
+        sceneList,
+        appliedList,
+        patternList,
+        solidColor,
+        { blackout },
+        { halfLight }
+      ] = await Promise.all([
+        api.listScenes(),
+        api.appliedScenes(),
+        api.listPatterns(),
+        api.solidColor(),
+        api.blackout(),
+        api.halfLight()
+      ]);
       setScenes(sceneList);
       setApplied(appliedList);
+      setPatterns(patternList);
       trackSolid(solidColor);
       setBlackout(blackout);
       setHalfLight(halfLight);
@@ -113,6 +133,7 @@ export function HomePage() {
     try {
       setApplied(await api.replaceWithScene(scene.name));
       trackSolid(await api.setSolidColor({ enabled: false }));
+      await syncPatterns();
     } catch (e) {
       showError(e);
     } finally {
@@ -127,6 +148,7 @@ export function HomePage() {
       setApplied(
         applied ? await api.applyScene(scene.name) : await api.unapplyScene(scene.name)
       );
+      await syncPatterns();
     } catch (e) {
       showError(e);
     } finally {
@@ -153,6 +175,7 @@ export function HomePage() {
     try {
       await api.clearPatterns();
       setApplied([]);
+      setPatterns([]);
       trackSolid(await api.setSolidColor({ enabled: true }));
     } catch (e) {
       showError(e);
@@ -178,7 +201,9 @@ export function HomePage() {
           Open editor
         </Button>
       </Group>
-      <Stack mt={'md'} style={{ flex: 1, minHeight: 0 }}>
+      {/* Clipped rather than allowed to grow, so the capture widgets can never spill
+          over the controls below; the scroller inside reaches whatever does not fit. */}
+      <Stack mt={'md'} style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {loading ? (
           <Group justify={'center'} py={'xl'}>
             <Loader />
@@ -272,6 +297,16 @@ export function HomePage() {
                     </Group>
                   </Group>
                 ))
+              )}
+
+              {/* The audio and video patterns are fed from the browser, so wherever they
+                  can be switched on their capture widgets have to be reachable too.
+                  Inside the scroller: they are tall enough to bury the controls below. */}
+              {patterns.some((p) => p.type === AUDIO_TYPE && p.enabled) && (
+                <AudioCapture />
+              )}
+              {patterns.some((p) => p.type === VIDEO_TYPE && p.enabled) && (
+                <VideoCapture />
               )}
             </Stack>
           </ScrollArea>

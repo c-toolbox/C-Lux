@@ -250,10 +250,11 @@ async function main() {
   // The debug page overrides what the lights show, so it sits behind the edit password.
   routes.get('/debug', requireAuth, getDebug);
   routes.put('/debug', requireAuth, setDebug);
-  routes.post('/audio', requireAuth, postAudio);
+  // Open like the other house controls: the landing page runs the capture widgets too,
+  // and a frame can only feed a pattern someone already enabled.
+  routes.post('/audio', postAudio);
   routes.post(
     '/video',
-    requireAuth,
     express.raw({ type: 'application/octet-stream', limit: VIDEO_BODY_LIMIT }),
     postVideo
   );

@@ -50,9 +50,8 @@ interface SliderSpec {
 const RIM_SLIDERS: readonly SliderSpec[] = [
   { key: 'centerX', label: 'Center X', min: 0, max: 1 },
   { key: 'centerY', label: 'Center Y', min: 0, max: 1 },
-  { key: 'radius', label: 'Radius', min: 0.2, max: 1.4 },
-  { key: 'ringInner', label: 'Ring inner', min: 0, max: 1 },
-  { key: 'ringOuter', label: 'Ring outer', min: 0, max: 1 }
+  { key: 'radius', label: 'Radius', min: 0, max: 1.4 },
+  { key: 'ringWidth', label: 'Ring width', min: 0, max: 1 }
 ];
 
 const STRIP_SLIDERS: readonly SliderSpec[] = [
@@ -122,29 +121,17 @@ export function VideoCapture() {
     const cy = geometry.centerY * OVERLAY_SIZE;
     const r = geometry.radius * half;
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.stroke();
-
-    const band = Math.abs(geometry.ringOuter - geometry.ringInner) * r;
+    const band = geometry.ringWidth * r;
     ctx.strokeStyle = 'rgba(77, 171, 247, 0.45)';
     ctx.lineWidth = Math.max(1, band);
     ctx.beginPath();
-    ctx.arc(cx, cy, ((geometry.ringInner + geometry.ringOuter) / 2) * r, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.stroke();
 
     // Where the first light reads from, so the pattern's rotation can be lined up.
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.beginPath();
-    ctx.arc(
-      cx,
-      cy - ((geometry.ringInner + geometry.ringOuter) / 2) * r,
-      3,
-      0,
-      Math.PI * 2
-    );
+    ctx.arc(cx, cy - r, 3, 0, Math.PI * 2);
     ctx.fill();
   }, [geometry, mode, capturing]);
 

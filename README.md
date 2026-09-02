@@ -57,7 +57,7 @@ All endpoints are served by the Express backend under the `/api` prefix and prox
 | PUT    | `/api/half-light`                | `{ halfLight }`        | Fade the top half out or restore it        |
 | GET    | `/api/solid-color`               | —                      | State of the fixed solid color layer       |
 | PUT    | `/api/solid-color`               | `{ color?, enabled? }` | Fade it to a color, or switch it on/off    |
-| POST   | `/api/audio` 🔒                  | audio analysis frame   | Feed one frame to audio-reactive patterns  |
+| POST   | `/api/audio`                     | audio analysis frame   | Feed one frame to audio-reactive patterns  |
 | GET    | `/api/stream`                    | —                      | Server-Sent Events stream of frames        |
 | GET    | `/api/scenes`                    | —                      | List the saved scenes                      |
 | GET    | `/api/scenes/applied`            | —                      | Names of the scenes currently switched on  |

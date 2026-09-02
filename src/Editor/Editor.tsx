@@ -15,6 +15,8 @@ import {
   Title
 } from '@mantine/core';
 
+import { AudioCapture } from '../Capture/AudioCapture';
+import { VideoCapture } from '../Capture/VideoCapture';
 import {
   api,
   AUDIO_TYPE,
@@ -28,12 +30,10 @@ import { type FormValues, toProps } from '../PatternForm/PatternForm';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
 import { AddPatternModal } from './AddPatternModal';
-import { AudioCapture } from './AudioCapture';
 import { EditPatternModal } from './EditPatternModal';
 import { ManageScenesModal } from './ManageScenesModal';
 import { PatternList } from './PatternList';
 import { downloadJson, randomName, readJsonFile } from './utils';
-import { VideoCapture } from './VideoCapture';
 
 function Editor() {
   const [patterns, setPatterns] = useState<PatternParameters[]>([]);
