@@ -16,23 +16,27 @@ export type VideoSource = 'camera' | 'screen';
 // it outwards, the way an ambient backlight follows the edges of a screen.
 export type VideoMode = 'strip' | 'fisheye';
 
-// Where the circle sits in the frame and which part of it to read, all as fractions so
-// the numbers survive a change of resolution. `radius` is a fraction of half the frame;
-// the ring bounds are fractions of that radius.
-export interface RimGeometry {
+// Which part of the frame each mode reads, all as fractions so the numbers survive a
+// change of resolution. `radius` is a fraction of half the frame; the ring bounds are
+// fractions of that radius; the strip band is a fraction of the frame height.
+export interface VideoGeometry {
   centerX: number;
   centerY: number;
   radius: number;
   ringInner: number;
   ringOuter: number;
+  stripY: number;
+  stripHeight: number;
 }
 
-export const DEFAULT_RIM_GEOMETRY: RimGeometry = {
+export const DEFAULT_VIDEO_GEOMETRY: VideoGeometry = {
   centerX: 0.5,
   centerY: 0.5,
   radius: 1,
-  ringInner: 0.72,
-  ringOuter: 0.97
+  ringInner: 0.95,
+  ringOuter: 1,
+  stripY: 0.5,
+  stripHeight: 0.025
 };
 
 export interface VideoCaptureHandle {
@@ -41,12 +45,13 @@ export interface VideoCaptureHandle {
 
 interface VideoCaptureOptions {
   source: VideoSource;
-  mode: VideoMode;
+  // Read every frame, so the mode can be switched without tearing the stream down.
+  mode: () => VideoMode;
   // Owned by the caller so the stream can be shown while it is being sampled; the
   // element also has to be in the page, or browsers may stop decoding frames into it.
   video: HTMLVideoElement;
   // Read every frame, so dragging a calibration slider takes effect without a restart.
-  geometry: () => RimGeometry;
+  geometry: () => VideoGeometry;
   // Called with the strip that was just sent, for a preview. The array is reused.
   onStrip: (width: number, rgb: Uint8Array) => void;
   // Called when the browser ends the capture on its own (e.g. "Stop sharing").
@@ -89,7 +94,7 @@ async function openStream(source: VideoSource): Promise<MediaStream> {
 // Byte offsets into the sampled frame for every light, grouped by light. Geometry only
 // changes when someone drags a slider, so the trigonometry is done once and the per
 // frame work is a flat walk over this table.
-function buildRimLut(lights: number, g: RimGeometry): Int32Array {
+function buildRimLut(lights: number, g: VideoGeometry): Int32Array {
   const lut = new Int32Array(lights * ARC_SAMPLES * RADIAL_SAMPLES);
   const cx = g.centerX * SAMPLE_SIZE;
   const cy = g.centerY * SAMPLE_SIZE;
@@ -168,12 +173,21 @@ export async function startVideoCapture({
     ctx.imageSmoothingQuality = 'high';
   };
 
-  // Collapse the frame to a single row. The browser's own downscale box-filters whole
-  // columns, so a tall frame averages down rather than picking one arbitrary line.
+  // Collapse a horizontal band of the frame to a single row. The browser's own downscale
+  // box-filters whole columns, so the band averages down rather than picking one
+  // arbitrary line.
   const sampleStrip = (): number => {
     const width = Math.min(VIDEO_MAX_WIDTH, video.videoWidth);
+    const frame = video.videoHeight;
+    const g = geometry();
+    const band = Math.min(frame, Math.max(1, Math.round(g.stripHeight * frame)));
+    const top = Math.min(
+      frame - band,
+      Math.max(0, Math.round(g.stripY * frame - band / 2))
+    );
+
     resize(width, 1);
-    ctx.drawImage(video, 0, 0, width, 1);
+    ctx.drawImage(video, 0, top, video.videoWidth, band, 0, 0, width, 1);
 
     const { data } = ctx.getImageData(0, 0, width, 1);
     for (let i = 0; i < width; i++) {
@@ -252,7 +266,7 @@ export async function startVideoCapture({
     if (video.readyState < video.HAVE_CURRENT_DATA) return;
     if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
-    const width = mode === 'strip' ? sampleStrip() : sampleRim();
+    const width = mode() === 'strip' ? sampleStrip() : sampleRim();
     if (width === 0) return;
 
     onStrip(width, strip);

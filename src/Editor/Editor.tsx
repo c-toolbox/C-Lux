@@ -228,7 +228,9 @@ function Editor() {
           </Button>
         </Group>
       </Group>
-      <Stack mt={'md'} style={{ flex: 1, minHeight: 0 }}>
+      {/* Clipped rather than allowed to grow, so the capture widgets can never spill
+          over the visualiser below. */}
+      <Stack mt={'md'} style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <Group align={'flex-end'} gap={'xs'}>
           <TextInput
             placeholder={'Name'}

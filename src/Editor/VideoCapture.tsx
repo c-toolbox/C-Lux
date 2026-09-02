@@ -13,10 +13,10 @@ import {
 
 import { describeError } from '../lib/errors';
 import {
-  DEFAULT_RIM_GEOMETRY,
-  type RimGeometry,
+  DEFAULT_VIDEO_GEOMETRY,
   startVideoCapture,
   type VideoCaptureHandle,
+  type VideoGeometry,
   type VideoMode,
   type VideoSource
 } from '../lib/video';
@@ -35,18 +35,31 @@ const MODES = [
 // same coordinates the geometry describes and then scaled by CSS.
 const OVERLAY_SIZE = 256;
 
-const SLIDERS = [
+// The preview only has to show what is being sampled, so it stays small enough to leave
+// the pattern list and the visualiser their room.
+const PREVIEW_WIDTH = 450;
+
+interface SliderSpec {
+  key: keyof VideoGeometry;
+  label: string;
+  min: number;
+  max: number;
+  step?: number;
+}
+
+const RIM_SLIDERS: readonly SliderSpec[] = [
   { key: 'centerX', label: 'Center X', min: 0, max: 1 },
   { key: 'centerY', label: 'Center Y', min: 0, max: 1 },
   { key: 'radius', label: 'Radius', min: 0.2, max: 1.4 },
   { key: 'ringInner', label: 'Ring inner', min: 0, max: 1 },
   { key: 'ringOuter', label: 'Ring outer', min: 0, max: 1 }
-] as const satisfies ReadonlyArray<{
-  key: keyof RimGeometry;
-  label: string;
-  min: number;
-  max: number;
-}>;
+];
+
+const STRIP_SLIDERS: readonly SliderSpec[] = [
+  { key: 'stripY', label: 'Strip position', min: 0, max: 1 },
+  // Fine steps, because a usable band is only a few percent of the frame.
+  { key: 'stripHeight', label: 'Strip height', min: 0.005, max: 1, step: 0.005 }
+];
 
 // Feeds the Video pattern: patterns run on the server, which has no video decoder, so
 // this tab samples the feed down to a strip of colors and streams that over the API.
@@ -55,8 +68,10 @@ export function VideoCapture() {
   const [mode, setMode] = useState<VideoMode>('fisheye');
   const [capturing, setCapturing] = useState(false);
   const [starting, setStarting] = useState(false);
-  const [geometry, setGeometry] = useState<RimGeometry>(DEFAULT_RIM_GEOMETRY);
+  const [geometry, setGeometry] = useState<VideoGeometry>(DEFAULT_VIDEO_GEOMETRY);
   const [error, setError] = useState<string | null>(null);
+  // Shown at the stream's own aspect ratio so the strip overlay lines up with the frame.
+  const [aspect, setAspect] = useState(16 / 9);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
@@ -67,6 +82,9 @@ export function VideoCapture() {
   // the one captured when the run started.
   const geometryRef = useRef(geometry);
   geometryRef.current = geometry;
+
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
 
   const stop = useCallback(() => {
     handle.current?.stop();
@@ -139,7 +157,7 @@ export function VideoCapture() {
     try {
       handle.current = await startVideoCapture({
         source,
-        mode,
+        mode: () => modeRef.current,
         video,
         geometry: () => geometryRef.current,
         onStrip,
@@ -154,6 +172,11 @@ export function VideoCapture() {
   }
 
   const fisheye = mode === 'fisheye';
+  const sliders = fisheye ? RIM_SLIDERS : STRIP_SLIDERS;
+
+  // Same clamping the sampler applies, so the band drawn here is the one being read.
+  const bandHeight = Math.min(1, Math.max(0.005, geometry.stripHeight));
+  const bandTop = Math.min(1 - bandHeight, Math.max(0, geometry.stripY - bandHeight / 2));
 
   return (
     <Paper withBorder p={'sm'} radius={'md'}>
@@ -173,7 +196,7 @@ export function VideoCapture() {
             }
             value={mode}
             data={MODES}
-            disabled={capturing || starting}
+            disabled={starting}
             onChange={(e) => setMode(e.currentTarget.value as VideoMode)}
           />
           <Button
@@ -186,44 +209,88 @@ export function VideoCapture() {
           </Button>
         </Group>
 
-        <Box
-          style={{
-            position: 'relative',
-            width: '100%',
-            // A square box cropping to fill shows exactly what the rim sampler reads.
-            aspectRatio: fisheye ? '1 / 1' : '16 / 9',
-            background: 'black',
-            borderRadius: 'var(--mantine-radius-sm)',
-            overflow: 'hidden',
-            display: capturing ? 'block' : 'none'
-          }}
-        >
-          <video
-            ref={videoRef}
-            muted
-            playsInline
+        <Group align={'flex-start'} gap={'sm'} wrap={'nowrap'}>
+          <Box
             style={{
-              display: 'block',
-              width: '100%',
-              height: '100%',
-              objectFit: fisheye ? 'cover' : 'contain'
+              position: 'relative',
+              flex: 'none',
+              width: PREVIEW_WIDTH,
+              // A square box cropping to fill shows exactly what the rim sampler reads;
+              // strip mode keeps the stream's own shape so the band overlay lines up.
+              aspectRatio: fisheye ? '1 / 1' : `${aspect}`,
+              background: 'black',
+              borderRadius: 'var(--mantine-radius-sm)',
+              overflow: 'hidden',
+              display: capturing ? 'block' : 'none'
             }}
-          />
-          {fisheye && (
-            <canvas
-              ref={overlayRef}
-              width={OVERLAY_SIZE}
-              height={OVERLAY_SIZE}
+          >
+            <video
+              ref={videoRef}
+              muted
+              playsInline
+              onLoadedMetadata={(e) => {
+                const { videoWidth, videoHeight } = e.currentTarget;
+                if (videoWidth && videoHeight) setAspect(videoWidth / videoHeight);
+              }}
               style={{
-                position: 'absolute',
-                inset: 0,
+                display: 'block',
                 width: '100%',
                 height: '100%',
-                pointerEvents: 'none'
+                objectFit: fisheye ? 'cover' : 'fill'
               }}
             />
-          )}
-        </Box>
+            {fisheye ? (
+              <canvas
+                ref={overlayRef}
+                width={OVERLAY_SIZE}
+                height={OVERLAY_SIZE}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  pointerEvents: 'none'
+                }}
+              />
+            ) : (
+              <Box
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: `${bandTop * 100}%`,
+                  height: `${bandHeight * 100}%`,
+                  border: '1px solid rgba(77, 171, 247, 0.9)',
+                  background: 'rgba(77, 171, 247, 0.15)',
+                  pointerEvents: 'none'
+                }}
+              />
+            )}
+          </Box>
+
+          <SimpleGrid
+            cols={{ base: 1, sm: fisheye ? 2 : 1 }}
+            spacing={'xs'}
+            verticalSpacing={4}
+            style={{ flex: 1, minWidth: 0 }}
+          >
+            {sliders.map(({ key, label, min, max, step }) => (
+              <Box key={key}>
+                <Text size={'xs'} c={'dimmed'}>
+                  {label}
+                </Text>
+                <Slider
+                  size={'sm'}
+                  min={min}
+                  max={max}
+                  step={step ?? 0.01}
+                  value={geometry[key]}
+                  onChange={(value) => setGeometry((g) => ({ ...g, [key]: value }))}
+                />
+              </Box>
+            ))}
+          </SimpleGrid>
+        </Group>
 
         {capturing && (
           <canvas
@@ -237,26 +304,6 @@ export function VideoCapture() {
               imageRendering: 'pixelated'
             }}
           />
-        )}
-
-        {fisheye && (
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={'xs'} verticalSpacing={4}>
-            {SLIDERS.map(({ key, label, min, max }) => (
-              <Box key={key}>
-                <Text size={'xs'} c={'dimmed'}>
-                  {label}
-                </Text>
-                <Slider
-                  size={'sm'}
-                  min={min}
-                  max={max}
-                  step={0.01}
-                  value={geometry[key]}
-                  onChange={(value) => setGeometry((g) => ({ ...g, [key]: value }))}
-                />
-              </Box>
-            ))}
-          </SimpleGrid>
         )}
 
         {error && (
