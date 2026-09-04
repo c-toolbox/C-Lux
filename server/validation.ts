@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { NumberRange } from '../shared/patterns/pattern';
+import { type NumberRange, SHARED_FIELDS } from '../shared/patterns/pattern';
 import { patternByType } from '../shared/patterns/patterns';
 
 import { HttpError } from './errors';
@@ -138,6 +138,13 @@ function validateAgainstSpec(
     } else {
       requireNumberInRange(value, spec, `props.${key}`);
     }
+  }
+
+  // The shared fields stay optional even when creating: patterns saved before one of
+  // them existed carry no value for it and fall back to its default.
+  for (const [key, spec] of Object.entries(SHARED_FIELDS)) {
+    if (validated[key] === undefined) continue;
+    requireNumberInRange(validated[key], spec, `props.${key}`);
   }
 
   return validated;

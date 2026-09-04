@@ -167,7 +167,7 @@ export class Engine {
     if (!instance) throw new HttpError(404, `No pattern named: ${name}`);
 
     const { type } = instance.parameters() as PatternParameters;
-    instance.set(validateUpdatedPatternProps(type, props));
+    instance.update(validateUpdatedPatternProps(type, props));
     return instance.serialize() as PatternParameters;
   }
 

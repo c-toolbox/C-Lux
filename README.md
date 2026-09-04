@@ -164,7 +164,7 @@ A destination of `-1` throws the color away instead of sending it anywhere, whic
 "remap": { "37": -1 }
 ```
 
-The visualizer applies the same map, so what it shows matches the ring. It reads the map from `config.json` at build time, so a change needs the web app rebuilt as well as the server restarted.
+The visualizer ignores the map: it shows the pattern as it is meant to look, while the remap only compensates for how the fixtures are wired.
 
 ### `output`
 
@@ -175,7 +175,7 @@ The visualizer applies the same map, so what it shows matches the ring. It reads
 
 #### `output.rotation`
 
-Degrees the frame is turned around the ring before it is sent, for installations where light 0 isn't where you'd like the pattern to start. The visualizer always keeps light 0 at the top; rotation is what lines that up with the hardware. It is the last step before the wire, after `server.remap`, so remap indices are the light indices the visualizer shows.
+Degrees the frame is turned around the ring before it is sent, for installations where light 0 isn't where you'd like the pattern to start. The visualizer always keeps light 0 at the top; rotation is what lines that up with the hardware. It is the last step before the wire, after `server.remap`, so remap indices are the ring positions the visualizer shows.
 
 #### `output.artnet`
 

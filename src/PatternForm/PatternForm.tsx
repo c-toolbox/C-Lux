@@ -3,8 +3,10 @@ import {
   Button,
   ColorInput,
   Group,
+  Input,
   NativeSelect,
   NumberInput,
+  Slider,
   Stack,
   TextInput
 } from '@mantine/core';
@@ -13,8 +15,8 @@ import {
   type Color,
   type FieldSpec,
   PATTERN_TYPES,
-  patternByType,
   patternDisplayName,
+  patternFields,
   type PatternParameters,
   type PatternProps,
   type PatternSchema,
@@ -30,7 +32,7 @@ export interface FormValues {
 }
 
 function schemaFor(type: PatternType): PatternSchema {
-  return patternByType(type)?.Fields ?? {};
+  return patternFields(type) ?? {};
 }
 
 const num = (v: number | string) => (typeof v === 'number' ? v : Number(v) || 0);
@@ -117,6 +119,21 @@ function Field({ spec, value, onChange }: FieldProps) {
         data={spec.options.map((o) => ({ value: String(o.value), label: o.label }))}
         onChange={(e) => onChange(Number(e.currentTarget.value))}
       />
+    );
+  }
+
+  if (spec.kind === 'slider') {
+    return (
+      <Input.Wrapper label={spec.label} description={spec.hint}>
+        <Slider
+          mt={'xs'}
+          min={spec.min}
+          max={spec.max}
+          step={spec.step}
+          value={num(value)}
+          onChange={onChange}
+        />
+      </Input.Wrapper>
     );
   }
 

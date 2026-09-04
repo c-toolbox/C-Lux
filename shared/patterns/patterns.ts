@@ -6,7 +6,13 @@ import { CometPattern, type CometProps } from './comet.ts';
 import { FirePattern, type FireProps } from './fire.ts';
 import { GradientPattern, type GradientProps } from './gradient.ts';
 import { MovingGaussianPattern, type MovingGaussianProps } from './moving-gaussian.ts';
-import { type Color, type FieldSpec, Pattern, type PatternSchema } from './pattern.ts';
+import {
+  type Color,
+  type FieldSpec,
+  Pattern,
+  type PatternSchema,
+  SHARED_FIELDS
+} from './pattern.ts';
 import { PulsePattern, type PulseProps } from './pulse.ts';
 import { RainbowPattern, type RainbowProps } from './rainbow.ts';
 import { RipplePattern, type RippleProps } from './ripple.ts';
@@ -73,6 +79,13 @@ export function patternDisplayName(type: string): string {
   return patternByType(type)?.DisplayName ?? type;
 }
 
+// Every configurable parameter of a pattern type: its own fields plus the ones the base
+// class owns for all patterns.
+export function patternFields(type: string): PatternSchema | undefined {
+  const cls = patternByType(type);
+  return cls && { ...cls.Fields, ...SHARED_FIELDS };
+}
+
 export type { Color, FieldSpec, PatternSchema };
 
 export type PatternProps =
@@ -97,7 +110,7 @@ export type PatternProps =
 // shared state `Pattern.serialize()` adds on top.
 export type PatternParameters = ReturnType<
   InstanceType<(typeof PATTERNS)[number]>['parameters']
-> & { enabled: boolean };
+> & { enabled: boolean; opacity: number };
 
 // A named, reusable combination of patterns.
 export interface Scene {

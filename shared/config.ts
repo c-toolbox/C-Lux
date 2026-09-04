@@ -66,8 +66,8 @@ export interface ConfigSaved extends ConfigStatus {
 }
 
 // Settings the running process only reads at startup. A save writes them to config.json
-// but they take effect on the next restart; `nLights` and `server.remap` reach the
-// browser at build time as well, so changing those needs a rebuild too.
+// but they take effect on the next restart; `nLights` reaches the browser at build time
+// as well, so changing it needs a rebuild too.
 export const RESTART_REQUIRED_SETTINGS = [
   'nLights',
   'server.tickRate',

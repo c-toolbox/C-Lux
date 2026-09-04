@@ -19,7 +19,11 @@ export type {
   Scene
 } from '../../shared/patterns/patterns';
 export { PATTERN_TYPES } from '../../shared/patterns/patterns';
-export { patternByType, patternDisplayName } from '../../shared/patterns/patterns';
+export {
+  patternByType,
+  patternDisplayName,
+  patternFields
+} from '../../shared/patterns/patterns';
 export type { SolidColorStatus, SolidColorUpdate } from '../../shared/patterns/static';
 export { VIDEO_TYPE } from '../../shared/patterns/video';
 export { REMAP_DISABLED } from '../../shared/remap';

@@ -37,7 +37,6 @@ export type VideoProps = PatternBaseProps & {
   smoothing: number;
   saturation: number;
   gamma: number;
-  opacity: number;
 };
 
 const clampByte = (value: number) =>
@@ -104,14 +103,6 @@ export class VideoPattern extends Pattern {
       row: 2,
       hint: 'Above 1 deepens the darks, below 1 lifts them.',
       ...POSITIVE
-    },
-    opacity: {
-      kind: 'number',
-      label: 'Opacity',
-      default: 1,
-      step: 0.05,
-      row: 3,
-      ...UNIT
     }
   } satisfies PatternSchema;
 
@@ -121,7 +112,6 @@ export class VideoPattern extends Pattern {
   smoothing!: number;
   saturation!: number;
   gamma!: number;
-  opacity!: number;
 
   // Rises to 1 while frames arrive and falls back once the feed goes stale.
   private presence = 0;
@@ -146,7 +136,6 @@ export class VideoPattern extends Pattern {
     smoothing: number;
     saturation: number;
     gamma: number;
-    opacity: number;
   } {
     return {
       name: this.name,
@@ -156,27 +145,17 @@ export class VideoPattern extends Pattern {
       fit: this.fit,
       smoothing: this.smoothing,
       saturation: this.saturation,
-      gamma: this.gamma,
-      opacity: this.opacity
+      gamma: this.gamma
     };
   }
 
-  set({
-    offset,
-    direction,
-    fit,
-    smoothing,
-    saturation,
-    gamma,
-    opacity
-  }: Partial<VideoProps>) {
+  set({ offset, direction, fit, smoothing, saturation, gamma }: Partial<VideoProps>) {
     this.offset = offset ?? this.offset;
     this.direction = direction ?? this.direction;
     this.fit = fit ?? this.fit;
     this.smoothing = smoothing ?? this.smoothing;
     this.saturation = saturation ?? this.saturation;
     this.gamma = gamma ?? this.gamma;
-    this.opacity = opacity ?? this.opacity;
 
     for (let i = 0; i < 256; i++) {
       this.gammaLut[i] = clampByte(255 * Math.pow(i / 255, this.gamma));
@@ -198,7 +177,6 @@ export class VideoPattern extends Pattern {
     // behaves the same whatever the tick rate is.
     const tau = this.smoothing * MAX_SMOOTHING_SECONDS;
     const k = tau > 0 ? 1 - Math.exp(-dt / tau) : 1;
-    const alpha = this.opacity * this.presence;
 
     for (let i = 0; i < this.state.length; i++) {
       const light = this.state[i];
@@ -206,7 +184,7 @@ export class VideoPattern extends Pattern {
       light.r += (this.target[src] - light.r) * k;
       light.g += (this.target[src + 1] - light.g) * k;
       light.b += (this.target[src + 2] - light.b) * k;
-      light.a = alpha;
+      light.a = this.presence;
     }
   }
 

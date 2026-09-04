@@ -15,6 +15,8 @@ export interface PatternBaseProps {
   name: string;
   // Disabled patterns stay in the list but are skipped when blending. Defaults to true.
   enabled?: boolean;
+  // Scales the alpha of every light of the pattern when it is blended. Defaults to 1.
+  opacity?: number;
 }
 
 export interface NumberRange {
@@ -34,6 +36,7 @@ interface FieldBase {
 // validate an incoming value on the server and render an input for it in the browser.
 export type FieldSpec =
   | (FieldBase & NumberRange & { kind: 'number'; default: number; step?: number })
+  | (FieldBase & NumberRange & { kind: 'slider'; default: number; step?: number })
   | (FieldBase & { kind: 'color'; default: Color })
   | (FieldBase & {
       kind: 'select';
@@ -51,6 +54,21 @@ export const POSITIVE: NumberRange = { exclusiveMin: 0 };
 
 // Lengths and positions are fractions of the ring, so they span (0, 1].
 export const POSITIVE_UNIT: NumberRange = { exclusiveMin: 0, max: 1 };
+
+// Parameters the base class owns rather than any single pattern. They are appended to
+// every pattern's own `Fields`, so the editor shows them and the server validates them
+// like the rest. Patterns stored before a shared field existed simply fall back to its
+// default, so these stay optional even when creating a pattern.
+export const SHARED_FIELDS = {
+  opacity: {
+    kind: 'slider',
+    label: 'Opacity',
+    hint: 'How strongly this pattern covers the ones below it',
+    default: 1,
+    step: 0.01,
+    ...UNIT
+  }
+} satisfies PatternSchema;
 
 // Convert HSV (h in degrees, s and v in [0, 1]) to 8-bit RGB.
 export function hsvToRgb(h: number, s: number, v: number): Color {
@@ -80,11 +98,13 @@ export function hsvToRgb(h: number, s: number, v: number): Color {
 export abstract class Pattern {
   name: string;
   enabled: boolean;
+  opacity: number;
   state: Array<ColorAlpha>;
 
-  constructor({ name, enabled }: PatternBaseProps) {
+  constructor({ name, enabled, opacity }: PatternBaseProps) {
     this.name = name;
     this.enabled = enabled ?? true;
+    this.opacity = opacity ?? SHARED_FIELDS.opacity.default;
     this.state = Array.from({ length: config.nLights }, () => ({
       r: 0,
       g: 0,
@@ -105,11 +125,21 @@ export abstract class Pattern {
   abstract set(values: object): void;
 
   /**
+   * Applies a partial update of every parameter: the shared ones the base class owns
+   * and, through `set`, the subclass's own.
+   */
+  update(values: object): void {
+    const { opacity } = values as Partial<PatternBaseProps>;
+    if (opacity !== undefined) this.opacity = opacity;
+    this.set(values);
+  }
+
+  /**
    * The full serialized form of the pattern: the subclass's own parameters plus the
    * shared state the base class owns.
    */
   serialize(): object {
-    return { ...this.parameters(), enabled: this.enabled };
+    return { ...this.parameters(), enabled: this.enabled, opacity: this.opacity };
   }
 
   /**
@@ -141,7 +171,7 @@ export abstract class Pattern {
       res.push(c.r);
       res.push(c.g);
       res.push(c.b);
-      res.push(c.a);
+      res.push(c.a * this.opacity);
     }
     return res;
   }

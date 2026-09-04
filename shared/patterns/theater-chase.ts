@@ -41,7 +41,10 @@ export class TheaterChasePattern extends Pattern {
   spacing!: number;
   speed!: number;
 
-  // Step offset of the lit dots and the sub-step remainder.
+  // Base positions of the lit dots, evenly spread over the ring so that rotating them
+  // wraps seamlessly. `offset` is how far they have rotated, `remainder` the sub-step
+  // part of that rotation.
+  private positions: Array<number> = [];
   private offset = 0;
   private remainder = 0;
 
@@ -72,6 +75,7 @@ export class TheaterChasePattern extends Pattern {
     this.b = b ?? this.b;
     this.spacing = spacing ?? this.spacing;
     this.speed = speed ?? this.speed;
+    this.layout();
     this.render();
   }
 
@@ -80,16 +84,27 @@ export class TheaterChasePattern extends Pattern {
     const steps = Math.trunc(this.remainder);
     if (steps !== 0) {
       this.remainder -= steps;
-      this.offset += steps;
+      const n = this.state.length;
+      this.offset = (((this.offset + steps) % n) + n) % n;
       this.render();
     }
   }
 
+  // Place the dots once. The count is derived from the spacing and the gaps between
+  // consecutive dots are spread as evenly as the light count allows, so that the ring
+  // closes on itself and no dot appears or disappears while rotating.
+  private layout() {
+    const n = this.state.length;
+    const count = Math.min(n, Math.max(1, Math.round(1 / this.spacing)));
+    this.positions = Array.from({ length: count }, (_, k) => Math.floor((k * n) / count));
+  }
+
   private render() {
-    const gap = Math.max(1, Math.round(this.spacing * this.state.length));
     for (let i = 0; i < this.state.length; i++) {
-      const lit = (((i + this.offset) % gap) + gap) % gap === 0;
-      this.state[i] = { r: this.r, g: this.g, b: this.b, a: lit ? 1 : 0 };
+      this.state[i] = { r: this.r, g: this.g, b: this.b, a: 0 };
+    }
+    for (const position of this.positions) {
+      this.state[(position + this.offset) % this.state.length].a = 1;
     }
   }
 }
