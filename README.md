@@ -13,7 +13,7 @@ Nothing is locked inside the UI, either. Every function the web interface offers
 
 ## Getting started
 
-Requires Node.js 22 or newer. See the Wiki page for more detailed explanations of the available patterns.
+Requires Node.js 22 or newer. The [Wiki](https://github.com/c-toolbox/C-Lux/wiki) explains every pattern and its options in detail; it lives in this repository as the `docs` submodule, so clone with `--recurse-submodules` if you want it alongside the code.
 
 ### Development
 
@@ -37,6 +37,20 @@ npm start
 
 `config.json` is read from disk each time the server starts, so changes to it — including `output` fix-ups — need only a restart. `nLights` is the exception: the browser bundle is sized from it at build time, so changing it needs `npm run build` as well.
 
+## Pages
+
+The interface is a single-page app with a handful of routes. Only the landing page is meant to be handed to an operator; the others are reached by typing their path and are gated by the editor password (see [Configuration](#configuration)).
+
+| Path      | Description                                                                                                     |
+| --------- | --------------------------------------------------------------------------------------------------------------- |
+| `/`       | The house controls: recall or drop scenes, blackout, half-light, and the fixed work-light color. Open to anyone. |
+| `/editor` 🔒 | Build a look — add, tune, reorder and mute pattern layers, then save, rename, import or export scenes.        |
+| `/debug` 🔒  | Suspend whatever is playing and drive a single light in a chosen color, to check how the strip is addressed.   |
+| `/config` 🔒 | Edit every `config.json` setting from the browser (see [Configuration](#configuration)).                       |
+| `/routes` 🔒 | An index of these pages, so the unlinked ones can be found without remembering their paths.                   |
+
+Whenever an Audio or Video layer is enabled, a capture panel appears on both the landing page and the editor. The server has neither a sound card nor a video decoder, so the browser does that work: it analyses an input device or loopback, or samples a shared screen, window, tab or camera, and streams the result to the pattern over the API. Any machine on the dome network can be the source, and it does not have to be the one driving the lights.
+
 ## API
 
 All endpoints are served by the Express backend under the `/api` prefix and proxied through Vite in development. Endpoints marked with a lock require the editor password (see [Configuration](#configuration)) and answer `401` without it.
@@ -59,7 +73,10 @@ All endpoints are served by the Express backend under the `/api` prefix and prox
 | PUT    | `/api/half-light`                | `{ halfLight }`        | Fade the top half out or restore it        |
 | GET    | `/api/solid-color`               | —                      | State of the fixed solid color layer       |
 | PUT    | `/api/solid-color`               | `{ color?, enabled? }` | Fade it to a color, or switch it on/off    |
+| GET    | `/api/debug` 🔒                  | —                      | The debug page's overrides on the output   |
+| PUT    | `/api/debug` 🔒                  | `{ suspended?, light?, color? }` | Suspend the show, or drive one light |
 | POST   | `/api/audio`                     | audio analysis frame   | Feed one frame to audio-reactive patterns  |
+| POST   | `/api/video`                     | strip of colors (binary) | Feed one sampled strip to video patterns |
 | GET    | `/api/stream`                    | —                      | Server-Sent Events stream of frames        |
 | GET    | `/api/scenes`                    | —                      | List the saved scenes                      |
 | GET    | `/api/scenes/applied`            | —                      | Names of the scenes currently switched on  |
@@ -86,7 +103,7 @@ Copy-Item config.sample.json config.json
 
 The server validates the file on startup and exits with a message naming the offending key if something is missing or out of range, so a typo shows up right away instead of as a dark ring later. Edits take effect on restart.
 
-The same settings can be edited from the browser at `/config`, behind the editor password. Saving there rewrites `config.json` and the server adopts everything it reads live — the transitions and the edit password — while the page names the settings that are waiting for a restart. The password is never sent to the browser: the page only shows whether one is set, and changing it signs every editor out.
+The same settings can be edited from the browser at `/config`, behind the editor password. Saving there rewrites `config.json` and the server adopts everything it reads live — the transitions, the shape of half-light mode, and the edit password — while the page names the settings that are waiting for a restart: `nLights`, the tick rate, the port, the remap and the whole `output` block. The password is never sent to the browser: the page only shows whether one is set, and changing it signs every editor out.
 
 ```json
 {
@@ -197,3 +214,5 @@ Degrees the frame is turned around the ring before it is sent, for installations
 2. Register it in the `PATTERNS` array in [`shared/patterns/patterns.ts`](shared/patterns/patterns.ts), and add its props interface to the `PatternProps` union in the same file.
 
 The available pattern types and their parameter shapes are derived from that list, so the UI and shared types pick up the new pattern automatically. `Fields` is the single source of truth for each parameter's label, default and allowed range: the server validates incoming props against it and the browser generates the edit form from it.
+
+The base class owns the parameters every layer shares — its name, whether it is enabled, and its opacity, which scales the alpha the pattern writes so any layer can be blended over the ones below it. Those come from `SHARED_FIELDS` in [`shared/patterns/pattern.ts`](shared/patterns/pattern.ts) and are appended to each pattern's own `Fields`, so a new pattern gets them without doing anything: paint `state` with an alpha per light and the rest follows.
