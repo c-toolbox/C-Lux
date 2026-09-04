@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { type NumberRange, SHARED_FIELDS } from '../shared/patterns/pattern';
+import { MAX_COLORS, type NumberRange, SHARED_FIELDS } from '../shared/patterns/pattern';
 import { patternByType } from '../shared/patterns/patterns';
 
 import { HttpError } from './errors';
@@ -44,7 +44,7 @@ export function validateName(value: unknown, label: string): string {
 // Recursively verify every leaf value of a pattern's props is a finite number (color
 // sub-objects like `color2` are checked the same way), so malformed client input -
 // missing fields, strings, NaN - fails fast with a clear 400 instead of silently
-// corrupting pattern state with NaN.
+// corrupting pattern state with NaN. Arrays are walked too, for palette props.
 function validatePatternProps(props: unknown, path = 'props'): Record<string, unknown> {
   if (typeof props !== 'object' || props === null || Array.isArray(props)) {
     throw new HttpError(400, `${path} must be an object`);
@@ -58,7 +58,9 @@ function validatePatternProps(props: unknown, path = 'props'): Record<string, un
       if (!Number.isFinite(value)) {
         throw new HttpError(400, `${fieldPath} must be a finite number`);
       }
-    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    } else if (Array.isArray(value)) {
+      value.forEach((entry, i) => validatePatternProps(entry, `${fieldPath}[${i}]`));
+    } else if (typeof value === 'object' && value !== null) {
       validatePatternProps(value, fieldPath);
     } else {
       throw new HttpError(400, `${fieldPath} must be a number`);
@@ -130,6 +132,19 @@ function validateAgainstSpec(
       for (const channel of COLOR_CHANNELS) {
         requireNumberInRange(color[channel], BYTE, `props.${key}.${channel}`);
       }
+    } else if (spec.kind === 'colors') {
+      if (!Array.isArray(value) || value.length === 0) {
+        throw new HttpError(400, `props.${key} must be a non-empty array of colors`);
+      }
+      if (value.length > MAX_COLORS) {
+        throw new HttpError(400, `props.${key} must hold at most ${MAX_COLORS} colors`);
+      }
+      value.forEach((entry, i) => {
+        const color = entry as Record<string, unknown>;
+        for (const channel of COLOR_CHANNELS) {
+          requireNumberInRange(color[channel], BYTE, `props.${key}[${i}].${channel}`);
+        }
+      });
     } else if (spec.kind === 'select') {
       if (!spec.options.some((option) => option.value === value)) {
         const allowed = spec.options.map((option) => option.value).join(', ');

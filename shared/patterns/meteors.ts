@@ -9,16 +9,17 @@ import {
   UNIT
 } from './pattern.ts';
 
-export type MeteorsProps = PatternBaseProps &
-  Color & {
-    // Meteors launched per second, speed in full turns per second and tail length as a
-    // fraction of the ring.
-    rate: number;
-    speed: number;
-    tail: number;
-    variation: number;
-    direction: number;
-  };
+export type MeteorsProps = PatternBaseProps & {
+  // Meteors launched per second, speed in full turns per second and tail length as a
+  // fraction of the ring. Every meteor picks one of `colors` at random.
+  colors: Color[];
+  rate: number;
+  speed: number;
+  maxSpeed: number;
+  tail: number;
+  variation: number;
+  direction: number;
+};
 
 // A head travelling around the ring, trailing a tail that fades out behind it.
 interface Meteor {
@@ -27,13 +28,19 @@ interface Meteor {
   speed: number;
   tail: number;
   direction: number;
+  color: Color;
 }
 
 export class MeteorsPattern extends Pattern {
   static readonly Type = 'Meteors';
   static readonly DisplayName = 'Meteors';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 255, g: 255, b: 255 } },
+    colors: {
+      kind: 'colors',
+      label: 'Colors',
+      default: [{ r: 255, g: 255, b: 255 }],
+      hint: 'Each meteor picks one of these at random.'
+    },
     rate: {
       kind: 'number',
       label: 'Rate (per s)',
@@ -48,6 +55,15 @@ export class MeteorsPattern extends Pattern {
       default: 0.4,
       step: 0.05,
       row: 0,
+      ...POSITIVE
+    },
+    maxSpeed: {
+      kind: 'number',
+      label: 'Max speed (turns/s)',
+      default: 1,
+      step: 0.05,
+      row: 0,
+      hint: 'Upper limit for a single meteor once variation is applied.',
       ...POSITIVE
     },
     tail: {
@@ -79,11 +95,10 @@ export class MeteorsPattern extends Pattern {
     }
   } satisfies PatternSchema;
 
-  r!: number;
-  g!: number;
-  b!: number;
+  colors: Color[] = MeteorsPattern.Fields.colors.default.map((c) => ({ ...c }));
   rate!: number;
   speed!: number;
+  maxSpeed: number = MeteorsPattern.Fields.maxSpeed.default;
   tail!: number;
   variation!: number;
   direction!: number;
@@ -98,9 +113,10 @@ export class MeteorsPattern extends Pattern {
   parameters(): {
     name: string;
     type: typeof MeteorsPattern.Type;
-    color: Color;
+    colors: Color[];
     rate: number;
     speed: number;
+    maxSpeed: number;
     tail: number;
     variation: number;
     direction: number;
@@ -108,21 +124,29 @@ export class MeteorsPattern extends Pattern {
     return {
       name: this.name,
       type: MeteorsPattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      colors: this.colors.map((c) => ({ ...c })),
       rate: this.rate,
       speed: this.speed,
+      maxSpeed: this.maxSpeed,
       tail: this.tail,
       variation: this.variation,
       direction: this.direction
     };
   }
 
-  set({ r, g, b, rate, speed, tail, variation, direction }: Partial<MeteorsProps>) {
-    this.r = r ?? this.r;
-    this.g = g ?? this.g;
-    this.b = b ?? this.b;
+  set({
+    colors,
+    rate,
+    speed,
+    maxSpeed,
+    tail,
+    variation,
+    direction
+  }: Partial<MeteorsProps>) {
+    this.colors = colors?.length ? colors.map((c) => ({ ...c })) : this.colors;
     this.rate = rate ?? this.rate;
     this.speed = speed ?? this.speed;
+    this.maxSpeed = maxSpeed ?? this.maxSpeed;
     this.tail = tail ?? this.tail;
     this.variation = variation ?? this.variation;
     this.direction = direction ?? this.direction;
@@ -132,13 +156,13 @@ export class MeteorsPattern extends Pattern {
   tick(dt: number) {
     const n = this.state.length;
 
-    // A meteor is retired once it has covered a full turn plus its own tail, so it
-    // leaves the ring the way it entered rather than blinking out.
+    // A meteor is retired once it has covered a full turn plus its own tail, by which
+    // point the tail has collapsed into the head (see `render`).
     this.meteors = this.meteors.filter((m) => {
       const step = m.speed * n * dt;
       m.position = mod(m.position + m.direction * step, n);
       m.travelled += step;
-      return m.travelled <= n + m.tail * n;
+      return m.travelled <= n + tailLength(m, n);
     });
 
     // `rate` is the expected number of launches per second.
@@ -157,29 +181,44 @@ export class MeteorsPattern extends Pattern {
     this.meteors.push({
       position: Math.random() * this.state.length,
       travelled: 0,
-      speed: Math.max(0.001, this.speed * jitter()),
+      speed: Math.min(this.maxSpeed, Math.max(0.001, this.speed * jitter())),
       tail: Math.max(0.001, this.tail * jitter()),
-      direction: this.direction === 0 ? (Math.random() < 0.5 ? 1 : -1) : this.direction
+      direction: this.direction === 0 ? (Math.random() < 0.5 ? 1 : -1) : this.direction,
+      color: this.colors[Math.floor(Math.random() * this.colors.length)]
     });
   }
 
   private render() {
     const n = this.state.length;
     for (let i = 0; i < n; i++) {
-      this.state[i] = { r: this.r, g: this.g, b: this.b, a: 0 };
+      this.state[i] = { r: 0, g: 0, b: 0, a: 0 };
     }
     for (const m of this.meteors) {
-      const tail = Math.max(1, m.tail * n);
+      const tail = tailLength(m, n);
       // The tail can only be as long as the meteor has actually travelled, so a new
-      // meteor grows its tail instead of appearing with a full one.
-      const length = Math.min(tail, m.travelled);
+      // meteor grows its tail instead of appearing with a full one. Past a full turn
+      // `left` shrinks it again, so the tail catches up with the head and the meteor
+      // collapses to a point rather than blinking out.
+      const left = n + tail - m.travelled;
+      const length = Math.min(tail, m.travelled, left);
+      const fade = Math.min(1, left / tail);
       const head = Math.round(m.position);
       for (let d = 0; d <= length; d++) {
         const light = this.state[mod(head - m.direction * d, n)];
-        light.a = Math.max(light.a, 1 - d / tail);
+        const a = (1 - d / tail) * fade;
+        if (a <= light.a) continue;
+        light.r = m.color.r;
+        light.g = m.color.g;
+        light.b = m.color.b;
+        light.a = a;
       }
     }
   }
+}
+
+// A meteor's tail in lights, never shorter than the single light of the head itself.
+function tailLength(m: Meteor, n: number): number {
+  return Math.max(1, m.tail * n);
 }
 
 function mod(value: number, n: number): number {

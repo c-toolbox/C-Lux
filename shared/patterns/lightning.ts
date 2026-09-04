@@ -4,17 +4,19 @@ import {
   type PatternBaseProps,
   type PatternSchema,
   POSITIVE,
-  POSITIVE_UNIT
+  POSITIVE_UNIT,
+  UNIT
 } from './pattern.ts';
 
 export type LightningProps = PatternBaseProps &
   Color & {
     // Strikes per second, the most flashes one strike can fire, the share of the ring a
-    // strike covers and how fast each flash fades.
+    // strike covers, how fast each flash fades and how far its ends taper off.
     rate: number;
     flashes: number;
     coverage: number;
     decay: number;
+    softness: number;
   };
 
 export class LightningPattern extends Pattern {
@@ -55,6 +57,15 @@ export class LightningPattern extends Pattern {
       step: 0.5,
       row: 1,
       ...POSITIVE
+    },
+    softness: {
+      kind: 'number',
+      label: 'Softness',
+      default: 0.35,
+      step: 0.05,
+      row: 2,
+      hint: "Share of a strike's arc that fades out at each end; 0 cuts off sharply.",
+      ...UNIT
     }
   } satisfies PatternSchema;
 
@@ -65,6 +76,7 @@ export class LightningPattern extends Pattern {
   flashes!: number;
   coverage!: number;
   decay!: number;
+  softness!: number;
 
   // The arc the current strike lights, its remaining flashes and the countdown to the
   // next flash or, once a strike is spent, to the next strike.
@@ -88,6 +100,7 @@ export class LightningPattern extends Pattern {
     flashes: number;
     coverage: number;
     decay: number;
+    softness: number;
   } {
     return {
       name: this.name,
@@ -96,11 +109,12 @@ export class LightningPattern extends Pattern {
       rate: this.rate,
       flashes: this.flashes,
       coverage: this.coverage,
-      decay: this.decay
+      decay: this.decay,
+      softness: this.softness
     };
   }
 
-  set({ r, g, b, rate, flashes, coverage, decay }: Partial<LightningProps>) {
+  set({ r, g, b, rate, flashes, coverage, decay, softness }: Partial<LightningProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
@@ -108,6 +122,7 @@ export class LightningPattern extends Pattern {
     this.flashes = flashes ?? this.flashes;
     this.coverage = coverage ?? this.coverage;
     this.decay = decay ?? this.decay;
+    this.softness = softness ?? this.softness;
     this.render();
   }
 
@@ -148,9 +163,15 @@ export class LightningPattern extends Pattern {
 
   private render() {
     const n = this.state.length;
+    // Ramp the intensity toward both ends of the arc so a strike fades out along the ring
+    // instead of cutting off.
+    const edge = this.span * this.softness;
     for (let i = 0; i < n; i++) {
-      const lit = (i - this.start + n) % n < this.span;
-      this.state[i] = { r: this.r, g: this.g, b: this.b, a: lit ? this.intensity : 0 };
+      const offset = (i - this.start + n) % n;
+      const distance = Math.min(offset, this.span - 1 - offset) + 0.5;
+      const ramp = edge > 0 ? Math.min(1, distance / edge) : 1;
+      const a = offset < this.span ? this.intensity * ramp : 0;
+      this.state[i] = { r: this.r, g: this.g, b: this.b, a };
     }
   }
 }

@@ -8,7 +8,6 @@ import {
   type ColorTemperatureProps
 } from './color-temperature.ts';
 import { CometPattern, type CometProps } from './comet.ts';
-import { ConfettiPattern, type ConfettiProps } from './confetti.ts';
 import { FirePattern, type FireProps } from './fire.ts';
 import { FireworksPattern, type FireworksProps } from './fireworks.ts';
 import { GradientPattern, type GradientProps } from './gradient.ts';
@@ -19,6 +18,7 @@ import { MovingGaussianPattern, type MovingGaussianProps } from './moving-gaussi
 import {
   type Color,
   type FieldSpec,
+  MAX_COLORS,
   Pattern,
   type PatternSchema,
   SHARED_FIELDS
@@ -31,7 +31,6 @@ import { RipplePattern, type RippleProps } from './ripple.ts';
 import { SineWavePattern, type SineWaveProps } from './sine-wave.ts';
 import { SparklePattern, type SparkleProps } from './sparkle.ts';
 import { StaticPattern, type StaticProps } from './static.ts';
-import { StrobePattern, type StrobeProps } from './strobe.ts';
 import { TheaterChasePattern, type TheaterChaseProps } from './theater-chase.ts';
 import { VideoPattern, type VideoProps } from './video.ts';
 import { WipePattern, type WipeProps } from './wipe.ts';
@@ -70,9 +69,7 @@ const PATTERNS = [
   WipePattern,
   MeteorsPattern,
   FireworksPattern,
-  ConfettiPattern,
   RainPattern,
-  StrobePattern,
   LightningPattern,
   AudioPattern,
   VideoPattern
@@ -112,6 +109,7 @@ export function patternFields(type: string): PatternSchema | undefined {
 }
 
 export type { Color, FieldSpec, PatternSchema };
+export { MAX_COLORS };
 
 export type PatternProps =
   | StaticProps
@@ -135,9 +133,7 @@ export type PatternProps =
   | WipeProps
   | MeteorsProps
   | FireworksProps
-  | ConfettiProps
   | RainProps
-  | StrobeProps
   | LightningProps
   | AudioProps
   | VideoProps;

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Button,
+  CloseButton,
   ColorInput,
   Group,
   Input,
@@ -14,6 +15,7 @@ import {
 import {
   type Color,
   type FieldSpec,
+  MAX_COLORS,
   PATTERN_TYPES,
   patternDisplayName,
   patternFields,
@@ -27,20 +29,25 @@ import { hexToRgb, rgbToHex } from '../lib/color';
 export interface FormValues {
   type: PatternType;
   name: string;
-  // Keyed by the pattern's schema fields: hex strings for colors, numbers otherwise.
-  values: Record<string, number | string>;
+  // Keyed by the pattern's schema fields: hex strings for colors, a list of them for
+  // palettes, numbers otherwise.
+  values: Record<string, FieldValue>;
 }
+
+type FieldValue = number | string | string[];
 
 function schemaFor(type: PatternType): PatternSchema {
   return patternFields(type) ?? {};
 }
 
-const num = (v: number | string) => (typeof v === 'number' ? v : Number(v) || 0);
+const num = (v: FieldValue) => (typeof v === 'number' ? v : Number(v) || 0);
 
 function defaultsFor(type: PatternType, name: string): FormValues {
-  const values: Record<string, number | string> = {};
+  const values: Record<string, FieldValue> = {};
   for (const [key, spec] of Object.entries(schemaFor(type))) {
-    values[key] = spec.kind === 'color' ? rgbToHex(spec.default) : spec.default;
+    if (spec.kind === 'color') values[key] = rgbToHex(spec.default);
+    else if (spec.kind === 'colors') values[key] = spec.default.map(rgbToHex);
+    else values[key] = spec.default;
   }
   return { type, name, values };
 }
@@ -49,7 +56,9 @@ export function toProps(values: FormValues): PatternProps {
   const props: Record<string, unknown> = { name: values.name };
   for (const [key, spec] of Object.entries(schemaFor(values.type))) {
     const value = values.values[key];
-    if (spec.kind !== 'color') {
+    if (spec.kind === 'colors') {
+      props[key] = asList(value).map(hexToRgb);
+    } else if (spec.kind !== 'color') {
       props[key] = num(value);
     } else if (key === 'color') {
       // The primary color is flattened into r/g/b, the shape pattern constructors take.
@@ -63,17 +72,22 @@ export function toProps(values: FormValues): PatternProps {
 
 export function fromParameters(p: PatternParameters): FormValues {
   const stored = p as unknown as Record<string, unknown>;
-  const values: Record<string, number | string> = {};
+  const values: Record<string, FieldValue> = {};
   for (const [key, spec] of Object.entries(schemaFor(p.type))) {
     const value = stored[key];
     if (spec.kind === 'color') {
       values[key] = rgbToHex((value ?? spec.default) as Color);
+    } else if (spec.kind === 'colors') {
+      const palette = Array.isArray(value) && value.length > 0 ? value : spec.default;
+      values[key] = (palette as Color[]).map(rgbToHex);
     } else {
       values[key] = typeof value === 'number' ? value : spec.default;
     }
   }
   return { type: p.type, name: p.name, values };
 }
+
+const asList = (value: FieldValue) => (Array.isArray(value) ? value : []);
 
 type Entry = [string, FieldSpec];
 
@@ -93,8 +107,8 @@ function rows(schema: PatternSchema): Entry[][] {
 
 interface FieldProps {
   spec: FieldSpec;
-  value: number | string;
-  onChange: (value: number | string) => void;
+  value: FieldValue;
+  onChange: (value: FieldValue) => void;
 }
 
 function Field({ spec, value, onChange }: FieldProps) {
@@ -107,6 +121,41 @@ function Field({ spec, value, onChange }: FieldProps) {
         value={String(value)}
         onChange={onChange}
       />
+    );
+  }
+
+  if (spec.kind === 'colors') {
+    const colors = asList(value);
+    const replace = (index: number, color: string) =>
+      onChange(colors.map((c, i) => (i === index ? color : c)));
+    return (
+      <Input.Wrapper label={spec.label} description={spec.hint}>
+        <Stack gap={'xs'} mt={'xs'}>
+          {colors.map((color, index) => (
+            <Group gap={'xs'} key={index} wrap={'nowrap'}>
+              <ColorInput
+                style={{ flex: 1 }}
+                format={'hex'}
+                value={color}
+                onChange={(c) => replace(index, c)}
+              />
+              <CloseButton
+                aria-label={'Remove color'}
+                disabled={colors.length <= 1}
+                onClick={() => onChange(colors.filter((_, i) => i !== index))}
+              />
+            </Group>
+          ))}
+          <Button
+            variant={'light'}
+            size={'xs'}
+            disabled={colors.length >= MAX_COLORS}
+            onClick={() => onChange([...colors, colors[colors.length - 1] ?? '#ffffff'])}
+          >
+            Add color
+          </Button>
+        </Stack>
+      </Input.Wrapper>
     );
   }
 
@@ -144,7 +193,7 @@ function Field({ spec, value, onChange }: FieldProps) {
       min={spec.min ?? spec.exclusiveMin}
       max={spec.max}
       step={spec.step}
-      value={value}
+      value={Array.isArray(value) ? spec.default : value}
       onChange={onChange}
     />
   );
@@ -174,7 +223,7 @@ export function PatternSubForm(props: PatternSubFormProps) {
         ? 'A pattern with this name already exists'
         : null;
 
-  const setField = (key: string, value: number | string) =>
+  const setField = (key: string, value: FieldValue) =>
     setValues((v) => ({ ...v, values: { ...v.values, [key]: value } }));
 
   return (
