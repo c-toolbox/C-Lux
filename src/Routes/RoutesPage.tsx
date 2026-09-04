@@ -35,7 +35,14 @@ export function RoutesPage() {
 
       <Stack mt={'xl'} maw={520} mx={'auto'}>
         {ROUTES.map((route) => (
-          <Paper key={route.path} component={Link} to={route.path} p={'md'} withBorder>
+          <Paper
+            key={route.path}
+            component={Link}
+            to={route.path}
+            p={'md'}
+            ta={'left'}
+            withBorder
+          >
             <Group justify={'space-between'} align={'center'} gap={'md'} wrap={'nowrap'}>
               <Stack gap={4}>
                 <Text fw={600}>{route.name}</Text>
