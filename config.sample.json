@@ -4,16 +4,17 @@
     "tickRate": 30,
     "port": 8787,
     "scenes": "scenes.json",
+    "remap": {},
     "editPassword": "",
     "blackoutTransition": 1.0,
     "halfLightTransition": 1.0,
+    "halfLightCoverage": 0.5,
     "halfLightFeather": 0.5,
     "solidColorTransition": 1.0,
     "sceneTransition": 1.0
   },
   "output": {
     "rotation": 180,
-    "remap": {},
     "artnet": {
       "enabled": false,
       "host": "0.0.0.0",

@@ -1,14 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 
 import config from '../../config.json';
+import { applyRemap, remapSources } from '../../shared/remap';
 import logo from '../assets/c-logo.png';
 import { subscribeFrames } from '../lib/api';
 
 const NUM_LIGHTS = config.nLights;
 
-function drawLights(canvas: HTMLCanvasElement, data: number[]) {
+// The same re-addressing the server applies on the way to the hardware, so a light that
+// was moved or switched off with `server.remap` looks the same here as on the ring. Read
+// from config.json at build time, so a change needs the web app rebuilt.
+const REMAP_SOURCES = remapSources(NUM_LIGHTS, config.server.remap);
+const REMAPPED = new Array<number>(NUM_LIGHTS * 3).fill(0);
+
+function drawLights(canvas: HTMLCanvasElement, frame: number[]) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
+
+  const data = applyRemap(frame, REMAP_SOURCES, REMAPPED);
 
   const dpr = window.devicePixelRatio || 1;
   const size = canvas.clientWidth;

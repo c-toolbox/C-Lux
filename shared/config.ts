@@ -18,9 +18,6 @@ export interface ArtNetSettings {
 
 export interface OutputSettings {
   rotation: number;
-  // `{ "5": 3 }` sends the color computed for light 5 to light 3. Has to be a closed
-  // shuffle: every light that gives its color away must be given one back.
-  remap: Record<string, number>;
   artnet: ArtNetSettings;
 }
 
@@ -28,8 +25,14 @@ export interface ServerSettings {
   tickRate: number;
   port: number;
   scenes: string;
+  // `{ "5": 3 }` sends the color computed for light 5 to light 3, and `{ "5": -1 }`
+  // throws it away. Entries are one-way; no two may point at the same light.
+  remap: Record<string, number>;
   blackoutTransition: number;
   halfLightTransition: number;
+  // Fraction of the ring half-light mode darkens, measured from the top: 0.5 is the top
+  // half, larger values reach further down.
+  halfLightCoverage: number;
   halfLightFeather: number;
   solidColorTransition: number;
   sceneTransition: number;
@@ -63,14 +66,14 @@ export interface ConfigSaved extends ConfigStatus {
 }
 
 // Settings the running process only reads at startup. A save writes them to config.json
-// but they take effect on the next restart; `nLights` reaches the browser at build time
-// as well, so changing it needs a rebuild too.
+// but they take effect on the next restart; `nLights` and `server.remap` reach the
+// browser at build time as well, so changing those needs a rebuild too.
 export const RESTART_REQUIRED_SETTINGS = [
   'nLights',
   'server.tickRate',
   'server.port',
   'server.scenes',
+  'server.remap',
   'output.rotation',
-  'output.remap',
   'output.artnet'
 ];

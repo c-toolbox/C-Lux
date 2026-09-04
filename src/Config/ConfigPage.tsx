@@ -22,12 +22,12 @@ import {
   api,
   type ArtNetSettings,
   type OutputSettings,
+  REMAP_DISABLED,
   type ServerSettings,
   type Settings
 } from '../lib/api';
 import { signOut } from '../lib/auth';
 import { describeError } from '../lib/errors';
-
 // The remap is edited as JSON: it is a sparse map of light indices, and a table for 142
 // lights would be far more unwieldy than the handful of entries it ever holds.
 function formatRemap(remap: Record<string, number>): string {
@@ -46,8 +46,8 @@ function parseRemap(text: string): Record<string, number> {
   const remap: Record<string, number> = {};
   for (const [from, to] of Object.entries(parsed)) {
     if (!/^\d+$/.test(from)) throw new Error(`"${from}" is not a light index`);
-    if (typeof to !== 'number' || !Number.isInteger(to) || to < 0) {
-      throw new Error(`"${from}" must point at a light index`);
+    if (typeof to !== 'number' || !Number.isInteger(to) || to < REMAP_DISABLED) {
+      throw new Error(`"${from}" must point at a light index, or -1 to disable it`);
     }
     remap[from] = to;
   }
@@ -115,7 +115,7 @@ export function ConfigPage() {
     setDraft(settings);
     setPasswordSet(editPasswordSet);
     setPassword(null);
-    setRemapText(formatRemap(settings.output.remap));
+    setRemapText(formatRemap(settings.server.remap));
     setRemapError(null);
   }
 
@@ -146,7 +146,7 @@ export function ConfigPage() {
   function changeRemap(text: string) {
     setRemapText(text);
     try {
-      patchOutput('remap', parseRemap(text));
+      patchServer('remap', parseRemap(text));
       setRemapError(null);
     } catch (e) {
       setRemapError(describeError(e));
@@ -284,6 +284,23 @@ export function ConfigPage() {
                     value={draft.server.scenes}
                     onChange={(e) => patchServer('scenes', e.currentTarget.value)}
                   />
+                  <Textarea
+                    label={'Remap'}
+                    description={
+                      'Lights patched to the wrong address, as { "from": to }. Entries ' +
+                      'are one-way; no two may point at the same light. Point at -1 to ' +
+                      'switch a light off. Takes effect after a restart, and after ' +
+                      'rebuilding the web app, which the visualizer reads it from.'
+                    }
+                    value={remapText}
+                    onChange={(e) => changeRemap(e.currentTarget.value)}
+                    error={remapError}
+                    autosize
+                    minRows={3}
+                    styles={{
+                      input: { fontFamily: 'var(--mantine-font-family-monospace)' }
+                    }}
+                  />
                   <PasswordInput
                     label={'Editor password'}
                     description={
@@ -334,11 +351,26 @@ export function ConfigPage() {
                     step={0.1}
                   />
                   <NumberField
+                    label={'Half light coverage'}
+                    description={
+                      'How much of the ring half light darkens, counted down from the ' +
+                      'top: 0.5 is half of it, 1 is all of it.'
+                    }
+                    value={draft.server.halfLightCoverage}
+                    onChange={(value) => patchServer('halfLightCoverage', value)}
+                    min={0}
+                    max={1}
+                    step={0.05}
+                  />
+                  <NumberField
                     label={'Half light feather'}
-                    description={'How soft the edge between the lit and dark halves is.'}
+                    description={
+                      'How soft the edge between the lit and dark halves is. 0 is a ' +
+                      'hard line.'
+                    }
                     value={draft.server.halfLightFeather}
                     onChange={(value) => patchServer('halfLightFeather', value)}
-                    min={0.01}
+                    min={0}
                     step={0.1}
                   />
                   <NumberField
@@ -370,21 +402,6 @@ export function ConfigPage() {
                     description={'Where light 0 of the frame sits on the installation.'}
                     value={draft.output.rotation}
                     onChange={(value) => patchOutput('rotation', value)}
-                  />
-                  <Textarea
-                    label={'Remap'}
-                    description={
-                      'Lights patched to the wrong address, as { "from": to }. Entries ' +
-                      'are one-way; no two may point at the same light.'
-                    }
-                    value={remapText}
-                    onChange={(e) => changeRemap(e.currentTarget.value)}
-                    error={remapError}
-                    autosize
-                    minRows={3}
-                    styles={{
-                      input: { fontFamily: 'var(--mantine-font-family-monospace)' }
-                    }}
                   />
                 </Stack>
               </Fieldset>

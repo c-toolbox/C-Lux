@@ -69,13 +69,16 @@ export class Engine {
   private blackout = false;
   private brightnessFactor = 1;
 
-  // Half-light mode. When on, the top half of the ring is blacked out. `halfLightFactor`
+  // Half-light mode. When on, the top of the ring is blacked out. `halfLightFactor`
   // eases between 0 (off) and 1 (fully applied) so the transition fades instead of
   // snapping. `halfLightMask[i]` is how dark light i gets when fully applied (1 = fully
-  // dark at the top, 0 = untouched at the bottom), interpolated across the seam.
+  // dark at the top, 0 = untouched at the bottom), interpolated across the seam. The mask
+  // is rebuilt whenever the settings that shape it are edited, so `halfLightMaskShape`
+  // records the ones it was built from.
   private halfLight = false;
   private halfLightFactor = 0;
-  private readonly halfLightMask: number[] = buildHalfLightMask();
+  private halfLightMask: number[] = buildHalfLightMask();
+  private halfLightMaskShape = halfLightMaskShape();
 
   // Overrides the debug page sets while checking the wiring. They short-circuit `blend()`
   // and so affect the live preview and the Art-Net output alike. Nothing here is
@@ -672,6 +675,12 @@ export class Engine {
       config.server.halfLightTransition
     );
 
+    const shape = halfLightMaskShape();
+    if (shape !== this.halfLightMaskShape) {
+      this.halfLightMaskShape = shape;
+      this.halfLightMask = buildHalfLightMask();
+    }
+
     if (this.frameListeners.size > 0) {
       const frame = this.blend();
       for (const listener of this.frameListeners) listener(frame);
@@ -690,17 +699,27 @@ export class Engine {
 
 // Build the per-light darkness mask for half-light mode. Lights are arranged in a ring
 // (light 0 at the top, matching the visualizer), so vertical position is cos(2π·i/N):
-// +1 at the top, -1 at the bottom. Darkness ramps from 1 (top) to 0 (bottom), feathered
-// over a band around the horizontal midline so the dark and lit halves interpolate.
+// +1 at the top, -1 at the bottom. `halfLightCoverage` is the fraction of the ring that
+// goes dark, measured down from the top, so the boundary sits at cos(π·coverage) - the
+// horizontal midline at 0.5. Darkness ramps from 1 above it to 0 below, feathered over a
+// band around the boundary so the dark and lit parts interpolate.
 function buildHalfLightMask(): number[] {
   const { nLights } = config;
+  // A feather of 0 means a hard line; the epsilon keeps the ramp from dividing by zero.
   const feather = Math.max(1e-6, config.server.halfLightFeather);
+  const edge = Math.cos(Math.PI * config.server.halfLightCoverage);
   const mask = new Array<number>(nLights);
   for (let i = 0; i < nLights; i++) {
     const vertical = Math.cos((2 * Math.PI * i) / nLights);
-    mask[i] = Math.min(1, Math.max(0, 0.5 + vertical / feather));
+    mask[i] = Math.min(1, Math.max(0, 0.5 + (vertical - edge) / feather));
   }
   return mask;
+}
+
+// The settings `buildHalfLightMask` reads, as a value that can be compared between ticks
+// to notice a save from the config page.
+function halfLightMaskShape(): string {
+  return `${config.nLights}:${config.server.halfLightCoverage}:${config.server.halfLightFeather}`;
 }
 
 // Move `current` toward `target` by one frame, easing over `transition` seconds. A

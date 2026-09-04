@@ -9,6 +9,7 @@ import {
   RESTART_REQUIRED_SETTINGS,
   type Settings
 } from '../shared/config';
+import { REMAP_DISABLED } from '../shared/remap';
 
 // Read from disk at startup rather than imported, so that editing config.json on a
 // deployed machine takes effect on the next restart. A JSON import would be inlined into
@@ -20,24 +21,29 @@ const serverSchema = z.object({
   tickRate: z.number().positive(),
   port: z.int().min(1).max(65535),
   scenes: z.string().min(1),
+  // Fix-ups for lights that were patched to the wrong address: `"5": 3` sends the color
+  // computed for light 5 to light 3 instead. Lights left out keep their 1:1 mapping;
+  // entries may be one-way, but no two of them may land on the same light. A destination
+  // of -1 discards the color, leaving that light dark.
+  remap: z
+    .record(
+      z.string().regex(/^\d+$/, 'must be a light index'),
+      z.int().min(REMAP_DISABLED)
+    )
+    .default({}),
   // Guards the edit page and the endpoints it drives. Empty switches the protection
   // off altogether.
   editPassword: z.string().default(''),
   blackoutTransition: z.number().nonnegative(),
   halfLightTransition: z.number().nonnegative(),
-  halfLightFeather: z.number().positive(),
+  halfLightCoverage: z.number().min(0).max(1),
+  halfLightFeather: z.number().nonnegative(),
   solidColorTransition: z.number().nonnegative(),
   sceneTransition: z.number().nonnegative()
 });
 
 const outputSchema = z.object({
   rotation: z.number(),
-  // Fix-ups for lights that were patched to the wrong address: `"5": 3` sends the color
-  // computed for light 5 to light 3 instead. Lights left out keep their 1:1 mapping;
-  // entries may be one-way, but no two of them may land on the same light.
-  remap: z
-    .record(z.string().regex(/^\d+$/, 'must be a light index'), z.int().nonnegative())
-    .default({}),
   artnet: z.object({
     enabled: z.boolean(),
     host: z.string().min(1),
@@ -59,26 +65,27 @@ const baseConfigSchema = z.object({
 });
 
 // Entries may be one-way; the only thing that cannot be resolved is two of them fighting
-// over the same destination light.
+// over the same destination light. Any number of entries may be disabled.
 function checkRemap(
-  cfg: { nLights: number; output: { remap: Record<string, number> } },
+  cfg: { nLights: number; server: { remap: Record<string, number> } },
   ctx: z.RefinementCtx
 ): void {
   const destinations = new Set<number>();
 
-  for (const [from, to] of Object.entries(cfg.output.remap)) {
+  for (const [from, to] of Object.entries(cfg.server.remap)) {
     if (Number(from) >= cfg.nLights || to >= cfg.nLights) {
       ctx.addIssue({
         code: 'custom',
-        path: ['output', 'remap', from],
+        path: ['server', 'remap', from],
         message: `must map light indices below nLights (${cfg.nLights})`
       });
       continue;
     }
+    if (to === REMAP_DISABLED) continue;
     if (destinations.has(to)) {
       ctx.addIssue({
         code: 'custom',
-        path: ['output', 'remap', from],
+        path: ['server', 'remap', from],
         message: `light ${to} is already the destination of another entry`
       });
       continue;
@@ -150,8 +157,10 @@ export function currentSettings(): Settings {
       tickRate: server.tickRate,
       port: server.port,
       scenes: server.scenes,
+      remap: server.remap,
       blackoutTransition: server.blackoutTransition,
       halfLightTransition: server.halfLightTransition,
+      halfLightCoverage: server.halfLightCoverage,
       halfLightFeather: server.halfLightFeather,
       solidColorTransition: server.solidColorTransition,
       sceneTransition: server.sceneTransition
@@ -183,10 +192,12 @@ export async function saveConfig(update: ConfigUpdate): Promise<string[]> {
       tickRate: server.tickRate,
       port: server.port,
       scenes: server.scenes,
+      remap: server.remap,
       // Omitted means "keep the current password"; an empty string clears it.
       editPassword: update.editPassword ?? config.server.editPassword,
       blackoutTransition: server.blackoutTransition,
       halfLightTransition: server.halfLightTransition,
+      halfLightCoverage: server.halfLightCoverage,
       halfLightFeather: server.halfLightFeather,
       solidColorTransition: server.solidColorTransition,
       sceneTransition: server.sceneTransition

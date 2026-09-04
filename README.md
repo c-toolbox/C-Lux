@@ -95,16 +95,17 @@ The same settings can be edited from the browser at `/config`, behind the editor
     "tickRate": 30,
     "port": 8787,
     "scenes": "scenes.json",
+    "remap": {},
     "editPassword": "",
     "blackoutTransition": 1.0,
     "halfLightTransition": 1.0,
+    "halfLightCoverage": 0.5,
     "halfLightFeather": 0.5,
     "solidColorTransition": 1.0,
     "sceneTransition": 1.0
   },
   "output": {
     "rotation": 180,
-    "remap": {},
     "artnet": {
       "enabled": false,
       "host": "0.0.0.0",
@@ -134,28 +135,18 @@ The same settings can be edited from the browser at `/config`, behind the editor
 | `tickRate`             | Animation updates per second. 30 looks smooth for cove lighting; higher costs CPU, lower makes fast patterns look steppy.      |
 | `port`                 | TCP port the API — and, in a production run, the built UI — is served on.                                                      |
 | `scenes`               | Path to the JSON file saved scenes are written to, relative to the project root.                                               |
+| `remap`                | Per-light address fix-ups for fixtures that were wired or patched out of order (see below).                                   |
 | `editPassword`         | Password guarding the edit page and the endpoints it drives. Leave empty to switch the protection off.                        |
 | `blackoutTransition`   | Seconds the master blackout takes to fade out or back in.                                                                      |
 | `halfLightTransition`  | Seconds half-light mode takes to fade its half out or back in.                                                                 |
-| `halfLightFeather`     | How soft the edge between the dark and lit halves is. Small values give a crisp line, larger ones a wider blend band.          |
+| `halfLightCoverage`    | Fraction of the ring half-light mode darkens, counted down from the top. `0.5` is the top half, `1` is the whole ring.         |
+| `halfLightFeather`     | How soft the edge between the dark and lit halves is. `0` gives a hard line, larger values a wider blend band.                 |
 | `solidColorTransition` | Seconds the solid work-light layer takes to fade to a new color or switch on and off.                                          |
 | `sceneTransition`      | Seconds a scene takes to fade in or out when it is applied, unapplied, or replaced.                                            |
 
 Any transition set to `0` snaps instead of fading.
 
-### `output`
-
-| Key        | Description                                                                                        |
-| ---------- | -------------------------------------------------------------------------------------------------- |
-| `rotation` | Degrees the frame is rotated around the ring before it reaches the hardware (see below).            |
-| `remap`    | Per-light address fix-ups for fixtures that were wired or patched out of order (see below).         |
-| `artnet`   | Art-Net transmission settings (see below).                                                          |
-
-#### `output.rotation`
-
-Degrees the frame is turned around the ring before it is sent, for installations where light 0 isn't where you'd like the pattern to start. The visualizer always keeps light 0 at the top; rotation is what lines that up with the hardware. It is applied before `remap`, so remap indices are physical positions on the ring.
-
-#### `output.remap`
+#### `server.remap`
 
 Per-light address fix-ups, written as `"position": address` — the color computed for a position on the ring is sent to a different light instead. So a light that physically sits at position 14 but answers to ID 0 needs `"14": 0`.
 
@@ -166,6 +157,25 @@ Entries are one-way, and can be paired up when two lights need to trade places:
 ```
 
 Lights left out of the map keep their 1:1 mapping. An entry outranks the 1:1 mapping of the light it lands on, so `{ "0": 14 }` on its own sends position 0's color to light 14 and leaves light 0 dark. Two entries pointing at the same light are rejected at startup, since only one color can be sent there.
+
+A destination of `-1` throws the color away instead of sending it anywhere, which switches that light off for good - useful for a dead or unwanted fixture that should stay dark:
+
+```json
+"remap": { "37": -1 }
+```
+
+The visualizer applies the same map, so what it shows matches the ring. It reads the map from `config.json` at build time, so a change needs the web app rebuilt as well as the server restarted.
+
+### `output`
+
+| Key        | Description                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------- |
+| `rotation` | Degrees the frame is rotated around the ring before it reaches the hardware (see below).            |
+| `artnet`   | Art-Net transmission settings (see below).                                                          |
+
+#### `output.rotation`
+
+Degrees the frame is turned around the ring before it is sent, for installations where light 0 isn't where you'd like the pattern to start. The visualizer always keeps light 0 at the top; rotation is what lines that up with the hardware. It is the last step before the wire, after `server.remap`, so remap indices are the light indices the visualizer shows.
 
 #### `output.artnet`
 
