@@ -201,21 +201,12 @@ export async function startVideoCapture({
     return width;
   };
 
-  // Average an annulus inside the circular image, one patch per light.
+  // Average an annulus inside the image, one patch per light. The whole frame is
+  // squashed into the square working buffer rather than centre-cropped, so nothing is
+  // thrown away on a wide window and the ring follows the frame's edges as an ellipse.
   const sampleRim = (): number => {
-    const side = Math.min(video.videoWidth, video.videoHeight);
     resize(SAMPLE_SIZE, SAMPLE_SIZE);
-    ctx.drawImage(
-      video,
-      (video.videoWidth - side) / 2,
-      (video.videoHeight - side) / 2,
-      side,
-      side,
-      0,
-      0,
-      SAMPLE_SIZE,
-      SAMPLE_SIZE
-    );
+    ctx.drawImage(video, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
 
     const g = geometry();
     const key = `${g.centerX}|${g.centerY}|${g.radius}|${g.ringWidth}|${g.rotation}`;

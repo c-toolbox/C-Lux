@@ -39,6 +39,10 @@ const OVERLAY_SIZE = 256;
 // the pattern list and the visualiser their room.
 const PREVIEW_WIDTH = 450;
 
+// Below this the sliders are unusable, so they wrap under the preview instead of
+// squeezing it and cropping the frame.
+const SLIDER_MIN_WIDTH = 240;
+
 interface SliderSpec {
   key: keyof VideoGeometry;
   label: string;
@@ -71,7 +75,8 @@ export function VideoCapture() {
   const [starting, setStarting] = useState(false);
   const [geometry, setGeometry] = useState<VideoGeometry>(DEFAULT_VIDEO_GEOMETRY);
   const [error, setError] = useState<string | null>(null);
-  // Shown at the stream's own aspect ratio so the strip overlay lines up with the frame.
+  // Shown at the stream's own aspect ratio, uncropped: the samplers read the whole
+  // frame, so the overlays only line up if the preview shows all of it.
   const [aspect, setAspect] = useState(16 / 9);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -164,10 +169,6 @@ export function VideoCapture() {
   const fisheye = mode === 'fisheye';
   const sliders = fisheye ? RIM_SLIDERS : STRIP_SLIDERS;
 
-  // A square box cropping to fill shows exactly what the rim sampler reads; strip mode
-  // keeps the stream's own shape so the band overlay lines up.
-  const ratio = fisheye ? 1 : aspect;
-
   // Same clamping the sampler applies, so the band drawn here is the one being read.
   const bandHeight = Math.min(1, Math.max(0.005, geometry.stripHeight));
   const bandTop = Math.min(1 - bandHeight, Math.max(0, geometry.stripY - bandHeight / 2));
@@ -203,13 +204,13 @@ export function VideoCapture() {
           </Button>
         </Group>
 
-        <Group align={'flex-start'} gap={'sm'} wrap={'nowrap'}>
+        <Group align={'flex-start'} gap={'sm'} wrap={'wrap'}>
           <Box
             style={{
               position: 'relative',
-              flex: 'none',
-              width: `min(${PREVIEW_WIDTH}px, 100%)`,
-              aspectRatio: `${ratio}`,
+              flex: `1 1 ${PREVIEW_WIDTH}px`,
+              maxWidth: PREVIEW_WIDTH,
+              aspectRatio: `${aspect}`,
               background: 'black',
               borderRadius: 'var(--mantine-radius-sm)',
               overflow: 'hidden',
@@ -228,7 +229,7 @@ export function VideoCapture() {
                 display: 'block',
                 width: '100%',
                 height: '100%',
-                objectFit: fisheye ? 'cover' : 'fill'
+                objectFit: 'fill'
               }}
             />
             {fisheye ? (
@@ -264,7 +265,7 @@ export function VideoCapture() {
             cols={{ base: 1, sm: fisheye ? 2 : 1 }}
             spacing={'xs'}
             verticalSpacing={4}
-            style={{ flex: 1, minWidth: 0 }}
+            style={{ flex: `1 1 ${SLIDER_MIN_WIDTH}px`, minWidth: 0 }}
           >
             {sliders.map(({ key, label, min, max, step }) => (
               <Box key={key}>
