@@ -275,15 +275,6 @@ export function ConfigPage() {
                     max={65535}
                     step={1}
                   />
-                  <TextInput
-                    label={'Scenes file'}
-                    description={
-                      'File name, relative to the project root. Takes effect after a ' +
-                      'restart.'
-                    }
-                    value={draft.server.scenes}
-                    onChange={(e) => patchServer('scenes', e.currentTarget.value)}
-                  />
                   <Textarea
                     label={'Remap'}
                     description={
@@ -474,7 +465,7 @@ export function ConfigPage() {
                   />
                   <NumberField
                     label={'Refresh rate'}
-                    description={'Packets per second.'}
+                    description={'Packets per second. Takes effect after a restart.'}
                     value={draft.output.artnet.refreshRate}
                     onChange={(value) => patchArtnet('refreshRate', value)}
                     min={1}

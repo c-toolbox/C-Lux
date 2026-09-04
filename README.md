@@ -94,7 +94,6 @@ The same settings can be edited from the browser at `/config`, behind the editor
   "server": {
     "tickRate": 30,
     "port": 8787,
-    "scenes": "scenes.json",
     "remap": {},
     "editPassword": "",
     "blackoutTransition": 1.0,
@@ -134,7 +133,6 @@ The same settings can be edited from the browser at `/config`, behind the editor
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `tickRate`             | Animation updates per second. 30 looks smooth for cove lighting; higher costs CPU, lower makes fast patterns look steppy.      |
 | `port`                 | TCP port the API — and, in a production run, the built UI — is served on.                                                      |
-| `scenes`               | Path to the JSON file saved scenes are written to, relative to the project root.                                               |
 | `remap`                | Per-light address fix-ups for fixtures that were wired or patched out of order (see below).                                   |
 | `editPassword`         | Password guarding the edit page and the endpoints it drives. Leave empty to switch the protection off.                        |
 | `blackoutTransition`   | Seconds the master blackout takes to fade out or back in.                                                                      |

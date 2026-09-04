@@ -3,7 +3,6 @@
   "server": {
     "tickRate": 30,
     "port": 8787,
-    "scenes": "scenes.json",
     "remap": {},
     "editPassword": "",
     "blackoutTransition": 1.0,

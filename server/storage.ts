@@ -4,16 +4,10 @@ import { fileURLToPath } from 'node:url';
 
 import { type Scene } from '../shared/patterns/patterns';
 
-import { config } from './config';
-
 // Scenes are named pattern combinations that can be applied on demand, and the only
 // pattern state that survives a restart. Resolved relative to the project root,
 // regardless of cwd.
-const scenesPath = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-  config.server.scenes
-);
+const scenesPath = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'scenes.json');
 
 // Bumped whenever the on-disk shape changes, so `migrate` below can bring an older file
 // up to date instead of the server having to reject it.

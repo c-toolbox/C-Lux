@@ -20,7 +20,6 @@ const configPath = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'confi
 const serverSchema = z.object({
   tickRate: z.number().positive(),
   port: z.int().min(1).max(65535),
-  scenes: z.string().min(1),
   // Fix-ups for lights that were patched to the wrong address: `"5": 3` sends the color
   // computed for light 5 to light 3 instead. Lights left out keep their 1:1 mapping;
   // entries may be one-way, but no two of them may land on the same light. A destination
@@ -99,18 +98,11 @@ function checkRemap(
 const configSchema = baseConfigSchema.superRefine(checkRemap);
 
 // The body of a save from the config page: the file's contents minus the password, which
-// the browser never receives and only sends when the user is changing it. The scenes
-// file stays a plain name here - a path from a request has no business escaping the
-// project root, even though it comes from an authenticated editor.
+// the browser never receives and only sends when the user is changing it.
 export const configUpdateSchema = z.object({
   settings: baseConfigSchema
     .extend({
-      server: serverSchema.omit({ editPassword: true }).extend({
-        scenes: z
-          .string()
-          .min(1)
-          .regex(/^[^/\\]+$/, 'must be a file name, without a path')
-      })
+      server: serverSchema.omit({ editPassword: true })
     })
     .superRefine(checkRemap),
   editPassword: z.string().optional()
@@ -156,7 +148,6 @@ export function currentSettings(): Settings {
     server: {
       tickRate: server.tickRate,
       port: server.port,
-      scenes: server.scenes,
       remap: server.remap,
       blackoutTransition: server.blackoutTransition,
       halfLightTransition: server.halfLightTransition,
@@ -191,7 +182,6 @@ export async function saveConfig(update: ConfigUpdate): Promise<string[]> {
     server: {
       tickRate: server.tickRate,
       port: server.port,
-      scenes: server.scenes,
       remap: server.remap,
       // Omitted means "keep the current password"; an empty string clears it.
       editPassword: update.editPassword ?? config.server.editPassword,

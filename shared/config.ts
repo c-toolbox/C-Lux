@@ -24,7 +24,6 @@ export interface OutputSettings {
 export interface ServerSettings {
   tickRate: number;
   port: number;
-  scenes: string;
   // `{ "5": 3 }` sends the color computed for light 5 to light 3, and `{ "5": -1 }`
   // throws it away. Entries are one-way; no two may point at the same light.
   remap: Record<string, number>;
@@ -72,7 +71,6 @@ export const RESTART_REQUIRED_SETTINGS = [
   'nLights',
   'server.tickRate',
   'server.port',
-  'server.scenes',
   'server.remap',
   'output.rotation',
   'output.artnet'

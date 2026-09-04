@@ -9,6 +9,7 @@ import { DebugPage } from './Debug/DebugPage.tsx';
 import Editor from './Editor/Editor.tsx';
 import { PasswordGate } from './Editor/PasswordGate.tsx';
 import { HomePage } from './HomePage/HomePage.tsx';
+import { RoutesPage } from './Routes/RoutesPage.tsx';
 import { ErrorBoundary } from './ErrorBoundary.tsx';
 
 import '@mantine/core/styles.css';
@@ -48,6 +49,15 @@ const router = createBrowserRouter([
     element: (
       <PasswordGate>
         <ConfigPage />
+      </PasswordGate>
+    )
+  },
+  // Gated as well: it lists the pages that are otherwise only reachable by typing the URL.
+  {
+    path: '/routes',
+    element: (
+      <PasswordGate>
+        <RoutesPage />
       </PasswordGate>
     )
   }
