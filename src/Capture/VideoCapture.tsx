@@ -14,6 +14,7 @@ import {
 import { describeError } from '../lib/errors';
 import {
   DEFAULT_VIDEO_GEOMETRY,
+  rimScale,
   startVideoCapture,
   type VideoCaptureHandle,
   type VideoGeometry,
@@ -127,21 +128,31 @@ export function VideoCapture() {
     const cx = geometry.centerX * OVERLAY_SIZE;
     const cy = geometry.centerY * OVERLAY_SIZE;
     const r = geometry.radius * half;
+    const scale = rimScale(aspect);
 
     const band = geometry.ringWidth * r;
+
+    // The square overlay is stretched to the frame's aspect ratio, so squashing here by
+    // the same factors the sampler uses puts a true circle on screen.
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(scale.x, scale.y);
+
     ctx.strokeStyle = 'rgba(77, 171, 247, 0.45)';
-    ctx.lineWidth = Math.max(1, band);
+    ctx.lineWidth = Math.max(1 / Math.min(scale.x, scale.y), band);
     ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
     ctx.stroke();
 
     // Where the first light reads from, so the rotation can be lined up with the ring.
     const angle = geometry.rotation * Math.PI * 2 - Math.PI / 2;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.beginPath();
-    ctx.arc(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r, 3, 0, Math.PI * 2);
+    ctx.arc(Math.cos(angle) * r, Math.sin(angle) * r, 3, 0, Math.PI * 2);
     ctx.fill();
-  }, [geometry, mode, capturing]);
+
+    ctx.restore();
+  }, [geometry, mode, capturing, aspect]);
 
   async function start() {
     const video = videoRef.current;

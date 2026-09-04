@@ -17,10 +17,11 @@ export type VideoSource = 'camera' | 'screen';
 export type VideoMode = 'strip' | 'fisheye';
 
 // Which part of the frame each mode reads, all as fractions so the numbers survive a
-// change of resolution. `radius` is the ring's radius as a fraction of half the frame
-// and `ringWidth` its thickness as a fraction of that; `rotation` is where light 0 reads
-// from, as a fraction of a turn clockwise from the top; the strip band is a fraction of
-// the frame height.
+// change of resolution. `radius` is the ring's radius as a fraction of half the frame's
+// shorter side — the ring stays a circle on a wide frame rather than following its edges
+// as an ellipse — and `ringWidth` its thickness as a fraction of that; `rotation` is
+// where light 0 reads from, as a fraction of a turn clockwise from the top; the strip
+// band is a fraction of the frame height.
 export interface VideoGeometry {
   centerX: number;
   centerY: number;
@@ -94,14 +95,23 @@ async function openStream(source: VideoSource): Promise<MediaStream> {
   });
 }
 
+// The frame is squashed into the square working buffer, so a circle in the source is an
+// ellipse in there. These shrink the long source axis back, keeping the sampled ring
+// round in the image and sized to the shorter side at radius 1.
+export function rimScale(aspect: number): { x: number; y: number } {
+  return aspect >= 1 ? { x: 1 / aspect, y: 1 } : { x: 1, y: aspect };
+}
+
 // Byte offsets into the sampled frame for every light, grouped by light. Geometry only
 // changes when someone drags a slider, so the trigonometry is done once and the per
 // frame work is a flat walk over this table.
-function buildRimLut(lights: number, g: VideoGeometry): Int32Array {
+function buildRimLut(lights: number, g: VideoGeometry, aspect: number): Int32Array {
   const lut = new Int32Array(lights * ARC_SAMPLES * RADIAL_SAMPLES);
   const cx = g.centerX * SAMPLE_SIZE;
   const cy = g.centerY * SAMPLE_SIZE;
-  const rmax = g.radius * SAMPLE_SIZE * 0.5;
+  const scale = rimScale(aspect);
+  const rmaxX = g.radius * SAMPLE_SIZE * 0.5 * scale.x;
+  const rmaxY = g.radius * SAMPLE_SIZE * 0.5 * scale.y;
   const last = SAMPLE_SIZE - 1;
   const clamp = (v: number) => (v < 0 ? 0 : v > last ? last : v);
 
@@ -118,8 +128,8 @@ function buildRimLut(lights: number, g: VideoGeometry): Int32Array {
 
       for (let k = 0; k < RADIAL_SAMPLES; k++) {
         const f = 1 + g.ringWidth * ((k + 0.5) / RADIAL_SAMPLES - 0.5);
-        const x = clamp(Math.round(cx + dx * rmax * f));
-        const y = clamp(Math.round(cy + dy * rmax * f));
+        const x = clamp(Math.round(cx + dx * rmaxX * f));
+        const y = clamp(Math.round(cy + dy * rmaxY * f));
         lut[n++] = (y * SAMPLE_SIZE + x) * 4;
       }
     }
@@ -163,7 +173,7 @@ export async function startVideoCapture({
 
   const lights = Math.min(VIDEO_MAX_WIDTH, config.nLights);
   const strip = new Uint8Array(VIDEO_MAX_WIDTH * 3);
-  let lut = buildRimLut(lights, geometry());
+  let lut = buildRimLut(lights, geometry(), 1);
   let lutKey = '';
   let posting = false;
 
@@ -203,15 +213,17 @@ export async function startVideoCapture({
 
   // Average an annulus inside the image, one patch per light. The whole frame is
   // squashed into the square working buffer rather than centre-cropped, so nothing is
-  // thrown away on a wide window and the ring follows the frame's edges as an ellipse.
+  // thrown away on a wide window; the sample positions undo that squash so the ring
+  // stays a circle in the image whatever the source aspect ratio is.
   const sampleRim = (): number => {
     resize(SAMPLE_SIZE, SAMPLE_SIZE);
     ctx.drawImage(video, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
 
     const g = geometry();
-    const key = `${g.centerX}|${g.centerY}|${g.radius}|${g.ringWidth}|${g.rotation}`;
+    const aspect = video.videoWidth / video.videoHeight;
+    const key = `${g.centerX}|${g.centerY}|${g.radius}|${g.ringWidth}|${g.rotation}|${aspect}`;
     if (key !== lutKey) {
-      lut = buildRimLut(lights, g);
+      lut = buildRimLut(lights, g, aspect);
       lutKey = key;
     }
 
