@@ -1,19 +1,31 @@
 import { AudioPattern, type AudioProps } from './audio.ts';
 import { AuroraPattern, type AuroraProps } from './aurora.ts';
 import { BouncePattern, type BounceProps } from './bounce.ts';
+import { CandlePattern, type CandleProps } from './candle.ts';
 import { ColorCyclePattern, type ColorCycleProps } from './color-cycle.ts';
+import {
+  ColorTemperaturePattern,
+  type ColorTemperatureProps
+} from './color-temperature.ts';
 import { CometPattern, type CometProps } from './comet.ts';
 import { FirePattern, type FireProps } from './fire.ts';
+import { FireworksPattern, type FireworksProps } from './fireworks.ts';
 import { GradientPattern, type GradientProps } from './gradient.ts';
+import { InterferencePattern, type InterferenceProps } from './interference.ts';
+import { LightningPattern, type LightningProps } from './lightning.ts';
+import { MeteorsPattern, type MeteorsProps } from './meteors.ts';
 import { MovingGaussianPattern, type MovingGaussianProps } from './moving-gaussian.ts';
 import {
   type Color,
   type FieldSpec,
+  MAX_COLORS,
   Pattern,
   type PatternSchema,
   SHARED_FIELDS
 } from './pattern.ts';
+import { PlasmaPattern, type PlasmaProps } from './plasma.ts';
 import { PulsePattern, type PulseProps } from './pulse.ts';
+import { RainPattern, type RainProps } from './rain.ts';
 import { RainbowPattern, type RainbowProps } from './rainbow.ts';
 import { RipplePattern, type RippleProps } from './ripple.ts';
 import { SineWavePattern, type SineWaveProps } from './sine-wave.ts';
@@ -21,6 +33,7 @@ import { SparklePattern, type SparkleProps } from './sparkle.ts';
 import { StaticPattern, type StaticProps } from './static.ts';
 import { TheaterChasePattern, type TheaterChaseProps } from './theater-chase.ts';
 import { VideoPattern, type VideoProps } from './video.ts';
+import { WipePattern, type WipeProps } from './wipe.ts';
 
 // The static metadata every pattern class carries: its `Type` tag, a user-facing
 // `DisplayName` and the `Fields` describing its configurable parameters.
@@ -49,6 +62,15 @@ const PATTERNS = [
   TheaterChasePattern,
   AuroraPattern,
   RipplePattern,
+  PlasmaPattern,
+  InterferencePattern,
+  CandlePattern,
+  ColorTemperaturePattern,
+  WipePattern,
+  MeteorsPattern,
+  FireworksPattern,
+  RainPattern,
+  LightningPattern,
   AudioPattern,
   VideoPattern
 ] as const satisfies readonly PatternStatics[];
@@ -87,6 +109,7 @@ export function patternFields(type: string): PatternSchema | undefined {
 }
 
 export type { Color, FieldSpec, PatternSchema };
+export { MAX_COLORS };
 
 export type PatternProps =
   | StaticProps
@@ -103,6 +126,15 @@ export type PatternProps =
   | TheaterChaseProps
   | AuroraProps
   | RippleProps
+  | PlasmaProps
+  | InterferenceProps
+  | CandleProps
+  | ColorTemperatureProps
+  | WipeProps
+  | MeteorsProps
+  | FireworksProps
+  | RainProps
+  | LightningProps
   | AudioProps
   | VideoProps;
 
