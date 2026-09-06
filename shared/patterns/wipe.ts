@@ -37,7 +37,7 @@ export class WipePattern extends Pattern {
     hold: {
       kind: 'number',
       label: 'Hold (s)',
-      default: 0.5,
+      default: 0,
       step: 0.1,
       row: 0,
       hint: 'Pause once the ring is back to color A.',
@@ -58,7 +58,7 @@ export class WipePattern extends Pattern {
       default: 0.05,
       step: 0.01,
       row: 1,
-      hint: 'Softens both edges where the colors meet.',
+      hint: 'How wide the moving edge fades from one color to the other.',
       ...UNIT
     },
     origin: {
@@ -139,10 +139,10 @@ export class WipePattern extends Pattern {
     const n = this.state.length;
     this.progress += this.speed * n * dt;
     if (this.progress >= n) {
-      // The ring is now a single color; swap the roles. Only a finished color A wipe
+      // The front is back at the origin; swap the roles. Only a finished color A wipe
       // pauses, so color B hands straight back over to color A.
       const finishedA = this.painting === 0;
-      this.progress = 0;
+      this.progress -= n;
       this.painting = finishedA ? 1 : 0;
       if (finishedA) this.holdTimer = this.hold;
     }
@@ -161,8 +161,14 @@ export class WipePattern extends Pattern {
       // Distance of the light's center from the origin along the sweep, so the front
       // sits at `progress` for both directions.
       const swept = mod(this.direction >= 0 ? i - start : start - i, n) + 0.5;
-      const mix =
-        width > 0 ? coverage(swept, progress, width, n) : swept < progress ? 1 : 0;
+      // Phase behind the front over the two-turn cycle: incoming fills the first turn,
+      // outgoing the second. The ring spans exactly half of that, so it carries a
+      // single edge that keeps its full width as it crosses the origin - the tail
+      // leaves the seam just as the head of the next turn arrives there.
+      const phase = mod(progress - swept, 2 * n);
+      const turn = phase < n ? phase : phase - n;
+      const ramp = width > 0 ? clamp01(Math.min(turn, n - turn) / width + 0.5) : 1;
+      const mix = phase < n ? ramp : 1 - ramp;
       this.state[i] = {
         r: Math.round(outgoing.r + (incoming.r - outgoing.r) * mix),
         g: Math.round(outgoing.g + (incoming.g - outgoing.g) * mix),
@@ -177,18 +183,6 @@ function mod(value: number, n: number): number {
   return ((value % n) + n) % n;
 }
 
-// How much of the incoming color a light `swept` lights past the origin takes: the share
-// of its `width` wide footprint that the swept arc covers. Convolving rather than fading
-// each edge on its own lets the front and the seam merge into a solid ring as the front
-// laps the origin, instead of leaving a dip between them.
-function coverage(swept: number, progress: number, width: number, n: number): number {
-  const from = swept - width / 2;
-  const to = swept + width / 2;
-  let covered = 0;
-  // The arc repeats every turn, and the footprint can reach the neighbouring copies.
-  for (let turn = -1; turn <= 1; turn++) {
-    const arc = turn * n;
-    covered += Math.max(0, Math.min(to, arc + progress) - Math.max(from, arc));
-  }
-  return Math.min(covered / width, 1);
+function clamp01(value: number): number {
+  return Math.min(Math.max(value, 0), 1);
 }
