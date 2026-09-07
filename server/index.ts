@@ -5,6 +5,8 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
+import { NDI_PREVIEW_HEADER_BYTES } from '../shared/ndi';
+
 import { publishAudioFrame } from './audio';
 import { getAuth, login, logout, requireAuth, signOutEveryone } from './auth';
 import {
@@ -16,6 +18,7 @@ import {
 } from './config';
 import { Engine } from './engine';
 import { HttpError } from './errors';
+import { ndiPreview, ndiSources, ndiStatus, setNdi, stopNdi } from './ndi';
 import { startOutputs } from './output';
 import { parseBody } from './validation';
 import { publishVideoStrip } from './video';
@@ -64,6 +67,25 @@ const debugBody = z.object({
     .nullable()
     .optional(),
   color: z.object({ r: channel, g: channel, b: channel }).optional()
+});
+
+// Every part of the sampling geometry is a fraction of the frame, so the whole body is
+// bounded and a slider can't ask the receiver to read outside the image.
+const fraction = z.number('must be a number').min(0).max(1);
+const ndiBody = z.object({
+  source: z.string('must be a string').nullable().optional(),
+  mode: z.enum(['strip', 'fisheye']).optional(),
+  geometry: z
+    .object({
+      centerX: fraction,
+      centerY: fraction,
+      radius: z.number('must be a number').min(0).max(2),
+      ringWidth: fraction,
+      rotation: fraction,
+      stripY: fraction,
+      stripHeight: fraction
+    })
+    .optional()
 });
 
 //
@@ -153,6 +175,41 @@ function postAudio(req: express.Request, res: express.Response) {
 function postVideo(req: express.Request, res: express.Response) {
   publishVideoStrip(req.body);
   res.status(204).end();
+}
+
+// NDI is a LAN protocol a browser cannot speak, so the server receives the stream itself
+// and the capture panel only picks a source and aims the sampling.
+function getNdi(_req: express.Request, res: express.Response) {
+  res.json(ndiStatus());
+}
+
+async function listNdiSources(_req: express.Request, res: express.Response) {
+  res.json(await ndiSources());
+}
+
+async function putNdi(req: express.Request, res: express.Response) {
+  res.json(await setNdi(parseBody(ndiBody, req.body)));
+}
+
+// What the receiver is reading, so the calibration sliders can be aimed by eye, plus the
+// strip it sampled from the same frame. Binary for the same reason the ingest is.
+function getNdiPreview(_req: express.Request, res: express.Response) {
+  const frame = ndiPreview();
+  if (frame === null) {
+    res.status(204).end();
+    return;
+  }
+
+  const body = Buffer.allocUnsafe(
+    NDI_PREVIEW_HEADER_BYTES + frame.rgb.length + frame.strip.length
+  );
+  body.writeUInt16LE(frame.width, 0);
+  body.writeUInt16LE(frame.height, 2);
+  body.writeUInt16LE(frame.strip.length / 3, 4);
+  body.set(frame.rgb, NDI_PREVIEW_HEADER_BYTES);
+  body.set(frame.strip, NDI_PREVIEW_HEADER_BYTES + frame.rgb.length);
+
+  res.type('application/octet-stream').send(body);
 }
 
 // Stream the blended frame to the client on every tick via Server-Sent Events.
@@ -287,6 +344,13 @@ async function main() {
     express.raw({ type: 'application/octet-stream', limit: VIDEO_BODY_LIMIT }),
     postVideo
   );
+  // Open like the capture endpoints above: the landing page runs the capture panel too,
+  // and only a source discovery has already seen can be opened, so this cannot point the
+  // receiver at an arbitrary host.
+  routes.get('/ndi', getNdi);
+  routes.get('/ndi/sources', listNdiSources);
+  routes.put('/ndi', putNdi);
+  routes.get('/ndi/preview', getNdiPreview);
   routes.get('/stream', streamFrames);
   routes.get('/scenes', listScenes);
   routes.get('/scenes/applied', appliedScenes);
@@ -356,6 +420,7 @@ async function main() {
     console.log(`${signal} received, shutting down`);
     clearInterval(tickTimer);
     for (const output of outputs) output.stop();
+    stopNdi();
     httpServer.close();
     process.exit(0);
   };

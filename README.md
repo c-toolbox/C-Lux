@@ -51,6 +51,8 @@ The interface is a single-page app with a handful of routes. Only the landing pa
 
 Whenever an Audio or Video layer is enabled, a capture panel appears on both the landing page and the editor. The server has neither a sound card nor a video decoder, so the browser does that work: it analyses an input device or loopback, or samples a shared screen, window, tab or camera, and streams the result to the pattern over the API. Any machine on the dome network can be the source, and it does not have to be the one driving the lights.
 
+NDI is the exception. A browser cannot join an NDI stream, so picking it as the video input hands the job to the server: it discovers the senders on the network, the panel picks one from the list, and the server receives, samples and feeds the pattern itself. The panel only aims the sampling and shows a small preview of what the server is reading, so the feed keeps running once the tab is closed. This needs the optional `grandi` dependency and the NDI runtime on the machine driving the lights; without either, the source list reports why and the other inputs are unaffected.
+
 ## API
 
 All endpoints are served by the Express backend under the `/api` prefix and proxied through Vite in development. Endpoints marked with a lock require the editor password (see [Configuration](#configuration)) and answer `401` without it.
@@ -77,6 +79,10 @@ All endpoints are served by the Express backend under the `/api` prefix and prox
 | PUT    | `/api/debug` 🔒                  | `{ suspended?, light?, color? }` | Suspend the show, or drive one light |
 | POST   | `/api/audio`                     | audio analysis frame   | Feed one frame to audio-reactive patterns  |
 | POST   | `/api/video`                     | strip of colors (binary) | Feed one sampled strip to video patterns |
+| GET    | `/api/ndi`                       | —                      | State of the server's own NDI receiver     |
+| GET    | `/api/ndi/sources`               | —                      | NDI senders visible on the network         |
+| PUT    | `/api/ndi`                       | `{ source?, mode?, geometry? }` | Open or close a source, and aim the sampling |
+| GET    | `/api/ndi/preview`               | —                      | Preview of the received frame (binary)     |
 | GET    | `/api/stream`                    | —                      | Server-Sent Events stream of frames        |
 | GET    | `/api/scenes`                    | —                      | List the saved scenes                      |
 | GET    | `/api/scenes/applied`            | —                      | Names of the scenes currently switched on  |

@@ -8,6 +8,7 @@ export type {
   Settings
 } from '../../shared/config';
 export type { DebugStatus, DebugUpdate } from '../../shared/debug';
+export type { NdiSource, NdiStatus, NdiUpdate } from '../../shared/ndi';
 export { AUDIO_TYPE } from '../../shared/patterns/audio';
 export type {
   Color,
@@ -30,6 +31,12 @@ export { REMAP_DISABLED } from '../../shared/remap';
 
 import type { ConfigSaved, ConfigStatus, ConfigUpdate } from '../../shared/config';
 import type { DebugStatus, DebugUpdate } from '../../shared/debug';
+import {
+  NDI_PREVIEW_HEADER_BYTES,
+  type NdiSource,
+  type NdiStatus,
+  type NdiUpdate
+} from '../../shared/ndi';
 import type {
   PatternParameters,
   PatternProps,
@@ -104,6 +111,11 @@ export const api = {
   // The debug page's overrides on the output. Editor-only, and never persisted.
   debug: () => request<DebugStatus>('/debug'),
   setDebug: (update: DebugUpdate) => request<DebugStatus>('/debug', 'PUT', update),
+  // The server's own NDI receiver: what it is doing, what it can see on the network, and
+  // which source it should be sampling.
+  ndi: () => request<NdiStatus>('/ndi'),
+  ndiSources: () => request<NdiSource[]>('/ndi/sources'),
+  setNdi: (update: NdiUpdate) => request<NdiStatus>('/ndi', 'PUT', update),
   removePattern: (name: string) =>
     request<{ name: string }>(`/patterns/${seg(name)}`, 'DELETE'),
   reorderPatterns: (order: string[]) =>
@@ -151,4 +163,37 @@ export function subscribeFrames(onFrame: (frame: number[]) => void): () => void 
     }
   };
   return () => source.close();
+}
+
+export interface NdiPreview {
+  width: number;
+  height: number;
+  rgb: Uint8Array;
+  strip: Uint8Array;
+}
+
+// One frame of what the server's NDI receiver is reading, plus the strip it sampled from
+// it. Binary rather than JSON, for the same reason the capture ingest is. Resolves to
+// null until the receiver has rendered a preview.
+export async function ndiPreview(signal?: AbortSignal): Promise<NdiPreview | null> {
+  const res = await fetch('/api/ndi/preview', { headers: authHeaders(), signal });
+  if (res.status === 204 || !res.ok) return null;
+
+  const body = new Uint8Array(await res.arrayBuffer());
+  if (body.length < NDI_PREVIEW_HEADER_BYTES) return null;
+
+  const header = new DataView(body.buffer, body.byteOffset, NDI_PREVIEW_HEADER_BYTES);
+  const width = header.getUint16(0, true);
+  const height = header.getUint16(2, true);
+  const stripWidth = header.getUint16(4, true);
+
+  const pixels = width * height * 3;
+  if (body.length !== NDI_PREVIEW_HEADER_BYTES + pixels + stripWidth * 3) return null;
+
+  return {
+    width,
+    height,
+    rgb: body.subarray(NDI_PREVIEW_HEADER_BYTES, NDI_PREVIEW_HEADER_BYTES + pixels),
+    strip: body.subarray(NDI_PREVIEW_HEADER_BYTES + pixels)
+  };
 }

@@ -12,6 +12,8 @@ import {
   Text
 } from '@mantine/core';
 
+import { NDI_PREVIEW_INTERVAL_MS } from '../../shared/ndi';
+import { api, type NdiPreview, ndiPreview, type NdiSource } from '../lib/api';
 import { describeError } from '../lib/errors';
 import {
   DEFAULT_VIDEO_GEOMETRY,
@@ -19,13 +21,14 @@ import {
   startVideoCapture,
   type VideoCaptureHandle,
   type VideoGeometry,
-  type VideoMode,
-  type VideoSource
+  type VideoInput,
+  type VideoMode
 } from '../lib/video';
 
 const SOURCES = [
   { value: 'camera', label: 'Camera' },
-  { value: 'screen', label: 'Screen or window' }
+  { value: 'screen', label: 'Screen or window' },
+  { value: 'ndi', label: 'NDI stream' }
 ];
 
 const MODES = [
@@ -84,13 +87,18 @@ function quantise(value: number, min: number, max: number, step: number) {
 
 // Feeds the Video pattern: patterns run on the server, which has no video decoder, so
 // this tab samples the feed down to a strip of colors and streams that over the API.
+// NDI is the exception — a browser cannot join an NDI stream, so the server receives and
+// samples that one itself and this panel only aims it and watches a preview.
 export function VideoCapture() {
-  const [source, setSource] = useState<VideoSource>('screen');
+  const [input, setInput] = useState<VideoInput>('screen');
   const [mode, setMode] = useState<VideoMode>('fisheye');
   const [capturing, setCapturing] = useState(false);
   const [starting, setStarting] = useState(false);
   const [geometry, setGeometry] = useState<VideoGeometry>(DEFAULT_VIDEO_GEOMETRY);
   const [error, setError] = useState<string | null>(null);
+  const [sources, setSources] = useState<NdiSource[]>([]);
+  const [source, setSource] = useState('');
+  const [scanning, setScanning] = useState(false);
   // Shown at the stream's own aspect ratio, uncropped: the samplers read the whole
   // frame, so the overlays only line up if the preview shows all of it.
   const [aspect, setAspect] = useState(16 / 9);
@@ -98,7 +106,10 @@ export function VideoCapture() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const stripRef = useRef<HTMLCanvasElement>(null);
+  const previewRef = useRef<HTMLCanvasElement>(null);
   const handle = useRef<VideoCaptureHandle | null>(null);
+
+  const ndi = input === 'ndi';
 
   // The sampler reads the geometry every frame, so it needs the live value rather than
   // the one captured when the run started.
@@ -108,19 +119,84 @@ export function VideoCapture() {
   const modeRef = useRef(mode);
   modeRef.current = mode;
 
-  const stop = useCallback(() => {
+  const stopBrowser = useCallback(() => {
     handle.current?.stop();
     handle.current = null;
-    setCapturing(false);
   }, []);
 
-  useEffect(() => stop, [stop]);
+  // The browser's own "stop sharing" control ends the track without going through us.
+  const onEnded = useCallback(() => {
+    stopBrowser();
+    setCapturing(false);
+  }, [stopBrowser]);
+
+  // Only the browser capture is torn down with the panel: the server's NDI receiver has
+  // no reason to stop just because this tab navigated away.
+  useEffect(() => stopBrowser, [stopBrowser]);
+
+  // Adopt a receiver that is already running, so reopening the page shows what the lights
+  // are actually being fed rather than an idle panel.
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .ndi()
+      .then((status) => {
+        if (cancelled || !status.running) return;
+        setInput('ndi');
+        setSource(status.source ?? '');
+        setMode(status.mode);
+        setGeometry(status.geometry);
+        setCapturing(true);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const scan = useCallback(async () => {
+    setScanning(true);
+    setError(null);
+    try {
+      const found = await api.ndiSources();
+      setSources(found);
+      // Keep the current pick if it is still on the network, otherwise take the first.
+      setSource((current) =>
+        found.some((s) => s.name === current) ? current : (found[0]?.name ?? '')
+      );
+    } catch (e) {
+      setError(describeError(e));
+    } finally {
+      setScanning(false);
+    }
+  }, []);
+
+  // Discovery takes a moment to warm up, so the list is fetched when NDI is picked rather
+  // than waiting for the user to open the dropdown and find it empty.
+  useEffect(() => {
+    if (ndi) void scan();
+  }, [ndi, scan]);
+
+  // Re-aim the running receiver as the sliders move. Debounced, because dragging a slider
+  // produces a value per frame and the receiver only needs the one it settles on.
+  useEffect(() => {
+    if (!ndi || !capturing) return;
+    const timer = setTimeout(() => {
+      api.setNdi({ mode, geometry }).catch((e: unknown) => setError(describeError(e)));
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [ndi, capturing, mode, geometry]);
+
+  const stop = useCallback(() => {
+    stopBrowser();
+    setCapturing(false);
+  }, [stopBrowser]);
 
   // Paint the strip that was last sent, one pixel per color, stretched by CSS.
   const onStrip = useCallback((width: number, rgb: Uint8Array) => {
     const canvas = stripRef.current;
     const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
+    if (!canvas || !ctx || width === 0) return;
     if (canvas.width !== width) canvas.width = width;
 
     const image = ctx.createImageData(width, 1);
@@ -132,6 +208,59 @@ export function VideoCapture() {
     }
     ctx.putImageData(image, 0, 0);
   }, []);
+
+  const drawPreview = useCallback((frame: NdiPreview) => {
+    const canvas = previewRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    if (canvas.width !== frame.width || canvas.height !== frame.height) {
+      canvas.width = frame.width;
+      canvas.height = frame.height;
+    }
+
+    const image = ctx.createImageData(frame.width, frame.height);
+    for (let i = 0; i < frame.width * frame.height; i++) {
+      image.data[i * 4] = frame.rgb[i * 3];
+      image.data[i * 4 + 1] = frame.rgb[i * 3 + 1];
+      image.data[i * 4 + 2] = frame.rgb[i * 3 + 2];
+      image.data[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(image, 0, 0);
+
+    const next = frame.width / frame.height;
+    setAspect((current) => (Math.abs(current - next) < 1e-6 ? current : next));
+  }, []);
+
+  // Poll the server for what its receiver is reading. Asking is also what makes it render
+  // previews at all, so this stops the moment the panel does.
+  useEffect(() => {
+    if (!ndi || !capturing) return;
+
+    const controller = new AbortController();
+    let timer = 0;
+    let cancelled = false;
+
+    const poll = async () => {
+      try {
+        const frame = await ndiPreview(controller.signal);
+        if (cancelled) return;
+        if (frame !== null) {
+          drawPreview(frame);
+          onStrip(frame.strip.length / 3, frame.strip);
+        }
+      } catch {
+        // A dropped poll is not worth reporting; the next one is 100ms away.
+      }
+      if (!cancelled) timer = window.setTimeout(poll, NDI_PREVIEW_INTERVAL_MS);
+    };
+    void poll();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [ndi, capturing, drawPreview, onStrip]);
 
   // Show which part of the image the rim sampler is reading.
   useEffect(() => {
@@ -170,21 +299,47 @@ export function VideoCapture() {
   }, [geometry, mode, capturing, aspect]);
 
   async function start() {
-    const video = videoRef.current;
-    if (!video) return;
-
     setStarting(true);
     setError(null);
     try {
-      handle.current = await startVideoCapture({
-        source,
-        mode: () => modeRef.current,
-        video,
-        geometry: () => geometryRef.current,
-        onStrip,
-        onEnded: stop
-      });
+      if (input === 'ndi') {
+        const status = await api.setNdi({ source, mode, geometry });
+        if (!status.running) {
+          throw new Error(
+            status.reason ?? status.error ?? 'That NDI source could not be opened'
+          );
+        }
+      } else {
+        const video = videoRef.current;
+        if (!video) return;
+
+        handle.current = await startVideoCapture({
+          source: input,
+          mode: () => modeRef.current,
+          video,
+          geometry: () => geometryRef.current,
+          onStrip,
+          onEnded
+        });
+      }
       setCapturing(true);
+    } catch (e) {
+      setError(describeError(e));
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  async function halt() {
+    if (!ndi) {
+      stop();
+      return;
+    }
+
+    setStarting(true);
+    try {
+      await api.setNdi({ source: null });
+      setCapturing(false);
     } catch (e) {
       setError(describeError(e));
     } finally {
@@ -205,10 +360,10 @@ export function VideoCapture() {
         <Group grow align={'flex-end'}>
           <NativeSelect
             label={'Video input'}
-            value={source}
+            value={input}
             data={SOURCES}
             disabled={capturing || starting}
-            onChange={(e) => setSource(e.currentTarget.value as VideoSource)}
+            onChange={(e) => setInput(e.currentTarget.value as VideoInput)}
           />
           <NativeSelect
             label={'Mode'}
@@ -224,11 +379,38 @@ export function VideoCapture() {
             variant={capturing ? 'filled' : 'default'}
             color={capturing ? 'green' : undefined}
             loading={starting}
-            onClick={() => (capturing ? stop() : void start())}
+            disabled={!capturing && ndi && source === ''}
+            onClick={() => void (capturing ? halt() : start())}
           >
             {capturing ? 'Stop capture' : 'Start capture'}
           </Button>
         </Group>
+
+        {ndi && (
+          <Group align={'flex-end'} gap={'xs'} wrap={'nowrap'}>
+            <NativeSelect
+              label={'NDI source'}
+              description={'Senders the server can see on the network'}
+              style={{ flex: 1, minWidth: 0 }}
+              value={source}
+              data={
+                sources.length === 0
+                  ? [{ value: '', label: scanning ? 'Searching…' : 'No sources found' }]
+                  : sources.map((s) => ({ value: s.name, label: s.name }))
+              }
+              disabled={capturing || starting || sources.length === 0}
+              onChange={(e) => setSource(e.currentTarget.value)}
+            />
+            <Button
+              variant={'default'}
+              loading={scanning}
+              disabled={capturing}
+              onClick={() => void scan()}
+            >
+              Rescan
+            </Button>
+          </Group>
+        )}
 
         <Group align={'flex-start'} gap={'sm'} wrap={'wrap'}>
           <Box
@@ -252,7 +434,18 @@ export function VideoCapture() {
                 if (videoWidth && videoHeight) setAspect(videoWidth / videoHeight);
               }}
               style={{
-                display: 'block',
+                display: ndi ? 'none' : 'block',
+                width: '100%',
+                height: '100%',
+                objectFit: 'fill'
+              }}
+            />
+            {/* NDI never reaches this tab, so the preview is the low-resolution copy the
+                server renders from the frames it is sampling. */}
+            <canvas
+              ref={previewRef}
+              style={{
+                display: ndi ? 'block' : 'none',
                 width: '100%',
                 height: '100%',
                 objectFit: 'fill'
