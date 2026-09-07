@@ -4,6 +4,7 @@ import {
   Button,
   Group,
   NativeSelect,
+  NumberInput,
   Paper,
   SimpleGrid,
   Slider,
@@ -52,20 +53,34 @@ interface SliderSpec {
   step?: number;
 }
 
+// Centre and radius are aimed by eye against the overlay, and a pixel of drag is coarser
+// than the adjustment that is still visible on the ring, so they step in thousandths and
+// are also typeable in the box next to the slider.
 const RIM_SLIDERS: readonly SliderSpec[] = [
-  { key: 'centerX', label: 'Center X', min: 0, max: 1 },
-  { key: 'centerY', label: 'Center Y', min: 0, max: 1 },
-  { key: 'radius', label: 'Radius', min: 0, max: 1.4 },
-  { key: 'ringWidth', label: 'Ring width', min: 0, max: 1 },
+  { key: 'centerX', label: 'Center X', min: 0, max: 1, step: 0.001 },
+  { key: 'centerY', label: 'Center Y', min: 0, max: 1, step: 0.001 },
+  { key: 'radius', label: 'Radius', min: 0, max: 1.4, step: 0.001 },
+  { key: 'ringWidth', label: 'Ring width', min: 0, max: 1, step: 0.001 },
   // A full turn, so the feed's "up" can be dragged onto the top of the light ring.
-  { key: 'rotation', label: 'Rotation', min: 0, max: 1, step: 0.005 }
+  { key: 'rotation', label: 'Rotation', min: 0, max: 1, step: 0.001 }
 ];
 
 const STRIP_SLIDERS: readonly SliderSpec[] = [
-  { key: 'stripY', label: 'Strip position', min: 0, max: 1 },
+  { key: 'stripY', label: 'Strip position', min: 0, max: 1, step: 0.001 },
   // Fine steps, because a usable band is only a few percent of the frame.
   { key: 'stripHeight', label: 'Strip height', min: 0.005, max: 1, step: 0.005 }
 ];
+
+// Slider values are fractions, so a step of 0.001 needs three places to be readable.
+function decimals(step: number) {
+  return Math.max(0, Math.ceil(-Math.log10(step)));
+}
+
+// Dragging lands on binary fractions of the track, so snap to the step before storing.
+function quantise(value: number, min: number, max: number, step: number) {
+  const snapped = Math.round((value - min) / step) * step + min;
+  return Math.min(max, Math.max(min, Number(snapped.toFixed(decimals(step) + 2))));
+}
 
 // Feeds the Video pattern: patterns run on the server, which has no video decoder, so
 // this tab samples the feed down to a strip of colors and streams that over the API.
@@ -278,21 +293,44 @@ export function VideoCapture() {
             verticalSpacing={4}
             style={{ flex: `1 1 ${SLIDER_MIN_WIDTH}px`, minWidth: 0 }}
           >
-            {sliders.map(({ key, label, min, max, step }) => (
-              <Box key={key}>
-                <Text size={'xs'} c={'dimmed'}>
-                  {label}
-                </Text>
-                <Slider
-                  size={'sm'}
-                  min={min}
-                  max={max}
-                  step={step ?? 0.01}
-                  value={geometry[key]}
-                  onChange={(value) => setGeometry((g) => ({ ...g, [key]: value }))}
-                />
-              </Box>
-            ))}
+            {sliders.map(({ key, label, min, max, step = 0.01 }) => {
+              const set = (value: number) =>
+                setGeometry((g) => ({ ...g, [key]: quantise(value, min, max, step) }));
+
+              return (
+                <Box key={key}>
+                  <Group justify={'space-between'} gap={4} wrap={'nowrap'}>
+                    <Text size={'xs'} c={'dimmed'}>
+                      {label}
+                    </Text>
+                    <NumberInput
+                      size={'xs'}
+                      w={86}
+                      min={min}
+                      max={max}
+                      step={step}
+                      clampBehavior={'strict'}
+                      decimalScale={decimals(step)}
+                      fixedDecimalScale
+                      value={geometry[key]}
+                      onChange={(value) => {
+                        const next = typeof value === 'number' ? value : Number(value);
+                        if (Number.isFinite(next)) set(next);
+                      }}
+                    />
+                  </Group>
+                  <Slider
+                    size={'sm'}
+                    label={(v) => v.toFixed(decimals(step))}
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={geometry[key]}
+                    onChange={set}
+                  />
+                </Box>
+              );
+            })}
           </SimpleGrid>
         </Group>
 
