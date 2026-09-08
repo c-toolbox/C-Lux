@@ -33,11 +33,27 @@ const FIND_WARM_MS = 150;
 // is not noticeably delayed, long enough not to spin.
 const FRAME_TIMEOUT_MS = 250;
 
-// Back off after a receive error rather than hammering a source that is failing.
-const RETRY_MS = 500;
+// Back off after a receive error rather than hammering a source that is failing. Kept
+// well under the video store's staleness window (shared/video.ts STALE_MS) so a single
+// transient error - a dropped packet, a momentary sender hiccup - doesn't itself force
+// the strip to go stale and the pattern to visibly flash to black.
+const RETRY_MS = 50;
 
 // Stop rendering previews once no one has asked for one for this long.
 const PREVIEW_IDLE_MS = 2000;
+
+// While a source is connected, re-publish the last strip on this interval so the video
+// store stays fresh between frames. An NDI sender's video rate is its own business and can
+// sit well under the store's staleness window (shared/video.ts STALE_MS) while the feed is
+// perfectly live - a static NDI Test Pattern sends video at 1 fps, and audio frames in
+// between keep the receive loop from ever seeing an idle tick. Without this the Video
+// pattern fades to black and back once a second. Kept well under STALE_MS.
+const HOLD_REFRESH_MS = 200;
+
+// ...but stop holding once no real frame has landed for this long, even if the receiver
+// still claims a connection: a half-dead source (audio flowing, video wedged) should fade
+// out rather than freeze the ring on its last frame forever.
+const HOLD_MAX_MS = 10_000;
 
 // Source pixels read per destination pixel when scaling a frame down. Uncapped, a 4K
 // feed would cost more per frame than the whole engine does.
@@ -135,6 +151,10 @@ let error: string | null = null;
 // and stops without publishing a frame the new receiver should own.
 let generation = 0;
 
+// Re-publishes the last strip between frames while the source is connected. See
+// HOLD_REFRESH_MS. Cleared by stop().
+let holdTimer: ReturnType<typeof setInterval> | null = null;
+
 // The frame squashed into a square RGBA working buffer, the same image the browser's
 // canvas produces, so both paths sample identically for the same geometry.
 const square = new Uint8Array(RIM_SAMPLE_SIZE * RIM_SAMPLE_SIZE * 4);
@@ -146,6 +166,10 @@ let lutKey = '';
 
 // Width of the strip published from the last frame, so the preview can carry it back.
 let stripWidth = 0;
+
+// When the last real video frame was sampled, so the hold timer knows how long to keep
+// re-publishing it before treating the source as gone. See HOLD_MAX_MS.
+let lastVideoAt = 0;
 
 let previewWantedUntil = 0;
 let preview: { width: number; height: number; rgb: Uint8Array } | null = null;
@@ -248,8 +272,48 @@ function renderPreview(pixels: Uint8Array, stride: number, w: number, h: number)
   }
 }
 
+// Set NDI_DEBUG=1 to log a once-a-second summary of what the receiver is actually
+// delivering (event mix, video frame interval, frame shape, connections, hold ticks).
+// Cheap to leave in: everything below is a no-op unless the variable is set.
+const DEBUG = process.env.NDI_DEBUG === '1';
+const dbg = {
+  since: 0,
+  events: new Map<string, number>(),
+  lastVideo: 0,
+  gapMax: 0,
+  shortFrames: 0,
+  holds: 0,
+  lastShape: ''
+};
+function dbgTick(active: Receiver): void {
+  const now = Date.now();
+  if (dbg.since === 0) dbg.since = now;
+  if (now - dbg.since < 1000) return;
+  const mix = [...dbg.events].map(([k, v]) => `${k}:${v}`).join(' ');
+  console.warn(
+    `[ndi-debug] ${mix} | video gap max ${dbg.gapMax}ms | holds ${dbg.holds} | ` +
+      `short ${dbg.shortFrames} | ${dbg.lastShape} | connections ${active.connections()}`
+  );
+  dbg.since = now;
+  dbg.events.clear();
+  dbg.gapMax = 0;
+  dbg.shortFrames = 0;
+  dbg.holds = 0;
+}
+function dbgEvent(type: string): void {
+  if (!DEBUG) return;
+  dbg.events.set(type, (dbg.events.get(type) ?? 0) + 1);
+}
+
 function publish(frame: ReceivedVideoFrame): void {
   const { xres, yres, lineStrideBytes, data } = frame;
+  if (DEBUG) {
+    const now = Date.now();
+    if (dbg.lastVideo !== 0) dbg.gapMax = Math.max(dbg.gapMax, now - dbg.lastVideo);
+    dbg.lastVideo = now;
+    dbg.lastShape = `${xres}x${yres} stride ${lineStrideBytes} bytes ${data.length}/${lineStrideBytes * yres}`;
+    if (xres < 1 || yres < 1 || data.length < lineStrideBytes * yres) dbg.shortFrames++;
+  }
   if (xres < 1 || yres < 1 || data.length < lineStrideBytes * yres) return;
 
   const width =
@@ -258,8 +322,9 @@ function publish(frame: ReceivedVideoFrame): void {
       : sampleFisheye(data, lineStrideBytes, xres, yres);
 
   // The working buffer is reused every frame, so the store gets its own copy.
-  setVideoStrip(width, strip.slice(0, width * 3));
+  setVideoStrip(width, strip.slice(0, width * 3), 'ndi');
   stripWidth = width;
+  lastVideoAt = Date.now();
 
   if (Date.now() < previewWantedUntil) renderPreview(data, lineStrideBytes, xres, yres);
 }
@@ -267,17 +332,21 @@ function publish(frame: ReceivedVideoFrame): void {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Pull frames until this receiver is replaced or stopped. `data` resolves with a timeout
-// event rather than rejecting, so a source that goes quiet just leaves the strip to go
-// stale and the pattern to fade out. Destroying happens here, once no call is in flight.
+// event rather than rejecting, so a source that goes quiet just stops feeding `publish`;
+// the hold timer in `start` keeps the strip alive until the source actually disconnects.
+// Destroying happens here, once no call is in flight.
 async function pump(active: Receiver, id: number): Promise<void> {
   while (generation === id) {
     try {
       const event = await active.data(FRAME_TIMEOUT_MS);
       if (generation !== id) break;
+      dbgEvent(event.type);
       if (event.type === 'video') publish(event);
+      if (DEBUG) dbgTick(active);
     } catch (err) {
       if (generation !== id) break;
       error = describe(err);
+      console.warn(`NDI receive error, retrying: ${error}`);
       await delay(RETRY_MS);
     }
   }
@@ -286,10 +355,15 @@ async function pump(active: Receiver, id: number): Promise<void> {
 
 function stop(): void {
   generation++;
+  if (holdTimer !== null) {
+    clearInterval(holdTimer);
+    holdTimer = null;
+  }
   receiver = null;
   sourceName = null;
   preview = null;
   stripWidth = 0;
+  lastVideoAt = 0;
 }
 
 async function start(name: string): Promise<void> {
@@ -324,6 +398,22 @@ async function start(name: string): Promise<void> {
   sourceName = source.name;
   error = null;
   lutKey = '';
+
+  // Between real frames, re-publish the last strip so a low- or uneven-rate sender isn't
+  // mistaken for a stopped capture and faded to black. Bounded by the source still being
+  // connected and its video not having been wedged for HOLD_MAX_MS, so a real disconnect
+  // still fades the ring out.
+  holdTimer = setInterval(() => {
+    if (
+      stripWidth > 0 &&
+      opened.connections() > 0 &&
+      Date.now() - lastVideoAt < HOLD_MAX_MS
+    ) {
+      setVideoStrip(stripWidth, strip.slice(0, stripWidth * 3), 'ndi');
+      if (DEBUG) dbg.holds++;
+    }
+  }, HOLD_REFRESH_MS);
+
   void pump(opened, generation);
 }
 

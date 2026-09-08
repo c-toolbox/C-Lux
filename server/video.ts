@@ -25,5 +25,5 @@ export function publishVideoStrip(body: unknown): void {
   }
 
   // Copied out of the request buffer: express recycles it once the response is sent.
-  setVideoStrip(width, Uint8Array.from(body.subarray(HEADER_BYTES)));
+  setVideoStrip(width, Uint8Array.from(body.subarray(HEADER_BYTES)), 'browser');
 }

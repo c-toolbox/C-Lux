@@ -23,19 +23,49 @@ export interface VideoStrip {
   rgb: Uint8Array;
 }
 
+// The two independent things that can publish into the store: a browser tab sampling a
+// camera or screen, and the server's own NDI receiver. Both are unauthenticated (open
+// like the other house controls), so more than one can be running at once — e.g. a
+// leftover capture tab left running in the background while another tab points the
+// receiver at an NDI source. Without an owner, whichever posts last wins for that instant
+// and the two sources visibly fight over the lights.
+export type VideoSource = 'browser' | 'ndi';
+
 let latest: VideoStrip | null = null;
 let latestAt = 0;
+let latestSource: VideoSource | null = null;
+// Tracks the stale/fresh edge for `videoStrip()`'s diagnostic logging below.
+let wasStale = false;
 
 // Record an already-validated strip from a capture client (the server ingest endpoint is
-// responsible for checking the raw request body first).
-export function setVideoStrip(width: number, rgb: Uint8Array): void {
+// responsible for checking the raw request body first). Ignored while a different source
+// still owns the feed, i.e. it has published within `STALE_MS` — a stray publisher can
+// only take over once the current one has gone quiet.
+export function setVideoStrip(width: number, rgb: Uint8Array, source: VideoSource): void {
+  const now = Date.now();
+  if (latestSource !== null && latestSource !== source && now - latestAt <= STALE_MS) {
+    return;
+  }
+
   latest = { width, rgb };
-  latestAt = Date.now();
+  latestAt = now;
+  latestSource = source;
 }
 
 // The most recent strip, or null when nothing has arrived recently.
 export function videoStrip(): VideoStrip | null {
-  if (latest === null || Date.now() - latestAt > STALE_MS) return null;
+  const gap = latest === null ? Infinity : Date.now() - latestAt;
+  if (gap > STALE_MS) {
+    // Edge-triggered: proves whether the pattern is really going stale (vs. the bug
+    // being downstream of this store) without spamming a line per tick.
+    if (!wasStale && latest !== null) {
+      console.warn(`videoStrip() went stale after ${gap}ms (source: ${latestSource})`);
+    }
+    wasStale = true;
+    return null;
+  }
+  if (wasStale) console.warn(`videoStrip() recovered (source: ${latestSource})`);
+  wasStale = false;
   return latest;
 }
 
