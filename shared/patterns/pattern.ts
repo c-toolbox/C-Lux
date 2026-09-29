@@ -96,6 +96,87 @@ export function hsvToRgb(h: number, s: number, v: number): Color {
   };
 }
 
+// The parameter values a pattern eases between after an edit: `from` is what was on
+// the lights when the change was committed, `to` the committed values, and `elapsed`
+// how far into `duration` seconds the ease has run.
+interface ParameterFade {
+  from: Record<string, unknown>;
+  to: Record<string, unknown>;
+  elapsed: number;
+  duration: number;
+}
+
+// A parameter value shaped like a color: a plain object with numeric r, g and b.
+function isColor(value: unknown): value is Color {
+  if (typeof value !== 'object' || value === null) return false;
+  const c = value as Record<string, unknown>;
+  return typeof c.r === 'number' && typeof c.g === 'number' && typeof c.b === 'number';
+}
+
+// Whether two committed parameter sets differ in anything the lights would show.
+function parametersDiffer(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>
+): boolean {
+  for (const [key, value] of Object.entries(b)) {
+    if (key === 'name' || key === 'type') continue;
+    if (!valueEquals(a[key], value)) return true;
+  }
+  return false;
+}
+
+function valueEquals(a: unknown, b: unknown): boolean {
+  if (typeof a === 'number' && typeof b === 'number') return a === b;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.length === b.length && a.every((entry, i) => valueEquals(entry, b[i]));
+  }
+  if (isColor(a) && isColor(b)) return a.r === b.r && a.g === b.g && a.b === b.b;
+  return a === b;
+}
+
+// The parameters a pattern should show at progress `t` between two committed sets,
+// keyed like `parameters()` output. `name` and `type` pass through untouched.
+function interpolateParameters(
+  from: Record<string, unknown>,
+  to: Record<string, unknown>,
+  t: number,
+  fields: PatternSchema
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, target] of Object.entries(to)) {
+    if (key === 'name' || key === 'type') out[key] = target;
+    else out[key] = interpolateValue(from[key], target, t, fields[key]?.kind);
+  }
+  return out;
+}
+
+// Ease one parameter value, using the field's kind to decide how: numbers and colors
+// lerp, palettes lerp color by color (and snap when their length changed), and
+// discrete selects snap outright because they have no meaningful in-between.
+function interpolateValue(
+  from: unknown,
+  to: unknown,
+  t: number,
+  kind: FieldSpec['kind'] | undefined
+): unknown {
+  if (kind === 'select') return to;
+  if (kind === 'color' && isColor(from) && isColor(to)) {
+    return {
+      r: from.r + (to.r - from.r) * t,
+      g: from.g + (to.g - from.g) * t,
+      b: from.b + (to.b - from.b) * t
+    };
+  }
+  if (kind === 'colors' && Array.isArray(from) && Array.isArray(to)) {
+    if (from.length !== to.length) return to;
+    return to.map((color, i) => interpolateValue(from[i], color, t, 'color'));
+  }
+  if (typeof from === 'number' && typeof to === 'number') {
+    return from + (to - from) * t;
+  }
+  return to;
+}
+
 // This type is a lighting pattern that is shown on the light display. The `tick` function
 // has to be called at regular intervals to update the lighting pattern. The data for the
 // pattern itself is returned through the `data` function
@@ -104,6 +185,10 @@ export abstract class Pattern {
   enabled: boolean;
   opacity: number;
   state: Array<ColorAlpha>;
+
+  // The ease an edit started, or null while the parameters sit at their committed
+  // values.
+  private parameterFade: ParameterFade | null = null;
 
   constructor({ name, enabled, opacity }: PatternBaseProps) {
     this.name = name;
@@ -130,19 +215,73 @@ export abstract class Pattern {
 
   /**
    * Applies a partial update of every parameter: the shared ones the base class owns
-   * and, through `set`, the subclass's own.
+   * and, through `set`, the subclass's own. With a positive `duration` the change eases
+   * in from what is currently lit over that many seconds (driven by `advance`) instead
+   * of landing at once.
    */
-  update(values: object): void {
+  update(values: object, duration = 0): void {
+    const from = this.parameterValues();
+    this.applyValues(values);
+    const to = this.parameterValues();
+
+    if (duration > 0 && this.enabled && parametersDiffer(from, to)) {
+      this.parameterFade = { from, to, elapsed: 0, duration };
+    } else {
+      this.parameterFade = null;
+    }
+  }
+
+  // Advance a parameter ease started by `update` by one frame, a no-op while none is
+  // running. At the end the committed values are applied exactly, so the ease can't
+  // stall a frame short of them.
+  advance(dt: number): void {
+    const fade = this.parameterFade;
+    if (fade === null) return;
+
+    fade.elapsed += dt;
+    const t = fade.elapsed / fade.duration;
+    if (t >= 1) {
+      this.parameterFade = null;
+      this.applyValues(fade.to);
+    } else {
+      this.applyValues(interpolateParameters(fade.from, fade.to, t, this.fields()));
+    }
+  }
+
+  // The parameters as the lights currently show them. While an ease is running the
+  // fields hold the eased values, so a new edit re-targets from what is lit rather
+  // than from where the ease started.
+  private parameterValues(): Record<string, unknown> {
+    return { ...(this.parameters() as Record<string, unknown>), opacity: this.opacity };
+  }
+
+  // Apply parameter values the way `update` does: the shared ones directly and the
+  // subclass's own through `set`. `propsFromParameters` flattens the nested `color`
+  // back into `r`/`g`/`b` (and is the identity for already-flat values), the shape
+  // `set` expects.
+  private applyValues(values: object): void {
     const { opacity } = values as Partial<PatternBaseProps>;
     if (opacity !== undefined) this.opacity = opacity;
-    this.set(values);
+    this.set(Pattern.propsFromParameters(values));
+  }
+
+  // The schema describing this pattern's parameters: its own `Fields` plus the shared
+  // ones, read off the concrete class so the base class needs no registry import.
+  private fields(): PatternSchema {
+    const own = (this.constructor as unknown as { Fields?: PatternSchema }).Fields;
+    return { ...own, ...SHARED_FIELDS };
   }
 
   /**
    * The full serialized form of the pattern: the subclass's own parameters plus the
-   * shared state the base class owns.
+   * shared state the base class owns. While an edit is still easing in, the committed
+   * target is reported rather than the values in flight, so a save or a re-read never
+   * captures a mid-ease snapshot.
    */
   serialize(): object {
+    if (this.parameterFade !== null) {
+      return { ...this.parameterFade.to, enabled: this.enabled };
+    }
     return { ...this.parameters(), enabled: this.enabled, opacity: this.opacity };
   }
 

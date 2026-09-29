@@ -149,6 +149,8 @@ export class Engine {
 
     const validProps = validateNewPatternProps(type, props);
     const instance = new cls({ ...validProps, name } as PatternProps);
+    // The new layer fades in over the scene transition rather than popping on top.
+    this.beginTransition();
     this.patterns.push(instance);
     return { name: instance.name };
   }
@@ -157,6 +159,8 @@ export class Engine {
     const index = this.patterns.findIndex((p) => p.name === name);
     if (index === -1) throw new HttpError(404, `No pattern named: ${name}`);
 
+    // The removed layer fades out over the scene transition rather than cutting.
+    this.beginTransition();
     this.patterns.splice(index, 1);
     // Any scene that needed this pattern is no longer fully applied.
     for (const scene of this.scenes) {
@@ -178,7 +182,12 @@ export class Engine {
     if (!instance) throw new HttpError(404, `No pattern named: ${name}`);
 
     const { type } = instance.parameters() as PatternParameters;
-    instance.update(validateUpdatedPatternProps(type, props));
+    // The change eases in from what is lit over the scene transition instead of
+    // cutting, so a committed edit reads like a scene change.
+    instance.update(
+      validateUpdatedPatternProps(type, props),
+      config.server.sceneTransition
+    );
     return instance.serialize() as PatternParameters;
   }
 
@@ -655,7 +664,11 @@ export class Engine {
   // animating while it fades out.
   private tickPatterns(dt: number): void {
     if (this.fading.length === 0) {
-      for (const p of this.patterns) if (p.enabled) p.tick(dt);
+      for (const p of this.patterns) {
+        if (!p.enabled) continue;
+        p.advance(dt);
+        p.tick(dt);
+      }
       return;
     }
 
@@ -667,6 +680,7 @@ export class Engine {
         const on = stack.enabled === null ? p.enabled : stack.enabled[j];
         if (!on || ticked.has(p)) continue;
         ticked.add(p);
+        p.advance(dt);
         p.tick(dt);
       }
     }

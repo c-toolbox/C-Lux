@@ -373,7 +373,10 @@ export function ConfigPage() {
                   />
                   <NumberField
                     label={'Scene (s)'}
-                    description={'Cross-fade when a scene replaces another.'}
+                    description={
+                      'Cross-fade when a scene changes, and the ease a pattern takes to ' +
+                      'edited values or to fade in and out when added or removed.'
+                    }
                     value={draft.server.sceneTransition}
                     onChange={(value) => patchServer('sceneTransition', value)}
                     min={0}

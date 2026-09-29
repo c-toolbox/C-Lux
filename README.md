@@ -163,7 +163,7 @@ The same settings can be edited from the browser at `/config`, behind the editor
 | `halfLightCoverage`    | Fraction of the ring half-light mode darkens, counted down from the top. `0.5` is the top half, `1` is the whole ring.         |
 | `halfLightFeather`     | How soft the edge between the dark and lit halves is. `0` gives a hard line, larger values a wider blend band.                 |
 | `solidColorTransition` | Seconds the solid work-light layer takes to fade to a new color or switch on and off.                                          |
-| `sceneTransition`      | Seconds a scene takes to fade in or out when it is applied, unapplied, or replaced.                                            |
+| `sceneTransition`      | Seconds a scene takes to fade in or out when it is applied, unapplied, or replaced, and a pattern to ease to edited values or fade in and out when added or removed. |
 
 Any transition set to `0` snaps instead of fading.
 
