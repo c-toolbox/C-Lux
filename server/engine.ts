@@ -32,12 +32,23 @@ const MAX_FADING_STACKS = 4;
 
 type FrameListener = (frame: number[]) => void;
 
+// A view of one stack in the dissolve chain: the patterns it composites, the enabled
+// state to use for each (the captured flags for a fading stack, or null for the live
+// stack, where the patterns' own flags apply), and whether the solid color layer is
+// part of it.
+interface StackView {
+  patterns: Array<Pattern>;
+  enabled: Array<boolean> | null;
+  solidEnabled: boolean;
+}
+
 // What the lights were showing when a scene change came in: the pattern stack at that
 // moment, plus whether the solid color layer was part of it. It keeps ticking while
-// `weight` — how far the stack that replaced it has faded in — runs from 0 to 1.
-interface FadingStack {
-  patterns: Array<Pattern>;
-  solidEnabled: boolean;
+// `weight` — how far the stack that replaced it has faded in — runs from 0 to 1. The
+// per-pattern `enabled` flags are captured too, because the instances are shared with
+// the stack that replaced this one and a pattern may be muted or unmuted mid-dissolve.
+interface FadingStack extends StackView {
+  enabled: Array<boolean>;
   weight: number;
 }
 
@@ -172,12 +183,17 @@ export class Engine {
   }
 
   // Disabled patterns stay in the list (and keep their place in the stack) but are
-  // skipped when ticking and blending.
+  // skipped when ticking and blending. The change dissolves over `sceneTransition`
+  // like a scene change rather than cutting, so the pattern fades out of (or into)
+  // the frame.
   setPatternEnabled(name: string, enabled: boolean): PatternParameters {
     const instance = this.patterns.find((p) => p.name === name);
     if (!instance) throw new HttpError(404, `No pattern named: ${name}`);
 
-    instance.enabled = enabled;
+    if (instance.enabled !== enabled) {
+      this.beginTransition();
+      instance.enabled = enabled;
+    }
     return instance.serialize() as PatternParameters;
   }
 
@@ -525,6 +541,7 @@ export class Engine {
 
     this.fading.push({
       patterns: this.patterns.slice(),
+      enabled: this.patterns.map((p) => p.enabled),
       solidEnabled: this.solidColor.enabled,
       weight: 0
     });
@@ -534,10 +551,11 @@ export class Engine {
 
   // The stack `index` steps back in the dissolve chain, which is the current one once
   // past every stack still fading out.
-  private stackAt(index: number): { patterns: Array<Pattern>; solidEnabled: boolean } {
+  private stackAt(index: number): StackView {
     return (
       this.fading[index] ?? {
         patterns: this.patterns,
+        enabled: null,
         solidEnabled: this.solidColor.enabled
       }
     );
@@ -557,14 +575,14 @@ export class Engine {
     const accum = this.blendAccum;
 
     const oldest = this.stackAt(0);
-    this.compositeStack(oldest.patterns, oldest.solidEnabled, accum);
+    this.compositeStack(oldest, accum);
 
     // Cross-dissolve each newer stack over the one before it, ending at the current one.
     // Mixing whole stacks rather than fading the individual patterns keeps the lights at
     // full strength throughout instead of dipping to the background mid-transition.
     for (const [i, fade] of this.fading.entries()) {
       const next = this.stackAt(i + 1);
-      this.compositeStack(next.patterns, next.solidEnabled, this.blendNext);
+      this.compositeStack(next, this.blendNext);
       for (let j = 0; j < accum.length; j++) {
         accum[j] += (this.blendNext[j] - accum[j]) * fade.weight;
       }
@@ -602,16 +620,16 @@ export class Engine {
   }
 
   // Composite one stack of patterns into `accum`, the solid color layer underneath them.
-  private compositeStack(
-    patterns: Array<Pattern>,
-    solidEnabled: boolean,
-    accum: number[]
-  ): void {
+  // A fading stack composites with the enabled flags it captured, so a pattern muted
+  // or unmuted mid-dissolve still fades out of (or into) the frame instead of cutting.
+  private compositeStack(stack: StackView, accum: number[]): void {
     accum.fill(0);
 
-    if (solidEnabled) this.composite(this.solidColor, accum);
-    for (const p of patterns) {
-      if (!p.enabled) continue;
+    if (stack.solidEnabled) this.composite(this.solidColor, accum);
+    for (let i = 0; i < stack.patterns.length; i++) {
+      const p = stack.patterns[i];
+      const on = stack.enabled === null ? p.enabled : stack.enabled[i];
+      if (!on) continue;
       this.composite(p, accum);
     }
   }
@@ -632,7 +650,9 @@ export class Engine {
 
   // Advance every pattern that is on the lights, whether it belongs to the current stack
   // or to one still dissolving. Stacks share instances — applying a scene leaves the
-  // patterns already running in place — so each is only ticked once.
+  // patterns already running in place — so each is only ticked once. A fading stack
+  // ticks with the enabled flags it captured, so a pattern muted mid-dissolve keeps
+  // animating while it fades out.
   private tickPatterns(dt: number): void {
     if (this.fading.length === 0) {
       for (const p of this.patterns) if (p.enabled) p.tick(dt);
@@ -641,8 +661,11 @@ export class Engine {
 
     const ticked = new Set<Pattern>();
     for (let i = 0; i <= this.fading.length; i++) {
-      for (const p of this.stackAt(i).patterns) {
-        if (!p.enabled || ticked.has(p)) continue;
+      const stack = this.stackAt(i);
+      for (let j = 0; j < stack.patterns.length; j++) {
+        const p = stack.patterns[j];
+        const on = stack.enabled === null ? p.enabled : stack.enabled[j];
+        if (!on || ticked.has(p)) continue;
         ticked.add(p);
         p.tick(dt);
       }
