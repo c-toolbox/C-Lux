@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Button,
   CloseButton,
@@ -25,6 +25,7 @@ import {
   type PatternType
 } from '../lib/api';
 import { hexToRgb, rgbToHex } from '../lib/color';
+import { PatternPreview } from '../PatternVisualizer/PatternPreview';
 
 export interface FormValues {
   type: PatternType;
@@ -207,12 +208,17 @@ type PatternSubFormProps = {
   onSubmit: (values: FormValues) => void;
 } & (
   { mode: 'add'; namePlaceholder: string; existingNames: string[] } | { mode: 'edit' }
-);
+) & { onValuesChange?: (values: FormValues) => void };
 
 // Renders the inputs for a pattern's parameters straight from its `Fields` schema.
 export function PatternSubForm(props: PatternSubFormProps) {
   const { initial, busy, onSubmit } = props;
+  const { onValuesChange } = props;
   const [values, setValues] = useState<FormValues>(initial);
+
+  useEffect(() => {
+    onValuesChange?.(values);
+  }, [values, onValuesChange]);
 
   const nameTaken =
     props.mode === 'add' && props.existingNames.includes(values.name.trim());
@@ -285,25 +291,37 @@ export function PatternForm({
   onSubmit
 }: PatternFormProps) {
   const [type, setType] = useState<PatternType>(PATTERN_TYPES[0]);
+  const [current, setCurrent] = useState<FormValues | null>(null);
+  const previewProps = useMemo(
+    () => (current && current.type === type ? toProps(current) : null),
+    [current, type]
+  );
 
   return (
-    <Stack gap={'md'}>
-      <NativeSelect
-        label={'Type'}
-        value={type}
-        data={PATTERN_TYPES.map((t) => ({ value: t, label: patternDisplayName(t) }))}
-        onChange={(e) => setType(e.currentTarget.value as PatternType)}
-      />
+    <Group align={'flex-start'} gap={'lg'} wrap={'wrap'}>
+      <Stack gap={'md'} style={{ flex: '1 1 300px', minWidth: 0 }}>
+        <NativeSelect
+          label={'Type'}
+          value={type}
+          data={PATTERN_TYPES.map((t) => ({ value: t, label: patternDisplayName(t) }))}
+          onChange={(e) => setType(e.currentTarget.value as PatternType)}
+        />
 
-      <PatternSubForm
-        key={type}
-        mode={'add'}
-        initial={defaultsFor(type, namePlaceholder)}
-        namePlaceholder={namePlaceholder}
-        existingNames={existingNames}
-        busy={busy}
-        onSubmit={onSubmit}
-      />
-    </Stack>
+        <PatternSubForm
+          key={type}
+          mode={'add'}
+          initial={defaultsFor(type, namePlaceholder)}
+          namePlaceholder={namePlaceholder}
+          existingNames={existingNames}
+          busy={busy}
+          onSubmit={onSubmit}
+          onValuesChange={setCurrent}
+        />
+      </Stack>
+
+      <div style={{ flex: '1 1 260px', maxWidth: 360, margin: '0 auto' }}>
+        {previewProps && <PatternPreview type={type} props={previewProps} />}
+      </div>
+    </Group>
   );
 }

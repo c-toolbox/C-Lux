@@ -20,7 +20,7 @@ export function AddPatternModal({
   onSubmit
 }: AddPatternModalProps) {
   return (
-    <Modal opened={opened} onClose={onClose} title={'Add pattern'} centered>
+    <Modal opened={opened} onClose={onClose} title={'Add pattern'} size={'xl'} centered>
       <PatternForm
         key={namePlaceholder}
         namePlaceholder={namePlaceholder}
