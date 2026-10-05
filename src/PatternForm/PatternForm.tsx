@@ -276,6 +276,11 @@ export function PatternSubForm(props: PatternSubFormProps) {
   );
 }
 
+const TYPE_OPTIONS = PATTERN_TYPES.map((t) => ({
+  value: t,
+  label: patternDisplayName(t)
+})).sort((a, b) => a.label.localeCompare(b.label));
+
 interface PatternFormProps {
   namePlaceholder: string;
   existingNames: string[];
@@ -303,7 +308,7 @@ export function PatternForm({
         <NativeSelect
           label={'Type'}
           value={type}
-          data={PATTERN_TYPES.map((t) => ({ value: t, label: patternDisplayName(t) }))}
+          data={TYPE_OPTIONS}
           onChange={(e) => setType(e.currentTarget.value as PatternType)}
         />
 
