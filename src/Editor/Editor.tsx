@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   TbBug,
   TbCheck,
   TbDeviceFloppy,
-  TbFileImport,
   TbHome,
   TbListDetails,
   TbLock,
@@ -18,7 +17,6 @@ import {
   Box,
   Button,
   Container,
-  FileButton,
   Group,
   Loader,
   ScrollArea,
@@ -76,7 +74,6 @@ function Editor() {
     list: [],
     at: 0
   });
-  const resetFile = useRef<() => void>(null);
 
   const trackTimelines = useCallback((list: TimelinePlayback[]) => {
     setTimelines({ list, at: performance.now() });
@@ -392,27 +389,6 @@ function Editor() {
           >
             Save patterns as scene
           </Button>
-          <FileButton
-            resetRef={resetFile}
-            accept={'application/json,.json'}
-            onChange={(file) => {
-              if (!file) return;
-              handleImportScene(file);
-              // Clear the input so picking the same file again still fires onChange.
-              resetFile.current?.();
-            }}
-          >
-            {(props) => (
-              <Button
-                {...props}
-                variant={'default'}
-                disabled={busy}
-                leftSection={<TbFileImport />}
-              >
-                Import scene…
-              </Button>
-            )}
-          </FileButton>
           <Button
             variant={'default'}
             leftSection={<TbListDetails />}
@@ -589,6 +565,7 @@ function Editor() {
         onMove={moveScene}
         onDelete={handleDeleteScene}
         onExport={handleExportScene}
+        onImport={handleImportScene}
       />
     </Container>
   );

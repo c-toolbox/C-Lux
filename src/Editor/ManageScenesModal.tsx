@@ -1,16 +1,26 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   TbChevronDown,
   TbChevronUp,
   TbCopy,
   TbCursorText,
   TbFileExport,
+  TbFileImport,
   TbGripVertical,
   TbPencil,
   TbPlayerPlay,
   TbTrash
 } from 'react-icons/tb';
-import { ActionIcon, Button, Group, Modal, Stack, Text, TextInput } from '@mantine/core';
+import {
+  ActionIcon,
+  Button,
+  FileButton,
+  Group,
+  Modal,
+  Stack,
+  Text,
+  TextInput
+} from '@mantine/core';
 
 import { type Scene } from '../lib/api';
 
@@ -27,6 +37,7 @@ interface ManageScenesModalProps {
   onMove: (from: number, to: number) => void;
   onDelete: (name: string) => void;
   onExport: (scene: Scene) => void;
+  onImport: (file: File) => void;
 }
 
 export function ManageScenesModal({
@@ -41,8 +52,10 @@ export function ManageScenesModal({
   onDuplicate,
   onMove,
   onDelete,
-  onExport
+  onExport,
+  onImport
 }: ManageScenesModalProps) {
+  const resetFile = useRef<() => void>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
@@ -81,9 +94,32 @@ export function ManageScenesModal({
         size={'xl'}
       >
         <Stack gap={'md'}>
+          <Group>
+            <FileButton
+              resetRef={resetFile}
+              accept={'application/json,.json'}
+              onChange={(file) => {
+                if (!file) return;
+                onImport(file);
+                // Clear the input so picking the same file again still fires onChange.
+                resetFile.current?.();
+              }}
+            >
+              {(props) => (
+                <Button
+                  {...props}
+                  variant={'default'}
+                  disabled={busy}
+                  leftSection={<TbFileImport />}
+                >
+                  Import scene…
+                </Button>
+              )}
+            </FileButton>
+          </Group>
           {scenes.length === 0 ? (
             <Text c={'dimmed'} ta={'center'} py={'md'}>
-              No scenes yet. Save or import one from the editor page.
+              No scenes yet. Save one from the editor page or import one.
             </Text>
           ) : (
             <Stack gap={'sm'}>
