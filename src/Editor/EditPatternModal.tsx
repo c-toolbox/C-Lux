@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Group, Modal } from '@mantine/core';
 
 import { type PatternParameters } from '../lib/api';
@@ -12,6 +12,7 @@ import { PatternPreview } from '../PatternVisualizer/PatternPreview';
 
 interface EditPatternModalProps {
   editing: PatternParameters | null;
+  existingNames: string[];
   onClose: () => void;
   busy: boolean;
   onSubmit: (values: FormValues) => void;
@@ -19,17 +20,30 @@ interface EditPatternModalProps {
 
 export function EditPatternModal({
   editing,
+  existingNames,
   onClose,
   busy,
   onSubmit
 }: EditPatternModalProps) {
-  const [current, setCurrent] = useState<FormValues | null>(null);
+  // Tagged with the pattern it came from, so a stale value from a previous edit (whose
+  // name may since have changed) is never previewed.
+  const [current, setCurrent] = useState<{
+    of: PatternParameters;
+    values: FormValues;
+  } | null>(null);
+  const onValuesChange = useCallback(
+    (values: FormValues) => {
+      if (editing) setCurrent({ of: editing, values });
+    },
+    [editing]
+  );
   const previewProps = useMemo(
-    () =>
-      editing && current && current.name === editing.name && current.type === editing.type
-        ? toProps(current)
-        : null,
+    () => (editing && current && current.of === editing ? toProps(current.values) : null),
     [current, editing]
+  );
+  const otherNames = useMemo(
+    () => existingNames.filter((n) => n !== editing?.name),
+    [existingNames, editing]
   );
 
   return (
@@ -46,9 +60,10 @@ export function EditPatternModal({
             <PatternSubForm
               mode={'edit'}
               initial={fromParameters(editing)}
+              existingNames={otherNames}
               busy={busy}
               onSubmit={onSubmit}
-              onValuesChange={setCurrent}
+              onValuesChange={onValuesChange}
             />
           </div>
 

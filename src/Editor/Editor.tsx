@@ -85,9 +85,9 @@ function Editor() {
     });
   }
 
-  async function handleEdit(values: FormValues) {
+  async function handleEdit(name: string, values: FormValues) {
     await run(async () => {
-      await api.updatePattern(values.name, toProps(values));
+      await api.updatePattern(name, toProps(values));
       setEditing(null);
     });
   }
@@ -390,9 +390,10 @@ function Editor() {
 
       <EditPatternModal
         editing={editing}
+        existingNames={existingNames}
         onClose={() => setEditing(null)}
         busy={busy}
-        onSubmit={(values) => void handleEdit(values)}
+        onSubmit={(values) => editing && void handleEdit(editing.name, values)}
       />
 
       <ManageScenesModal

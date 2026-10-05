@@ -202,15 +202,15 @@ function Field({ spec, value, onChange }: FieldProps) {
   );
 }
 
-// The name is fixed once a pattern exists, so only the add form needs a placeholder and
-// the list of names to reject.
 type PatternSubFormProps = {
   initial: FormValues;
   busy: boolean;
+  // Names the pattern may not take; in edit mode this excludes the pattern's own name.
+  existingNames: string[];
   onSubmit: (values: FormValues) => void;
-} & (
-  { mode: 'add'; namePlaceholder: string; existingNames: string[] } | { mode: 'edit' }
-) & { onValuesChange?: (values: FormValues) => void };
+} & ({ mode: 'add'; namePlaceholder: string } | { mode: 'edit' }) & {
+    onValuesChange?: (values: FormValues) => void;
+  };
 
 // Renders the inputs for a pattern's parameters straight from its `Fields` schema.
 export function PatternSubForm(props: PatternSubFormProps) {
@@ -222,8 +222,7 @@ export function PatternSubForm(props: PatternSubFormProps) {
     onValuesChange?.(values);
   }, [values, onValuesChange]);
 
-  const nameTaken =
-    props.mode === 'add' && props.existingNames.includes(values.name.trim());
+  const nameTaken = props.existingNames.includes(values.name.trim());
   const nameError =
     values.name.trim() === ''
       ? 'Name is required'
@@ -241,7 +240,6 @@ export function PatternSubForm(props: PatternSubFormProps) {
         placeholder={props.mode === 'add' ? props.namePlaceholder : undefined}
         value={values.name}
         error={nameError}
-        disabled={props.mode === 'edit'}
         onChange={(e) => {
           // Read the value now: React nulls out `currentTarget` before the lazy
           // updater below runs.

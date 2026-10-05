@@ -182,12 +182,30 @@ export class Engine {
     if (!instance) throw new HttpError(404, `No pattern named: ${name}`);
 
     const { type } = instance.parameters() as PatternParameters;
+    const { name: requested, ...rest } = validateUpdatedPatternProps(type, props);
+
+    const newName =
+      requested === undefined ? name : validateName(requested, 'pattern name');
+    if (newName !== name) {
+      if (newName === SOLID_COLOR_NAME) {
+        throw new HttpError(400, `${SOLID_COLOR_NAME} is a reserved pattern name`);
+      }
+      if (this.patterns.some((p) => p.name === newName)) {
+        throw new HttpError(400, `A pattern named ${newName} already exists`);
+      }
+    }
+
     // The change eases in from what is lit over the scene transition instead of
     // cutting, so a committed edit reads like a scene change.
-    instance.update(
-      validateUpdatedPatternProps(type, props),
-      config.server.sceneTransition
-    );
+    instance.update(rest, config.server.sceneTransition);
+
+    if (newName !== name) {
+      instance.name = newName;
+      // Any scene that needed the old name is no longer fully applied.
+      for (const scene of this.scenes) {
+        if (scene.patterns.some((p) => p.name === name)) this.applied.delete(scene.name);
+      }
+    }
     return instance.serialize() as PatternParameters;
   }
 
