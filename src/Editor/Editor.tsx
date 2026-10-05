@@ -232,9 +232,7 @@ function Editor() {
           </Button>
         </Group>
       </Group>
-      {/* Clipped rather than allowed to grow, so the capture widgets can never spill
-          over the visualiser below; the scroller inside reaches whatever does not fit. */}
-      <Stack mt={'md'} style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <Stack mt={'md'} style={{ flexShrink: 0 }}>
         <Group align={'flex-end'} gap={'xs'}>
           <TextInput
             placeholder={'Name'}
@@ -317,39 +315,69 @@ function Editor() {
             {error}
           </Alert>
         )}
-
-        <ScrollArea type={'auto'} offsetScrollbars style={{ flex: 1, minHeight: 0 }}>
-          <Stack gap={'md'}>
-            {loading ? (
-              <Group justify={'center'} py={'xl'}>
-                <Loader />
-              </Group>
-            ) : patterns.length === 0 ? (
-              <Text c={'dimmed'} ta={'center'} py={'xl'}>
-                No patterns yet. Add one to get started.
-              </Text>
-            ) : (
-              <PatternList
-                patterns={patterns}
-                busy={busy}
-                onMove={move}
-                onEdit={setEditing}
-                onToggleEnabled={handleToggleEnabled}
-                onRemove={handleRemove}
-              />
-            )}
-
-            {/* Inside the scroller: a short window would otherwise clip the previews
-                against the visualiser with no way to reach what was cut off. */}
-            {patterns.some((p) => p.type === AUDIO_TYPE && p.enabled) && <AudioCapture />}
-            {patterns.some((p) => p.type === VIDEO_TYPE && p.enabled) && <VideoCapture />}
-          </Stack>
-        </ScrollArea>
       </Stack>
 
-      <Box mt={'md'} style={{ flexShrink: 0 }}>
-        <PatternVisualizer />
-      </Box>
+      <Group
+        mt={'md'}
+        gap={'md'}
+        align={'stretch'}
+        wrap={'nowrap'}
+        style={{ flex: 1, minHeight: 0 }}
+      >
+        {/* Clipped rather than allowed to grow, so the capture widgets can never spill
+          over the visualiser beside them; the scroller inside reaches whatever does not fit. */}
+        <Stack style={{ flex: '1 1 0', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
+          <ScrollArea type={'auto'} offsetScrollbars style={{ flex: 1, minHeight: 0 }}>
+            <Stack gap={'md'}>
+              {loading ? (
+                <Group justify={'center'} py={'xl'}>
+                  <Loader />
+                </Group>
+              ) : patterns.length === 0 ? (
+                <Text c={'dimmed'} ta={'center'} py={'xl'}>
+                  No patterns yet. Add one to get started.
+                </Text>
+              ) : (
+                <PatternList
+                  patterns={patterns}
+                  busy={busy}
+                  onMove={move}
+                  onEdit={setEditing}
+                  onToggleEnabled={handleToggleEnabled}
+                  onRemove={handleRemove}
+                />
+              )}
+
+              {/* Inside the scroller: a short window would otherwise clip the previews
+                against the visualiser with no way to reach what was cut off. */}
+              {patterns.some((p) => p.type === AUDIO_TYPE && p.enabled) && (
+                <AudioCapture />
+              )}
+              {patterns.some((p) => p.type === VIDEO_TYPE && p.enabled) && (
+                <VideoCapture />
+              )}
+            </Stack>
+          </ScrollArea>
+        </Stack>
+
+        {/* The square visualizer is capped by both the column width and the row height,
+            so it can never grow taller than the space and overlap the controls above. */}
+        <Box
+          style={{
+            flex: '1 1 0',
+            minWidth: 0,
+            minHeight: 0,
+            containerType: 'size',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <Box w={'min(100cqw, 100cqh)'}>
+            <PatternVisualizer />
+          </Box>
+        </Box>
+      </Group>
 
       <AddPatternModal
         opened={addOpen}

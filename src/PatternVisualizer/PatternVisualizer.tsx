@@ -63,7 +63,7 @@ export function PatternVisualizer() {
       style={{
         position: 'relative',
         width: '100%',
-        maxWidth: 350,
+        maxWidth: 600,
         aspectRatio: '1 / 1',
         margin: '0 auto'
       }}

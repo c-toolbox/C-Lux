@@ -201,65 +201,25 @@ export function HomePage() {
           Open editor
         </Button>
       </Group>
-      {/* Clipped rather than allowed to grow, so the capture widgets can never spill
-          over the controls below; the scroller inside reaches whatever does not fit. */}
-      <Stack mt={'md'} style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        {loading ? (
-          <Group justify={'center'} py={'xl'}>
-            <Loader />
-          </Group>
-        ) : (
-          <ScrollArea type={'auto'} offsetScrollbars style={{ flex: 1, minHeight: 0 }}>
-            <Stack gap={'xs'}>
-              {solid && (
-                <Group
-                  justify={'space-between'}
-                  px={'md'}
-                  py={'xs'}
-                  style={{
-                    border: '1px solid var(--mantine-color-default-border)',
-                    borderRadius: 8
-                  }}
-                >
-                  <Checkbox
-                    checked={solid.enabled}
-                    disabled={busy}
-                    onChange={(e) =>
-                      void updateSolid({ enabled: e.currentTarget.checked })
-                    }
-                    label={<Text fw={600}>Solid color</Text>}
-                  />
-
-                  <Group gap={'xs'}>
-                    <ColorInput
-                      format={'hex'}
-                      value={solidHex}
-                      onChange={setSolidHex}
-                      onChangeEnd={(hex) => void updateSolid({ color: hexToRgb(hex) })}
-                      disabled={busy}
-                      w={130}
-                      aria-label={'Solid color'}
-                      onClick={() => setPickerOpen((open) => !open)}
-                      popoverProps={{
-                        opened: pickerOpen,
-                        onDismiss: () => setPickerOpen(false)
-                      }}
-                    />
-                    <Button disabled={busy} onClick={() => void selectSolid()}>
-                      Select
-                    </Button>
-                  </Group>
-                </Group>
-              )}
-
-              {scenes.length === 0 ? (
-                <Text c={'dimmed'} ta={'center'} py={'xl'}>
-                  No scenes yet. Create and save some in the editor.
-                </Text>
-              ) : (
-                scenes.map((scene) => (
+      <Group
+        mt={'md'}
+        gap={'md'}
+        align={'stretch'}
+        wrap={'nowrap'}
+        style={{ flex: 1, minHeight: 0 }}
+      >
+        {/* Clipped rather than allowed to grow, so the capture widgets can never spill
+          over the controls beside them; the scroller inside reaches whatever does not fit. */}
+        <Stack style={{ flex: '1 1 0', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
+          {loading ? (
+            <Group justify={'center'} py={'xl'}>
+              <Loader />
+            </Group>
+          ) : (
+            <ScrollArea type={'auto'} offsetScrollbars style={{ flex: 1, minHeight: 0 }}>
+              <Stack gap={'xs'}>
+                {solid && (
                   <Group
-                    key={scene.name}
                     justify={'space-between'}
                     px={'md'}
                     py={'xs'}
@@ -269,95 +229,164 @@ export function HomePage() {
                     }}
                   >
                     <Checkbox
-                      checked={isApplied(scene)}
-                      disabled={busy || scene.patterns.length === 0}
-                      onChange={(e) => void toggle(scene, e.currentTarget.checked)}
-                      label={<Text fw={600}>{scene.name}</Text>}
+                      checked={solid.enabled}
+                      disabled={busy}
+                      onChange={(e) =>
+                        void updateSolid({ enabled: e.currentTarget.checked })
+                      }
+                      label={<Text fw={600}>Solid color</Text>}
                     />
 
                     <Group gap={'xs'}>
-                      {isOnlyActive(scene) ? (
-                        <Button
-                          disabled={busy}
-                          variant={'default'}
-                          style={toggleTransition}
-                          onClick={() => void toggle(scene, false)}
-                        >
-                          Unselect
-                        </Button>
-                      ) : (
-                        <Button
-                          disabled={busy}
-                          style={toggleTransition}
-                          onClick={() => void select(scene)}
-                        >
-                          Select
-                        </Button>
-                      )}
+                      <ColorInput
+                        format={'hex'}
+                        value={solidHex}
+                        onChange={setSolidHex}
+                        onChangeEnd={(hex) => void updateSolid({ color: hexToRgb(hex) })}
+                        disabled={busy}
+                        w={130}
+                        aria-label={'Solid color'}
+                        onClick={() => setPickerOpen((open) => !open)}
+                        popoverProps={{
+                          opened: pickerOpen,
+                          onDismiss: () => setPickerOpen(false)
+                        }}
+                      />
+                      <Button disabled={busy} onClick={() => void selectSolid()}>
+                        Select
+                      </Button>
                     </Group>
                   </Group>
-                ))
-              )}
+                )}
 
-              {/* The audio and video patterns are fed from the browser, so wherever they
+                {scenes.length === 0 ? (
+                  <Text c={'dimmed'} ta={'center'} py={'xl'}>
+                    No scenes yet. Create and save some in the editor.
+                  </Text>
+                ) : (
+                  scenes.map((scene) => (
+                    <Group
+                      key={scene.name}
+                      justify={'space-between'}
+                      px={'md'}
+                      py={'xs'}
+                      style={{
+                        border: '1px solid var(--mantine-color-default-border)',
+                        borderRadius: 8
+                      }}
+                    >
+                      <Checkbox
+                        checked={isApplied(scene)}
+                        disabled={busy || scene.patterns.length === 0}
+                        onChange={(e) => void toggle(scene, e.currentTarget.checked)}
+                        label={<Text fw={600}>{scene.name}</Text>}
+                      />
+
+                      <Group gap={'xs'}>
+                        {isOnlyActive(scene) ? (
+                          <Button
+                            disabled={busy}
+                            variant={'default'}
+                            style={toggleTransition}
+                            onClick={() => void toggle(scene, false)}
+                          >
+                            Unselect
+                          </Button>
+                        ) : (
+                          <Button
+                            disabled={busy}
+                            style={toggleTransition}
+                            onClick={() => void select(scene)}
+                          >
+                            Select
+                          </Button>
+                        )}
+                      </Group>
+                    </Group>
+                  ))
+                )}
+
+                {/* The audio and video patterns are fed from the browser, so wherever they
                   can be switched on their capture widgets have to be reachable too.
                   Inside the scroller: they are tall enough to bury the controls below. */}
-              {patterns.some((p) => p.type === AUDIO_TYPE && p.enabled) && (
-                <AudioCapture />
-              )}
-              {patterns.some((p) => p.type === VIDEO_TYPE && p.enabled) && (
-                <VideoCapture />
-              )}
-            </Stack>
-          </ScrollArea>
-        )}
-      </Stack>
+                {patterns.some((p) => p.type === AUDIO_TYPE && p.enabled) && (
+                  <AudioCapture />
+                )}
+                {patterns.some((p) => p.type === VIDEO_TYPE && p.enabled) && (
+                  <VideoCapture />
+                )}
+              </Stack>
+            </ScrollArea>
+          )}
+        </Stack>
 
-      <Group
-        mt={'md'}
-        gap={64}
-        justify={'center'}
-        align={'center'}
-        wrap={'nowrap'}
-        style={{ flexShrink: 0 }}
-      >
-        <Button
-          disabled={busy}
-          onClick={() => void toggleBlackout()}
-          variant={blackout ? 'filled' : 'default'}
-          color={blackout ? '#2c5c00' : undefined}
-          size={'lg'}
-          h={140}
-          px={'xs'}
-          style={{
-            ...toggleTransition,
-            flex: '0 1 175px',
-            whiteSpace: 'normal'
-          }}
+        <Stack
+          gap={'md'}
+          justify={'center'}
+          align={'center'}
+          style={{ flex: '1 1 0', minWidth: 0, minHeight: 0 }}
         >
-          {blackout ? 'Restore' : 'Fade to black'}
-        </Button>
+          {/* Capped by both the column width and the height left over, so the square
+              visualizer never grows into the buttons or the header. */}
+          <Box
+            w={'100%'}
+            style={{
+              flex: '1 1 0',
+              minHeight: 0,
+              containerType: 'size',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Box w={'min(100cqw, 100cqh)'}>
+              <PatternVisualizer />
+            </Box>
+          </Box>
 
-        <Box style={{ flex: '0 1 350px' }}>
-          <PatternVisualizer />
-        </Box>
+          <Group
+            gap={'md'}
+            justify={'center'}
+            align={'center'}
+            wrap={'nowrap'}
+            w={'100%'}
+            style={{ flexShrink: 0 }}
+          >
+            <Button
+              disabled={busy}
+              onClick={() => void toggleBlackout()}
+              variant={blackout ? 'filled' : 'default'}
+              color={blackout ? '#2c5c00' : undefined}
+              size={'lg'}
+              h={140}
+              px={'xs'}
+              style={{
+                ...toggleTransition,
+                flex: '0 1 175px',
+                whiteSpace: 'normal'
+              }}
+            >
+              {blackout ? 'Restore' : 'Fade to black'}
+            </Button>
 
-        <Button
-          disabled={busy}
-          onClick={() => void toggleHalfLight()}
-          variant={halfLight ? 'filled' : 'default'}
-          color={halfLight ? '#a5145b' : undefined}
-          size={'lg'}
-          h={140}
-          px={'xs'}
-          style={{
-            ...toggleTransition,
-            flex: '0 1 175px',
-            whiteSpace: 'normal'
-          }}
-        >
-          {halfLight ? 'Full lights' : 'Half light'}
-        </Button>
+            <Button
+              disabled={busy}
+              onClick={() => void toggleHalfLight()}
+              variant={halfLight ? 'filled' : 'default'}
+              color={halfLight ? '#a5145b' : undefined}
+              size={'lg'}
+              h={140}
+              px={'xs'}
+              style={{
+                ...toggleTransition,
+                flex: '0 1 175px',
+                whiteSpace: 'normal'
+              }}
+            >
+              {halfLight ? 'Full lights' : 'Half light'}
+            </Button>
+          </Group>
+        </Stack>
       </Group>
     </Container>
   );
