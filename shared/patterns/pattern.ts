@@ -168,6 +168,19 @@ export function hsvToRgb(h: number, s: number, v: number): Color {
   };
 }
 
+// Inverse of `hsvToRgb`: h in degrees [0, 360), s and v in [0, 1]. Grays get hue 0.
+export function rgbToHsv({ r, g, b }: Color): { h: number; s: number; v: number } {
+  const max = Math.max(r, g, b);
+  const c = max - Math.min(r, g, b);
+  let h = 0;
+  if (c > 0) {
+    if (max === r) h = ((g - b) / c + 6) % 6;
+    else if (max === g) h = (b - r) / c + 2;
+    else h = (r - g) / c + 4;
+  }
+  return { h: h * 60, s: max > 0 ? c / max : 0, v: max / 255 };
+}
+
 // The parameter values a pattern eases between after an edit: `from` is what was on
 // the lights when the change was committed, `to` the committed values, and `elapsed`
 // how far into `duration` seconds the ease has run.

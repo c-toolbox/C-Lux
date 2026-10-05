@@ -1,5 +1,6 @@
 import { AudioPattern } from './patterns/audio.ts';
 import { MovingGaussianPattern } from './patterns/moving-gaussian.ts';
+import { hsvToRgb } from './patterns/pattern.ts';
 import { SparklePattern } from './patterns/sparkle.ts';
 import { VideoPattern } from './patterns/video.ts';
 
@@ -8,7 +9,8 @@ type RawPattern = Record<string, unknown>;
 // Step `i` upgrades a saved pattern from version `i + 1` to `i + 2`. Patterns are
 // untrusted here, so anything unexpected passes through for validation to reject.
 const STEPS: ReadonlyArray<(pattern: RawPattern) => RawPattern> = [
-  // 1 -> 2: Sparkle's hue window is centered on `hue` rather than starting at it,
+  // 1 -> 2: Sparkle picks a color whose hue its hue window is centered on, instead of a
+  // hue the window started at and a saturation,
   // Moving Gaussian's speed runs the same way as every other pattern's, and fields added
   // since get their defaults, which render as before. The Audio and Video capture
   // settings used to live in the capture panel, which started on these same defaults.
@@ -48,9 +50,17 @@ const STEPS: ReadonlyArray<(pattern: RawPattern) => RawPattern> = [
       };
     }
     if (p.type !== SparklePattern.Type) return p;
-    if (typeof p.hue !== 'number' || typeof p.hueRange !== 'number') return p;
+    const { hue, hueRange, saturation, ...rest } = p;
+    if (typeof hue !== 'number' || typeof hueRange !== 'number') return p;
+    if (typeof saturation !== 'number') return p;
     const { attack } = SparklePattern.Fields;
-    return { attack: attack.default, ...p, hue: (p.hue + p.hueRange / 2) % 360 };
+    const center = (hue + hueRange / 2) % 360;
+    return {
+      attack: attack.default,
+      ...rest,
+      hueRange,
+      color: hsvToRgb(center, saturation, 1)
+    };
   }
 ];
 

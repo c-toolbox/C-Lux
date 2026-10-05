@@ -242,21 +242,28 @@ describe('Sparkle', () => {
     );
   });
 
-  it('sparkles white without saturation', () => {
-    const p = make('Sparkle', { density: 1, saturation: 0, hue: 200, hueRange: 360 });
+  it('sparkles white by default, whatever the hue range', () => {
+    const p = make('Sparkle', { density: 1, hueRange: 360 });
     run(p, 1);
     for (const i of litLights(p)) expect(rgbAt(p, i)).toEqual(WHITE);
   });
 
-  it('sparkles in the configured hue', () => {
-    const p = make('Sparkle', { density: 1, saturation: 1, hue: 120, hueRange: 0 });
+  it('sparkles in the configured color', () => {
+    const color = { r: 200, g: 120, b: 40 };
+    const p = make('Sparkle', { density: 1, color, hueRange: 0 });
     run(p, 1);
     expect(litLights(p).length).toBeGreaterThan(0);
-    for (const i of litLights(p)) expect(rgbAt(p, i)).toEqual(GREEN);
+    for (const i of litLights(p)) expect(rgbAt(p, i)).toEqual(color);
+  });
+
+  it('scales the sparkles by the color alpha', () => {
+    const p = make('Sparkle', { density: 1, color: { ...RED, a: 0.5 } });
+    p.tick(1 / 30);
+    expect(Math.max(...alphas(p))).toBe(0.5);
   });
 
   it('draws from the whole hue range', () => {
-    const p = make('Sparkle', { density: 1, decay: 0, saturation: 1, hueRange: 360 });
+    const p = make('Sparkle', { density: 1, decay: 0, color: RED, hueRange: 360 });
     run(p, 1);
     const colors = new Set(litLights(p).map((i) => JSON.stringify(rgbAt(p, i))));
     expect(colors.size).toBeGreaterThan(20);
@@ -264,15 +271,15 @@ describe('Sparkle', () => {
 
   // A density of one light per second over a one second tick ignites exactly one light,
   // the one `Math.random` picks, without rolling for whether to ignite at all.
-  const one = { density: 1 / N, saturation: 1 };
+  const one = { density: 1 / N };
 
   it.each([
     [0, 0, 60],
     [0.5, Math.floor(N / 2), 120],
     [0.999999, N - 1, 180]
-  ])('centers the hue window on the hue (random %d)', (value, light, hue) => {
+  ])('centers the hue window on the color (random %d)', (value, light, hue) => {
     fixRandom(value);
-    const p = make('Sparkle', { ...one, hue: 120, hueRange: 120 });
+    const p = make('Sparkle', { ...one, color: GREEN, hueRange: 120 });
     p.tick(1);
     expect(litLights(p)).toEqual([light]);
     const { r, g, b } = hsvToRgb(hue, 1, 1);
@@ -284,7 +291,7 @@ describe('Sparkle', () => {
 
   it('wraps a hue window that crosses 0°', () => {
     fixRandom(0);
-    const p = make('Sparkle', { ...one, hue: 0, hueRange: 120 });
+    const p = make('Sparkle', { ...one, color: RED, hueRange: 120 });
     p.tick(1);
     expect(rgbAt(p, 0)).toEqual(hsvToRgb(300, 1, 1));
   });

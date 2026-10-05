@@ -10,6 +10,7 @@ import { loadScenes, migrate, saveScenes, SCENES_FILE_VERSION } from '../server/
 import { validateName, validateNewPatternProps } from '../server/validation';
 import { migratePatterns, PATTERN_DATA_VERSION } from '../shared/migrate';
 import { AUDIO_INPUT_SYSTEM } from '../shared/patterns/audio';
+import { hsvToRgb } from '../shared/patterns/pattern';
 import {
   PATTERN_TYPES,
   patternByType,
@@ -45,6 +46,8 @@ vi.mock('../server/storage', async (importOriginal) => ({
 const scenesPath = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'scenes.json');
 const raw = JSON.parse(readFileSync(scenesPath, 'utf8')) as unknown;
 const scenes = migrate(raw);
+
+const RED = { r: 255, g: 0, b: 0 };
 
 // The saved patterns that actually reach the pattern list; the solid color layer is
 // filtered out on load.
@@ -147,19 +150,19 @@ describe('scenes file migration', () => {
     expect(() => migrate(value)).toThrow(/recognized format/);
   });
 
-  const sparkle = { name: 's', type: 'Sparkle', hue: 300, hueRange: 120 };
+  const sparkle = { name: 's', type: 'Sparkle', hue: 300, hueRange: 120, saturation: 1 };
 
   it('converts version 1 patterns', () => {
     const [migrated] = migrate({
       version: 1,
       scenes: [{ name: 'one', patterns: [sparkle] }]
     });
-    expect(migrated.patterns[0]).toMatchObject({ hue: 0, hueRange: 120 });
+    expect(migrated.patterns[0]).toMatchObject({ color: RED, hueRange: 120 });
   });
 
   it('converts patterns in a bare array', () => {
     const [migrated] = migrate([{ name: 'one', patterns: [sparkle] }]);
-    expect(migrated.patterns[0]).toMatchObject({ hue: 0 });
+    expect(migrated.patterns[0]).toMatchObject({ color: RED });
   });
 
   it('leaves current patterns alone', () => {
@@ -212,14 +215,60 @@ describe('pattern migration', () => {
   ])(
     'centers a version 1 Sparkle hue %d with range %d on %d',
     (hue, hueRange, centered) => {
-      const [p] = migratePatterns([{ type: 'Sparkle', hue, hueRange }], 1);
-      expect(p).toEqual({ type: 'Sparkle', hue: centered, hueRange, attack: 0 });
+      const [p] = migratePatterns([{ type: 'Sparkle', hue, hueRange, saturation: 1 }], 1);
+      expect(p).toEqual({
+        type: 'Sparkle',
+        color: hsvToRgb(centered, 1, 1),
+        hueRange,
+        attack: 0
+      });
     }
   );
 
+  it.each([0, 0.4, 1])('keeps a version 1 Sparkle saturation %d', (saturation) => {
+    const [p] = migratePatterns(
+      [{ type: 'Sparkle', hue: 0, hueRange: 0, saturation }],
+      1
+    );
+    expect(p).toMatchObject({ color: hsvToRgb(0, saturation, 1) });
+  });
+
+  it('keeps a version 1 Sparkle lighting the colors it used to', () => {
+    const old = {
+      ...defaultParameters('Sparkle', 's'),
+      density: 1 / N,
+      hue: 60,
+      hueRange: 120,
+      saturation: 0.8
+    };
+    delete (old as Record<string, unknown>).color;
+    const [migrated] = migratePatterns([old], 1) as Params[];
+    expect(() => validateNewPatternProps('Sparkle', propsOf(migrated))).not.toThrow();
+    // Version 1 drew hues from the window starting at `hue`.
+    for (const [random, hue] of [
+      [0, 60],
+      [0.25, 90],
+      [0.75, 150]
+    ]) {
+      vi.spyOn(Math, 'random').mockReturnValue(random);
+      const p = build(migrated);
+      p.tick(1);
+      const light = Math.floor(random * N);
+      const lit = p.state[light];
+      const expected = hsvToRgb(hue, 0.8, 1);
+      expect(Math.abs(lit.r - expected.r), `hue ${hue}`).toBeLessThanOrEqual(1);
+      expect(Math.abs(lit.g - expected.g), `hue ${hue}`).toBeLessThanOrEqual(1);
+      expect(Math.abs(lit.b - expected.b), `hue ${hue}`).toBeLessThanOrEqual(1);
+      vi.restoreAllMocks();
+    }
+  });
+
   it('defaults the fields added in version 2', () => {
     const [audio, sparkle] = migratePatterns(
-      [defaultParameters('Audio', 'a'), defaultParameters('Sparkle', 's')].map(
+      [
+        defaultParameters('Audio', 'a'),
+        { ...defaultParameters('Sparkle', 's'), hue: 0, saturation: 0 }
+      ].map(
         ({
           input: _input,
           hz: _hz,
@@ -399,10 +448,18 @@ describe('engine with the saved scenes', () => {
   });
 
   it('converts an import from an older version', async () => {
-    const pattern = { ...defaultParameters('Sparkle', 'old'), hue: 100, hueRange: 140 };
+    const pattern = {
+      ...defaultParameters('Sparkle', 'old'),
+      hue: 100,
+      hueRange: 140,
+      saturation: 1
+    };
+    delete (pattern as Record<string, unknown>).color;
     for (const version of [undefined, 1]) {
       await engine.importScene({ version, name: 'old', patterns: [pattern] });
-      expect(engine.listScenes().at(-1)!.patterns[0]).toMatchObject({ hue: 170 });
+      expect(engine.listScenes().at(-1)!.patterns[0]).toMatchObject({
+        color: { ...hsvToRgb(170, 1, 1), a: 1 }
+      });
     }
   });
 
