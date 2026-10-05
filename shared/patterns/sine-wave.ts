@@ -34,7 +34,7 @@ export class SineWavePattern extends Pattern {
       kind: 'number',
       label: 'Speed (turns/s)',
       default: 0.07,
-      step: 0.05,
+      step: 0.01,
       row: 0
     },
     min: { kind: 'number', label: 'Min', default: 0, step: 0.05, row: 1, ...UNIT },
