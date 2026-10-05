@@ -100,10 +100,16 @@ export function edgeValues(spec: FieldSpec): unknown[] {
         spec.default,
         { r: 0, g: 0, b: 0 },
         { r: 255, g: 255, b: 255 },
-        { r: 255, g: 0, b: 128 }
+        { r: 0, g: 0, b: 0, a: 0 },
+        { r: 255, g: 0, b: 128, a: 0.5 }
       ];
     case 'colors':
-      return [spec.default, palette(1), palette(2), palette(MAX_COLORS)];
+      return [
+        spec.default,
+        palette(1),
+        palette(2).map((c) => ({ ...c, a: 0 })),
+        palette(MAX_COLORS).map((c, i) => ({ ...c, a: i % 2 ? 0.5 : 1 }))
+      ];
     default: {
       const far = Math.max(10, Math.abs(spec.default) * 10);
       const values = [spec.default];

@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { validateNewPatternProps } from '../server/validation';
+import { AUDIO_TYPE } from '../shared/patterns/audio';
+import { BlendMode, type Color } from '../shared/patterns/pattern';
 import {
   type FieldSpec,
   PATTERN_TYPES,
@@ -70,13 +72,51 @@ describe.each(PATTERN_TYPES)('%s pattern', (type) => {
     expect(build(original as Params).serialize()).toEqual(original);
   });
 
-  it('round-trips a disabled, half-opaque pattern', () => {
-    const params = { ...defaultParameters(type), enabled: false, opacity: 0.5 };
+  it('round-trips a disabled, half-opaque, subtracting pattern', () => {
+    const params = {
+      ...defaultParameters(type),
+      enabled: false,
+      opacity: 0.5,
+      blendMode: BlendMode.Subtract
+    };
     const pattern = build(params);
     expect(pattern.enabled).toBe(false);
     expect(pattern.opacity).toBe(0.5);
+    expect(pattern.blendMode).toBe(BlendMode.Subtract);
     expect(build(pattern.serialize() as Params).serialize()).toEqual(pattern.serialize());
   });
+
+  it('defaults to alpha blending', () => {
+    const params: Record<string, unknown> = defaultParameters(type);
+    delete params.blendMode;
+    expect(build(params as Params).blendMode).toBe(BlendMode.Alpha);
+  });
+
+  // Audio only paints its color in single-frequency mode; it has its own tests.
+  const colorKeys = Object.entries(fields)
+    .filter(([, spec]) => spec.kind === 'color' || spec.kind === 'colors')
+    .map(([key]) => key);
+  it.runIf(colorKeys.length > 0 && type !== AUDIO_TYPE)(
+    'stays dark with fully transparent colors',
+    () => {
+      vi.spyOn(Math, 'random').mockImplementation(mulberry32(7));
+      const params = defaultParameters(type);
+      for (const key of colorKeys) {
+        const value = params[key] as Color | Color[];
+        params[key] = Array.isArray(value)
+          ? value.map((c) => ({ ...c, a: 0 }))
+          : { ...value, a: 0 };
+      }
+      const pattern = build(params);
+      for (let i = 0; i < 60; i++) {
+        pattern.advance(1 / 30);
+        pattern.tick(1 / 30);
+        const lit = pattern.state.findIndex((l) => Math.max(l.r, l.g, l.b) * l.a > 0);
+        expect(lit, `frame ${i}`).toBe(-1);
+      }
+      vi.restoreAllMocks();
+    }
+  );
 
   it('scales alpha by opacity', () => {
     const pattern = build({ ...defaultParameters(type), opacity: 0 });

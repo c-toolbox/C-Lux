@@ -170,9 +170,20 @@ describe('pattern migration', () => {
     'centers a version 1 Sparkle hue %d with range %d on %d',
     (hue, hueRange, centered) => {
       const [p] = migratePatterns([{ type: 'Sparkle', hue, hueRange }], 1);
-      expect(p).toEqual({ type: 'Sparkle', hue: centered, hueRange });
+      expect(p).toEqual({ type: 'Sparkle', hue: centered, hueRange, attack: 0 });
     }
   );
+
+  it('defaults the fields added in version 2', () => {
+    const [audio, sparkle] = migratePatterns(
+      [defaultParameters('Audio', 'a'), defaultParameters('Sparkle', 's')].map(
+        ({ hz: _hz, color: _color, attack: _attack, ...rest }) => rest
+      ),
+      1
+    ) as Params[];
+    expect(() => validateNewPatternProps('Audio', propsOf(audio))).not.toThrow();
+    expect(() => validateNewPatternProps('Sparkle', propsOf(sparkle))).not.toThrow();
+  });
 
   it('leaves other pattern types alone', () => {
     const plasma = { type: 'Plasma', hue: 100, hueRange: 140 };

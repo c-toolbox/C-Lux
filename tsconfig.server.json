@@ -24,5 +24,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["server", "shared", "tests"]
+  "include": ["server", "shared", "tests"],
+  // Tests of browser code need the DOM types; tsconfig.app.json checks them.
+  "exclude": ["tests/client"]
 }

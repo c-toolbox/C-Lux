@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AUDIO_BANDS, setAudioFrame } from '../shared/audio';
+import {
+  AUDIO_BANDS,
+  AUDIO_MAX_HZ,
+  AUDIO_MIN_HZ,
+  audioBandIndex,
+  setAudioFrame
+} from '../shared/audio';
 import { type Color, hsvToRgb } from '../shared/patterns/pattern';
 import { setVideoStrip } from '../shared/video';
 
@@ -33,7 +39,7 @@ describe('Audio', () => {
 
   const onlyBand = (band: number) => (k: number) => (k === band ? 1 : 0);
 
-  it.each([0, 1])('stays dark on silence in mode %d', (mode) => {
+  it.each([0, 1, 2])('stays dark on silence in mode %d', (mode) => {
     const p = make('Audio', { mode });
     feed(0);
     p.tick(1 / 30);
@@ -146,6 +152,48 @@ describe('Audio', () => {
       feed(0.9);
       p.tick(1 / 30);
       expectFilled(p, 0.9);
+    });
+  });
+
+  describe('single frequency', () => {
+    const color = { r: 10, g: 200, b: 30 };
+    const single = (overrides: Record<string, unknown> = {}) =>
+      make('Audio', { mode: 2, floor: 0, color, ...overrides });
+
+    it.each([
+      [AUDIO_MIN_HZ, 0],
+      [AUDIO_MAX_HZ, AUDIO_BANDS - 1]
+    ])('lights the whole dome with %d Hz in its color', (hz, band) => {
+      const p = single({ hz });
+      feed(1, onlyBand(band));
+      p.tick(1 / 30);
+      for (let i = 0; i < N; i++) {
+        expect(rgbAt(p, i)).toEqual(color);
+        expect(alphas(p)[i]).toBeCloseTo(1);
+      }
+    });
+
+    it('ignores the other bands', () => {
+      const p = single({ hz: AUDIO_MIN_HZ });
+      feed(1, (k) => (k === 0 ? 0 : 1));
+      p.tick(1 / 30);
+      expect(alphas(p).every((a) => a === 0)).toBe(true);
+    });
+
+    it('follows the band level and the color alpha', () => {
+      const p = single({ hz: AUDIO_MIN_HZ, color: { ...color, a: 0.5 } });
+      feed(0, (k) => (k === 0 ? 0.6 : 0));
+      p.tick(1 / 30);
+      alphas(p).forEach((a) => expect(a).toBeCloseTo(0.3));
+    });
+
+    it('interpolates between neighbouring bands', () => {
+      const between = AUDIO_MIN_HZ * Math.pow(AUDIO_MAX_HZ / AUDIO_MIN_HZ, 0.5);
+      const x = audioBandIndex(between);
+      const p = single({ hz: between });
+      feed(0, (k) => (k === Math.floor(x) ? 1 : 0));
+      p.tick(1 / 30);
+      alphas(p).forEach((a) => expect(a).toBeCloseTo(1 - (x - Math.floor(x))));
     });
   });
 

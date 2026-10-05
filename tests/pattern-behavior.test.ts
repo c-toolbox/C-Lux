@@ -92,6 +92,37 @@ describe('Static', () => {
     allColored(p, GREEN);
   });
 
+  it('lights the ring at its color alpha', () => {
+    const p = make('StaticPattern', { color: { ...RED, a: 0.25 } });
+    expect(alphas(p).every((a) => a === 0.25)).toBe(true);
+    allColored(p, RED);
+  });
+
+  it('fades the alpha along with the color', () => {
+    const p = make('StaticPattern', { color: RED }) as StaticPattern;
+    p.fadeTo({ ...RED, a: 0 }, 2);
+    p.tick(1);
+    expect(alphas(p).every((a) => a === 0.5)).toBe(true);
+    p.tick(1);
+    expect(alphas(p).every((a) => a === 0)).toBe(true);
+  });
+
+  it('treats a color without alpha as opaque', () => {
+    const p = make('StaticPattern', { color: { ...RED, a: 0 } }) as StaticPattern;
+    p.fadeTo(GREEN, 0);
+    expect(p.parameters().color).toEqual({ ...GREEN, a: 1 });
+    expect(alphas(p).every((a) => a === 1)).toBe(true);
+  });
+
+  it('eases an alpha-only edit', () => {
+    const p = make('StaticPattern', { color: RED });
+    p.update({ color: { ...RED, a: 0 } }, 1);
+    p.advance(0.5);
+    alphas(p).forEach((a) => expect(a).toBeCloseTo(0.5));
+    p.advance(0.5);
+    expect(alphas(p).every((a) => a === 0)).toBe(true);
+  });
+
   it('starts a new fade from the color currently lit', () => {
     const p = make('StaticPattern', { color: BLACK }) as StaticPattern;
     p.fadeTo(WHITE, 2);
@@ -222,6 +253,76 @@ describe('Sparkle', () => {
     run(p, 1);
     const colors = new Set(litLights(p).map((i) => JSON.stringify(rgbAt(p, i))));
     expect(colors.size).toBeGreaterThan(20);
+  });
+
+  // A density of one light per second over a one second tick ignites exactly one light,
+  // the one `Math.random` picks, without rolling for whether to ignite at all.
+  const one = { density: 1 / N, saturation: 1 };
+
+  it.each([
+    [0, 0, 60],
+    [0.5, Math.floor(N / 2), 120],
+    [0.999999, N - 1, 180]
+  ])('centers the hue window on the hue (random %d)', (value, light, hue) => {
+    fixRandom(value);
+    const p = make('Sparkle', { ...one, hue: 120, hueRange: 120 });
+    p.tick(1);
+    expect(litLights(p)).toEqual([light]);
+    const { r, g, b } = hsvToRgb(hue, 1, 1);
+    const lit = rgbAt(p, light);
+    expect(Math.abs(lit.r - r) + Math.abs(lit.g - g) + Math.abs(lit.b - b)).toBeLessThan(
+      3
+    );
+  });
+
+  it('wraps a hue window that crosses 0°', () => {
+    fixRandom(0);
+    const p = make('Sparkle', { ...one, hue: 0, hueRange: 120 });
+    p.tick(1);
+    expect(rgbAt(p, 0)).toEqual(hsvToRgb(300, 1, 1));
+  });
+
+  it.each([0.5, 1, 2])('fades sparkles in over an attack of %d s', (attack) => {
+    fixRandom(0);
+    const p = make('Sparkle', { ...one, attack, decay: 0 });
+    p.tick(1);
+    // Ignited at the end of the tick, the light has not started to rise yet.
+    expect(alphas(p)[0]).toBe(0);
+    p.update({ density: 0 });
+    p.tick(attack / 4);
+    expect(alphas(p)[0]).toBeCloseTo(0.25);
+    p.tick(attack / 2);
+    expect(alphas(p)[0]).toBeCloseTo(0.75);
+    p.tick(attack);
+    expect(alphas(p)[0]).toBe(1);
+  });
+
+  it('decays once the attack has peaked', () => {
+    fixRandom(0);
+    const p = make('Sparkle', { ...one, attack: 1, decay: 2 });
+    p.tick(1);
+    p.update({ density: 0 });
+    p.tick(1);
+    expect(alphas(p)[0]).toBe(1);
+    p.tick(0.5);
+    expect(alphas(p)[0]).toBeCloseTo(Math.exp(-1));
+  });
+
+  it('rises from the current brightness when re-ignited', () => {
+    fixRandom(0);
+    const p = make('Sparkle', { ...one, attack: 0, decay: Math.LN2 });
+    p.tick(1);
+    expect(alphas(p)[0]).toBe(1);
+    p.update({ density: 0 });
+    p.tick(1);
+    expect(alphas(p)[0]).toBeCloseTo(0.5);
+    p.update({ density: 1 / N, attack: 1 });
+    p.tick(1);
+    // Decayed to a quarter, then re-ignited without dipping to dark.
+    expect(alphas(p)[0]).toBeCloseTo(0.25);
+    p.update({ density: 0 });
+    p.tick(0.5);
+    expect(alphas(p)[0]).toBeCloseTo(0.75);
   });
 });
 
@@ -399,6 +500,32 @@ describe('Bounce', () => {
     const p = make('Bounce', { speed: 0 });
     run(p, 3);
     expect(argmax(alphas(p))).toBe(0);
+  });
+
+  it('bounces off the seam with a negative speed', () => {
+    const p = make('Bounce', { speed: -10 / N });
+    p.tick(1);
+    expect(argmax(alphas(p))).toBe(10);
+    p.tick(1);
+    expect(argmax(alphas(p))).toBe(20);
+    p.tick(1);
+    expect(argmax(alphas(p))).toBe(30);
+  });
+
+  it('moves the same way with a negative speed, reflecting off the seam first', () => {
+    const forward = make('Bounce', { speed: 0.3 });
+    const backward = make('Bounce', { speed: -0.3 });
+    for (let i = 0; i < 20; i++) {
+      forward.tick(0.37);
+      backward.tick(0.37);
+      expect(alphas(backward), `tick ${i}`).toEqual(alphas(forward));
+    }
+  });
+
+  it('scales the bump by its color alpha', () => {
+    const a = alphas(make('Bounce', { color: { ...GREEN, a: 0.5 } }));
+    expect(a[0]).toBeCloseTo(0.5);
+    expect(Math.max(...a)).toBeCloseTo(0.5);
   });
 
   it('paints every light in its color', () => {

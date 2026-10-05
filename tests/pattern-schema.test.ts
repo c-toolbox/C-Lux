@@ -172,12 +172,16 @@ describe.each(PATTERN_TYPES)('%s validation', (type) => {
         reject({ r: 256, g: 0, b: 0 });
         reject({ r: 0, g: -1, b: 0 });
         reject({ r: 0, g: 0, b: Number.NaN });
+        reject({ r: 0, g: 0, b: 0, a: 1.5 });
+        reject({ r: 0, g: 0, b: 0, a: -0.1 });
+        reject({ r: 0, g: 0, b: 0, a: 'opaque' });
         break;
       case 'colors':
         reject([]);
         reject(Array.from({ length: MAX_COLORS + 1 }, () => ({ r: 0, g: 0, b: 0 })));
         reject([{ r: 0, g: 0, b: 300 }]);
         reject([{ r: 0, g: 0 }]);
+        reject([{ r: 0, g: 0, b: 0, a: 2 }]);
         break;
       default:
         if (spec.min !== undefined) reject(spec.min - 1);

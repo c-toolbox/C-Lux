@@ -1,3 +1,4 @@
+import { AudioPattern } from './patterns/audio.ts';
 import { SparklePattern } from './patterns/sparkle.ts';
 
 type RawPattern = Record<string, unknown>;
@@ -5,11 +6,17 @@ type RawPattern = Record<string, unknown>;
 // Step `i` upgrades a saved pattern from version `i + 1` to `i + 2`. Patterns are
 // untrusted here, so anything unexpected passes through for validation to reject.
 const STEPS: ReadonlyArray<(pattern: RawPattern) => RawPattern> = [
-  // 1 -> 2: Sparkle's hue window is centered on `hue` rather than starting at it.
+  // 1 -> 2: Sparkle's hue window is centered on `hue` rather than starting at it, and
+  // fields added since get their defaults, which render as before.
   (p) => {
+    if (p.type === AudioPattern.Type) {
+      const { hz, color } = AudioPattern.Fields;
+      return { hz: hz.default, color: { ...color.default }, ...p };
+    }
     if (p.type !== SparklePattern.Type) return p;
     if (typeof p.hue !== 'number' || typeof p.hueRange !== 'number') return p;
-    return { ...p, hue: (p.hue + p.hueRange / 2) % 360 };
+    const { attack } = SparklePattern.Fields;
+    return { attack: attack.default, ...p, hue: (p.hue + p.hueRange / 2) % 360 };
   }
 ];
 
