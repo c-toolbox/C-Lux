@@ -37,10 +37,16 @@ export class RainPattern extends Pattern {
   static readonly Type = 'Rain';
   static readonly DisplayName = 'Rain';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 77, g: 171, b: 247 },
+      hint: 'Color of the drops.'
+    },
     rate: {
       kind: 'number',
       label: 'Rate (drops/s)',
+      hint: 'Drops started per second.',
       default: 4,
       step: 0.5,
       row: 0,
@@ -49,6 +55,7 @@ export class RainPattern extends Pattern {
     speed: {
       kind: 'number',
       label: 'Speed (turns/s)',
+      hint: 'How fast the drops fall.',
       default: 0.5,
       step: 0.05,
       row: 0,
@@ -57,6 +64,7 @@ export class RainPattern extends Pattern {
     length: {
       kind: 'number',
       label: 'Trail (fraction)',
+      hint: "Length of each drop's trail as a fraction of the ring.",
       default: 0.05,
       step: 0.01,
       row: 1,

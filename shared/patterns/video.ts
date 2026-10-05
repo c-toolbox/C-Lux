@@ -130,6 +130,7 @@ export class VideoPattern extends Pattern {
     centerX: {
       kind: 'number',
       label: 'Center X',
+      hint: 'Horizontal center of the fisheye circle, as a fraction of the frame width.',
       default: DEFAULT_VIDEO_GEOMETRY.centerX,
       step: 0.001,
       row: 1,
@@ -139,6 +140,7 @@ export class VideoPattern extends Pattern {
     centerY: {
       kind: 'number',
       label: 'Center Y',
+      hint: 'Vertical center of the fisheye circle, as a fraction of the frame height.',
       default: DEFAULT_VIDEO_GEOMETRY.centerY,
       step: 0.001,
       row: 1,
@@ -177,6 +179,7 @@ export class VideoPattern extends Pattern {
     stripY: {
       kind: 'number',
       label: 'Strip position',
+      hint: 'Vertical center of the band that is read, as a fraction of the frame height.',
       default: DEFAULT_VIDEO_GEOMETRY.stripY,
       step: 0.001,
       row: 3,
@@ -186,6 +189,7 @@ export class VideoPattern extends Pattern {
     stripHeight: {
       kind: 'number',
       label: 'Strip height',
+      hint: 'Height of the band as a fraction of the frame height; its rows are averaged.',
       default: DEFAULT_VIDEO_GEOMETRY.stripHeight,
       step: 0.005,
       row: 3,
@@ -204,6 +208,7 @@ export class VideoPattern extends Pattern {
     direction: {
       kind: 'select',
       label: 'Direction',
+      hint: 'Which way the strip runs around the ring.',
       default: DIRECTION_CW,
       row: 4,
       options: [
@@ -214,6 +219,7 @@ export class VideoPattern extends Pattern {
     fit: {
       kind: 'select',
       label: 'Fit',
+      hint: 'Smooth blends neighboring pixels; Sharp takes the nearest one.',
       default: FIT_SMOOTH,
       row: 5,
       options: [
@@ -233,6 +239,7 @@ export class VideoPattern extends Pattern {
     saturation: {
       kind: 'number',
       label: 'Saturation',
+      hint: '1 keeps the source colors, higher makes them more vivid, 0 turns them gray.',
       default: 1.2,
       step: 0.1,
       row: 6,

@@ -25,11 +25,22 @@ export class WipePattern extends Pattern {
   static readonly Type = 'Wipe';
   static readonly DisplayName = 'Wipe';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color A', default: { r: 255, g: 255, b: 255 } },
-    color2: { kind: 'color', label: 'Color B', default: { r: 34, g: 139, b: 230 } },
+    color: {
+      kind: 'color',
+      label: 'Color A',
+      default: { r: 255, g: 255, b: 255 },
+      hint: 'First of the two colors the wipe alternates between.'
+    },
+    color2: {
+      kind: 'color',
+      label: 'Color B',
+      default: { r: 34, g: 139, b: 230 },
+      hint: 'Second of the two colors the wipe alternates between.'
+    },
     speed: {
       kind: 'number',
       label: 'Speed (turns/s)',
+      hint: 'How fast the moving edge travels.',
       default: 0.3,
       step: 0.05,
       row: 0,
@@ -47,6 +58,7 @@ export class WipePattern extends Pattern {
     direction: {
       kind: 'select',
       label: 'Direction',
+      hint: 'Which way the edge travels around the ring.',
       default: 1,
       options: [
         { value: 1, label: 'Forward' },
@@ -65,6 +77,7 @@ export class WipePattern extends Pattern {
     origin: {
       kind: 'number',
       label: 'Origin (fraction)',
+      hint: 'Where the wipe starts, as a fraction of the ring.',
       default: 0,
       step: 0.05,
       row: 1,

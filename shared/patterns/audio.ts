@@ -91,6 +91,7 @@ export class AudioPattern extends Pattern {
       kind: 'select',
       label: 'Mode',
       default: AUDIO_MODE_SPECTRUM,
+      hint: 'Spectrum spreads the frequencies over the ring, VU meter shows overall loudness, Single frequency pulses the dome with one band.',
       row: 0,
       options: [
         { value: AUDIO_MODE_SPECTRUM, label: 'Spectrum' },
@@ -102,6 +103,7 @@ export class AudioPattern extends Pattern {
       kind: 'number',
       label: 'Gain',
       default: 1,
+      hint: 'Multiplies the incoming level; raise it for quiet sources.',
       step: 0.1,
       row: 0,
       ...NON_NEGATIVE
@@ -110,6 +112,7 @@ export class AudioPattern extends Pattern {
       kind: 'number',
       label: 'Noise gate',
       default: 0.05,
+      hint: 'Levels below this stay dark, so background noise does not light up.',
       step: 0.01,
       row: 1,
       ...UNIT
@@ -139,6 +142,7 @@ export class AudioPattern extends Pattern {
       kind: 'number',
       label: 'Base hue',
       default: 0,
+      hint: 'Hue at the top of the ring, in degrees.',
       step: 10,
       row: 2,
       visibleWhen: { mode: RING_MODES, colorMode: [COLOR_MODE_HUE] },
@@ -148,6 +152,7 @@ export class AudioPattern extends Pattern {
       kind: 'number',
       label: 'Hue span',
       default: 300,
+      hint: 'How far the hue turns from top to bottom; negative turns the other way.',
       step: 10,
       row: 2,
       visibleWhen: { mode: RING_MODES, colorMode: [COLOR_MODE_HUE] },
@@ -157,6 +162,7 @@ export class AudioPattern extends Pattern {
       kind: 'color',
       label: 'Top color',
       default: { r: 77, g: 171, b: 247 },
+      hint: 'Color at the top of the ring.',
       row: 3,
       visibleWhen: { mode: RING_MODES, colorMode: [COLOR_MODE_TWO_COLORS] }
     },
@@ -164,6 +170,7 @@ export class AudioPattern extends Pattern {
       kind: 'color',
       label: 'Bottom color',
       default: { r: 255, g: 64, b: 129 },
+      hint: 'Color at the bottom of the ring.',
       row: 3,
       visibleWhen: { mode: RING_MODES, colorMode: [COLOR_MODE_TWO_COLORS] }
     },
@@ -212,6 +219,7 @@ export class AudioPattern extends Pattern {
       kind: 'color',
       label: 'Frequency color',
       default: { r: 77, g: 171, b: 247 },
+      hint: 'Color the dome pulses in.',
       visibleWhen: { mode: [AUDIO_MODE_FREQUENCY] }
     }
   } satisfies PatternSchema;

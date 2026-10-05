@@ -22,6 +22,7 @@ export class FirePattern extends Pattern {
     cooling: {
       kind: 'number',
       label: 'Cooling',
+      hint: 'How fast the flames cool; higher gives shorter flames.',
       default: 55,
       step: 5,
       row: 0,
@@ -30,6 +31,7 @@ export class FirePattern extends Pattern {
     sparking: {
       kind: 'number',
       label: 'Sparking',
+      hint: 'Chance of a new spark at the base; higher gives a livelier fire.',
       default: 0.6,
       step: 0.05,
       row: 0,

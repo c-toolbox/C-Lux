@@ -45,6 +45,7 @@ export class MeteorsPattern extends Pattern {
     rate: {
       kind: 'number',
       label: 'Rate (per s)',
+      hint: 'Meteors launched per second.',
       default: 1,
       step: 0.1,
       row: 0,
@@ -53,6 +54,7 @@ export class MeteorsPattern extends Pattern {
     speed: {
       kind: 'number',
       label: 'Speed (turns/s)',
+      hint: 'Typical speed of a meteor.',
       default: 0.4,
       step: 0.05,
       row: 0,
@@ -70,6 +72,7 @@ export class MeteorsPattern extends Pattern {
     tail: {
       kind: 'number',
       label: 'Tail (fraction)',
+      hint: 'Typical tail length as a fraction of the ring.',
       default: 0.08,
       step: 0.01,
       row: 1,
@@ -87,6 +90,7 @@ export class MeteorsPattern extends Pattern {
     direction: {
       kind: 'select',
       label: 'Direction',
+      hint: 'Which way meteors travel; Both picks one at random for each meteor.',
       default: 1,
       options: [
         { value: 1, label: 'Forward' },

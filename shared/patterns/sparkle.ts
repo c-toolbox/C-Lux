@@ -28,6 +28,7 @@ export class SparklePattern extends Pattern {
     density: {
       kind: 'number',
       label: 'Density (ring/s)',
+      hint: 'Sparkles started per second, as a share of the lights in the ring.',
       default: 0.14,
       step: 0.01,
       row: 0,
@@ -45,12 +46,21 @@ export class SparklePattern extends Pattern {
     decay: {
       kind: 'number',
       label: 'Decay',
+      hint: 'How fast a sparkle fades; higher is shorter.',
       default: 3,
       step: 0.5,
       row: 0,
       ...NON_NEGATIVE
     },
-    hue: { kind: 'number', label: 'Hue (°)', default: 0, step: 10, row: 1, ...DEGREES },
+    hue: {
+      kind: 'number',
+      label: 'Hue (°)',
+      default: 0,
+      step: 10,
+      row: 1,
+      hint: 'Center of the hue window the sparkles pick their colors from.',
+      ...DEGREES
+    },
     hueRange: {
       kind: 'number',
       label: 'Hue range (°)',
@@ -63,6 +73,7 @@ export class SparklePattern extends Pattern {
     saturation: {
       kind: 'number',
       label: 'Saturation',
+      hint: '0 gives white sparkles, 1 full color.',
       default: 0,
       step: 0.05,
       row: 1,

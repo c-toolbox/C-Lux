@@ -18,10 +18,18 @@ export class RainbowPattern extends Pattern {
   static readonly Type = 'Rainbow';
   static readonly DisplayName = 'Rainbow';
   static readonly Fields = {
-    speed: { kind: 'number', label: 'Speed (°/s)', default: 60, step: 5, row: 0 },
+    speed: {
+      kind: 'number',
+      label: 'Speed (°/s)',
+      default: 60,
+      step: 5,
+      row: 0,
+      hint: 'How fast the colors scroll around the ring, in degrees of hue per second.'
+    },
     cycles: {
       kind: 'number',
       label: 'Cycles',
+      hint: 'How many times the spectrum repeats around the ring.',
       default: 1,
       step: 1,
       row: 0,
@@ -30,12 +38,21 @@ export class RainbowPattern extends Pattern {
     saturation: {
       kind: 'number',
       label: 'Saturation',
+      hint: '0 is white, 1 is full color.',
       default: 1,
       step: 0.05,
       row: 1,
       ...UNIT
     },
-    value: { kind: 'number', label: 'Value', default: 1, step: 0.05, row: 1, ...UNIT }
+    value: {
+      kind: 'number',
+      label: 'Value',
+      default: 1,
+      step: 0.05,
+      row: 1,
+      hint: 'Brightness of the colors.',
+      ...UNIT
+    }
   } satisfies PatternSchema;
 
   speed!: number;

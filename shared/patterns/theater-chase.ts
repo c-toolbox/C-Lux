@@ -17,10 +17,16 @@ export class TheaterChasePattern extends Pattern {
   static readonly Type = 'TheaterChase';
   static readonly DisplayName = 'Theater Chase';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 255, g: 255, b: 255 } },
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 255, g: 255, b: 255 },
+      hint: 'Color of the dots.'
+    },
     spacing: {
       kind: 'number',
       label: 'Spacing (fraction)',
+      hint: 'Distance between lit dots as a fraction of the ring.',
       default: 0.02,
       step: 0.01,
       row: 0,
@@ -29,6 +35,7 @@ export class TheaterChasePattern extends Pattern {
     speed: {
       kind: 'number',
       label: 'Speed (turns/s)',
+      hint: 'How fast the dots move; negative reverses.',
       default: 0.05,
       step: 0.05,
       row: 0

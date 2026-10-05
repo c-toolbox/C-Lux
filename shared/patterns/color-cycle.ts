@@ -16,16 +16,31 @@ export class ColorCyclePattern extends Pattern {
   static readonly Type = 'ColorCycle';
   static readonly DisplayName = 'Color Cycle';
   static readonly Fields = {
-    speed: { kind: 'number', label: 'Speed (°/s)', default: 30, step: 5 },
+    speed: {
+      kind: 'number',
+      label: 'Speed (°/s)',
+      default: 30,
+      step: 5,
+      hint: 'How fast the hue turns, in degrees per second; negative reverses.'
+    },
     saturation: {
       kind: 'number',
       label: 'Saturation',
+      hint: '0 is white, 1 is full color.',
       default: 1,
       step: 0.05,
       row: 0,
       ...UNIT
     },
-    value: { kind: 'number', label: 'Value', default: 1, step: 0.05, row: 0, ...UNIT }
+    value: {
+      kind: 'number',
+      label: 'Value',
+      default: 1,
+      step: 0.05,
+      row: 0,
+      hint: 'Brightness of the color.',
+      ...UNIT
+    }
   } satisfies PatternSchema;
 
   speed!: number;

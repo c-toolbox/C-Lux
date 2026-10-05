@@ -20,10 +20,16 @@ export class CandlePattern extends Pattern {
   static readonly Type = 'Candle';
   static readonly DisplayName = 'Candle';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 255, g: 147, b: 41 } },
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 255, g: 147, b: 41 },
+      hint: 'Color of the flame.'
+    },
     brightness: {
       kind: 'number',
       label: 'Brightness',
+      hint: 'Brightness of the flame when it is not dipping.',
       default: 1,
       step: 0.05,
       row: 0,
@@ -32,6 +38,7 @@ export class CandlePattern extends Pattern {
     depth: {
       kind: 'number',
       label: 'Flicker depth',
+      hint: 'How far the flicker can dim a light below the brightness.',
       default: 0.45,
       step: 0.05,
       row: 0,
@@ -40,6 +47,7 @@ export class CandlePattern extends Pattern {
     speed: {
       kind: 'number',
       label: 'Flicker (per s)',
+      hint: 'How often each light changes its level; higher is more restless.',
       default: 6,
       step: 0.5,
       row: 0,

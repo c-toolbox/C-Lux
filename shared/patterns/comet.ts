@@ -21,10 +21,16 @@ export class CometPattern extends Pattern {
   static readonly Type = 'Comet';
   static readonly DisplayName = 'Comet';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 255, g: 255, b: 255 } },
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 255, g: 255, b: 255 },
+      hint: 'Color of the comet.'
+    },
     speed: {
       kind: 'number',
       label: 'Speed (turns/s)',
+      hint: 'How fast the head travels.',
       default: 0.1,
       step: 0.05,
       row: 0
@@ -32,6 +38,7 @@ export class CometPattern extends Pattern {
     tail: {
       kind: 'number',
       label: 'Tail (fraction)',
+      hint: 'Length of the fading tail as a fraction of the ring.',
       default: 0.06,
       step: 0.01,
       row: 0,
@@ -40,6 +47,7 @@ export class CometPattern extends Pattern {
     direction: {
       kind: 'select',
       label: 'Direction',
+      hint: 'Which way the comet travels around the ring.',
       default: 1,
       options: [
         { value: 1, label: 'Forward' },
@@ -49,6 +57,7 @@ export class CometPattern extends Pattern {
     start: {
       kind: 'number',
       label: 'Start (fraction)',
+      hint: 'Where the head starts, as a fraction of the ring.',
       default: 0,
       step: 0.01,
       row: 1,

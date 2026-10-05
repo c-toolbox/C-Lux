@@ -43,6 +43,7 @@ export class FireworksPattern extends Pattern {
     rate: {
       kind: 'number',
       label: 'Rate (per s)',
+      hint: 'Shells launched per second.',
       default: 0.6,
       step: 0.1,
       row: 0,
@@ -51,6 +52,7 @@ export class FireworksPattern extends Pattern {
     speed: {
       kind: 'number',
       label: 'Speed (turns/s)',
+      hint: 'How fast shells rise and bursts spread.',
       default: 0.6,
       step: 0.05,
       row: 0,
@@ -59,6 +61,7 @@ export class FireworksPattern extends Pattern {
     spread: {
       kind: 'number',
       label: 'Burst (fraction)',
+      hint: 'How far a burst spreads, as a fraction of the ring.',
       default: 0.15,
       step: 0.01,
       row: 1,
@@ -67,6 +70,7 @@ export class FireworksPattern extends Pattern {
     decay: {
       kind: 'number',
       label: 'Decay',
+      hint: 'How fast a burst fades; higher is shorter.',
       default: 1.5,
       step: 0.1,
       row: 1,
@@ -75,6 +79,7 @@ export class FireworksPattern extends Pattern {
     origin: {
       kind: 'number',
       label: 'Launch point',
+      hint: 'Where shells launch from, as a fraction of the ring.',
       default: 0.5,
       step: 0.05,
       row: 2,

@@ -88,6 +88,7 @@ describe.each(PATTERN_TYPES)('%s schema', (type) => {
 
   it.each(Object.entries(fields))('field %s is well-formed', (key, spec) => {
     expect(spec.label.trim()).not.toBe('');
+    expect(spec.hint?.trim(), `${key} has no hint`).toBeTruthy();
     if (spec.row !== undefined) expect(Number.isInteger(spec.row)).toBe(true);
 
     for (const [other, values] of Object.entries(spec.visibleWhen ?? {})) {

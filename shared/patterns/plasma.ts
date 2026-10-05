@@ -25,10 +25,19 @@ export class PlasmaPattern extends Pattern {
   static readonly Type = 'Plasma';
   static readonly DisplayName = 'Plasma';
   static readonly Fields = {
-    hue: { kind: 'number', label: 'Hue (°)', default: 200, step: 10, row: 0, ...DEGREES },
+    hue: {
+      kind: 'number',
+      label: 'Hue (°)',
+      default: 200,
+      step: 10,
+      row: 0,
+      hint: 'Center hue of the palette.',
+      ...DEGREES
+    },
     hueRange: {
       kind: 'number',
       label: 'Hue range (°)',
+      hint: 'How far the colors stray from the center hue.',
       default: 140,
       step: 10,
       row: 0,
@@ -37,6 +46,7 @@ export class PlasmaPattern extends Pattern {
     scale: {
       kind: 'number',
       label: 'Scale (turns)',
+      hint: 'How many times the pattern repeats around the ring; higher gives smaller blobs.',
       // Rounded to whole turns of the ring so the field stays continuous across the seam.
       default: 2,
       step: 1,
@@ -46,6 +56,7 @@ export class PlasmaPattern extends Pattern {
     speed: {
       kind: 'number',
       label: 'Speed (turns/s)',
+      hint: 'How fast the plasma moves.',
       default: 0.06,
       step: 0.01,
       row: 1
@@ -53,6 +64,7 @@ export class PlasmaPattern extends Pattern {
     saturation: {
       kind: 'number',
       label: 'Saturation',
+      hint: '0 is white, 1 is full color.',
       default: 0.9,
       step: 0.05,
       row: 1,

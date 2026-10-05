@@ -1,4 +1,4 @@
-import { type PointerEvent, useRef } from 'react';
+import { type PointerEvent, type ReactNode, useRef } from 'react';
 import { TbPlus } from 'react-icons/tb';
 import {
   Box,
@@ -57,7 +57,7 @@ function background(stops: StopValue[]): string {
 }
 
 interface ColorMapInputProps {
-  label: string;
+  label: ReactNode;
   description?: string;
   value: StopValue[];
   onChange: (value: StopValue[]) => void;

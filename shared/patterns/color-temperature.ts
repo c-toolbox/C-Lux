@@ -29,6 +29,7 @@ export class ColorTemperaturePattern extends Pattern {
     brightness: {
       kind: 'number',
       label: 'Brightness',
+      hint: 'Overall brightness of the light.',
       default: 1,
       step: 0.05,
       row: 0,

@@ -16,9 +16,25 @@ export class GradientPattern extends Pattern {
   static readonly Type = 'Gradient';
   static readonly DisplayName = 'Gradient';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color A', default: { r: 77, g: 171, b: 247 } },
-    color2: { kind: 'color', label: 'Color B', default: { r: 247, g: 77, b: 77 } },
-    speed: { kind: 'number', label: 'Drift (cycles/s)', default: 0.1, step: 0.05 }
+    color: {
+      kind: 'color',
+      label: 'Color A',
+      default: { r: 77, g: 171, b: 247 },
+      hint: 'Color on one side of the ring.'
+    },
+    color2: {
+      kind: 'color',
+      label: 'Color B',
+      default: { r: 247, g: 77, b: 77 },
+      hint: 'Color on the opposite side of the ring.'
+    },
+    speed: {
+      kind: 'number',
+      label: 'Drift (cycles/s)',
+      default: 0.1,
+      step: 0.05,
+      hint: 'How fast the gradient slides around the ring; negative reverses.'
+    }
   } satisfies PatternSchema;
 
   r!: number;

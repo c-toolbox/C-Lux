@@ -31,10 +31,16 @@ export class RipplePattern extends Pattern {
   static readonly Type = 'Ripple';
   static readonly DisplayName = 'Ripple';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 77, g: 171, b: 247 },
+      hint: 'Color of the waves.'
+    },
     speed: {
       kind: 'number',
       label: 'Speed (turns/s)',
+      hint: 'How fast the waves spread out.',
       default: 0.25,
       step: 0.05,
       row: 0,
@@ -43,6 +49,7 @@ export class RipplePattern extends Pattern {
     width: {
       kind: 'number',
       label: 'Width (ring share)',
+      hint: 'Thickness of each wave front as a fraction of the ring.',
       default: 0.04,
       step: 0.01,
       row: 0,
@@ -51,6 +58,7 @@ export class RipplePattern extends Pattern {
     decay: {
       kind: 'number',
       label: 'Decay',
+      hint: 'How fast the waves fade as they spread; 0 keeps them bright.',
       default: 0.5,
       step: 0.1,
       row: 1,
@@ -59,12 +67,21 @@ export class RipplePattern extends Pattern {
     interval: {
       kind: 'number',
       label: 'Interval (s)',
+      hint: 'Time between new waves.',
       default: 2,
       step: 0.5,
       row: 1,
       ...POSITIVE
     },
-    origin: { kind: 'number', label: 'Origin', default: 0, step: 0.05, row: 1, ...UNIT }
+    origin: {
+      kind: 'number',
+      label: 'Origin',
+      default: 0,
+      step: 0.05,
+      row: 1,
+      hint: 'Where the waves start, as a fraction of the ring.',
+      ...UNIT
+    }
   } satisfies PatternSchema;
 
   r!: number;

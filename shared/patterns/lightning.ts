@@ -23,10 +23,16 @@ export class LightningPattern extends Pattern {
   static readonly Type = 'Lightning';
   static readonly DisplayName = 'Lightning';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 200, g: 220, b: 255 } },
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 200, g: 220, b: 255 },
+      hint: 'Color of the flashes.'
+    },
     rate: {
       kind: 'number',
       label: 'Strikes (per s)',
+      hint: 'Average number of strikes per second.',
       default: 0.4,
       step: 0.1,
       row: 0,
@@ -45,6 +51,7 @@ export class LightningPattern extends Pattern {
     coverage: {
       kind: 'number',
       label: 'Coverage (fraction)',
+      hint: 'Share of the ring a single strike lights.',
       default: 0.4,
       step: 0.05,
       row: 1,
@@ -53,6 +60,7 @@ export class LightningPattern extends Pattern {
     decay: {
       kind: 'number',
       label: 'Decay',
+      hint: 'How fast each flash fades; higher is snappier.',
       default: 8,
       step: 0.5,
       row: 1,

@@ -19,10 +19,16 @@ export class MovingGaussianPattern extends Pattern {
   static readonly Type = 'MovingGaussian';
   static readonly DisplayName = 'Moving Gaussian';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 77, g: 171, b: 247 },
+      hint: 'Color of the bump.'
+    },
     sigma: {
       kind: 'number',
       label: 'Sigma (fraction)',
+      hint: 'Width of the bump as a fraction of the ring.',
       default: 0.04,
       step: 0.01,
       row: 0,
@@ -31,6 +37,7 @@ export class MovingGaussianPattern extends Pattern {
     speed: {
       kind: 'number',
       label: 'Speed (turns/s)',
+      hint: 'How fast the bump travels around the ring; negative reverses.',
       default: 0.07,
       step: 0.05,
       row: 0
@@ -38,6 +45,7 @@ export class MovingGaussianPattern extends Pattern {
     origin: {
       kind: 'number',
       label: 'Origin (fraction)',
+      hint: 'Where the bump starts, as a fraction of the ring.',
       default: 0,
       step: 0.01,
       ...UNIT

@@ -36,7 +36,12 @@ export class StaticPattern extends Pattern {
   static readonly Type = 'StaticPattern';
   static readonly DisplayName = 'Static';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 77, g: 171, b: 247 },
+      hint: 'Color of the lit range.'
+    },
     start: {
       kind: 'number',
       label: 'Range start (fraction)',
@@ -49,6 +54,7 @@ export class StaticPattern extends Pattern {
     end: {
       kind: 'number',
       label: 'Range end (fraction)',
+      hint: 'Where the lit range ends, as a fraction of the ring.',
       default: 1,
       step: 0.01,
       row: 0,

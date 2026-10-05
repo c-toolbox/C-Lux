@@ -17,10 +17,16 @@ export class BouncePattern extends Pattern {
   static readonly Type = 'Bounce';
   static readonly DisplayName = 'Bounce';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 77, g: 171, b: 247 },
+      hint: 'Color of the bump.'
+    },
     sigma: {
       kind: 'number',
       label: 'Sigma (fraction)',
+      hint: 'Width of the bump as a fraction of the ring.',
       default: 0.04,
       step: 0.01,
       row: 0,
@@ -29,6 +35,7 @@ export class BouncePattern extends Pattern {
     speed: {
       kind: 'number',
       label: 'Speed (turns/s)',
+      hint: 'How fast the bump travels; it turns around after a full turn.',
       default: 0.1,
       step: 0.05,
       row: 0

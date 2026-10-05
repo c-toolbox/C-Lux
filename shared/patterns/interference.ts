@@ -24,11 +24,22 @@ export class InterferencePattern extends Pattern {
   static readonly Type = 'Interference';
   static readonly DisplayName = 'Interference';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color A', default: { r: 34, g: 139, b: 230 } },
-    color2: { kind: 'color', label: 'Color B', default: { r: 250, g: 82, b: 82 } },
+    color: {
+      kind: 'color',
+      label: 'Color A',
+      default: { r: 34, g: 139, b: 230 },
+      hint: 'Color of wave A.'
+    },
+    color2: {
+      kind: 'color',
+      label: 'Color B',
+      default: { r: 250, g: 82, b: 82 },
+      hint: 'Color of wave B.'
+    },
     waves: {
       kind: 'number',
       label: 'Waves A',
+      hint: 'Number of wave A crests around the ring.',
       default: 3,
       step: 1,
       row: 0,
@@ -46,6 +57,7 @@ export class InterferencePattern extends Pattern {
     speed: {
       kind: 'number',
       label: 'Speed A (turns/s)',
+      hint: 'How fast wave A travels; negative reverses.',
       default: 0.08,
       step: 0.01,
       row: 1
@@ -53,6 +65,7 @@ export class InterferencePattern extends Pattern {
     speed2: {
       kind: 'number',
       label: 'Speed B (turns/s)',
+      hint: 'How fast wave B travels; negative reverses.',
       default: -0.05,
       step: 0.01,
       row: 1

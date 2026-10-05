@@ -23,11 +23,22 @@ export class AuroraPattern extends Pattern {
   static readonly Type = 'Aurora';
   static readonly DisplayName = 'Aurora';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color A', default: { r: 43, g: 212, b: 125 } },
-    color2: { kind: 'color', label: 'Color B', default: { r: 112, g: 72, b: 232 } },
+    color: {
+      kind: 'color',
+      label: 'Color A',
+      default: { r: 43, g: 212, b: 125 },
+      hint: 'Main color of the curtains.'
+    },
+    color2: {
+      kind: 'color',
+      label: 'Color B',
+      default: { r: 112, g: 72, b: 232 },
+      hint: 'Color the curtains shift toward in places.'
+    },
     speed: {
       kind: 'number',
       label: 'Drift (turns/s)',
+      hint: 'How fast the curtains drift around the ring; negative reverses.',
       default: 0.05,
       step: 0.01,
       row: 0
@@ -35,6 +46,7 @@ export class AuroraPattern extends Pattern {
     scale: {
       kind: 'number',
       label: 'Curtains',
+      hint: 'Number of curtains around the ring, rounded to a whole number.',
       default: 2,
       // Rounded to whole turns of the ring so the field stays continuous across the seam.
       step: 1,
@@ -44,6 +56,7 @@ export class AuroraPattern extends Pattern {
     intensity: {
       kind: 'number',
       label: 'Intensity',
+      hint: 'Overall brightness of the curtains.',
       default: 1,
       step: 0.05,
       row: 0,

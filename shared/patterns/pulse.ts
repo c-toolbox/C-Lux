@@ -22,10 +22,38 @@ export class PulsePattern extends Pattern {
   static readonly Type = 'Pulse';
   static readonly DisplayName = 'Pulse';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
-    period: { kind: 'number', label: 'Period (s)', default: 3, step: 0.5, ...POSITIVE },
-    min: { kind: 'number', label: 'Min', default: 0, step: 0.05, row: 0, ...UNIT },
-    max: { kind: 'number', label: 'Max', default: 1, step: 0.05, row: 0, ...UNIT }
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 77, g: 171, b: 247 },
+      hint: 'Color of the pulse.'
+    },
+    period: {
+      kind: 'number',
+      label: 'Period (s)',
+      default: 3,
+      step: 0.5,
+      hint: 'Time for one full breath, dim to bright and back.',
+      ...POSITIVE
+    },
+    min: {
+      kind: 'number',
+      label: 'Min',
+      default: 0,
+      step: 0.05,
+      row: 0,
+      hint: 'Brightness at the dimmest point.',
+      ...UNIT
+    },
+    max: {
+      kind: 'number',
+      label: 'Max',
+      default: 1,
+      step: 0.05,
+      row: 0,
+      hint: 'Brightness at the brightest point.',
+      ...UNIT
+    }
   } satisfies PatternSchema;
 
   r!: number;

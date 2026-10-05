@@ -20,7 +20,12 @@ export class SineWavePattern extends Pattern {
   static readonly Type = 'SineWave';
   static readonly DisplayName = 'Sine Wave';
   static readonly Fields = {
-    color: { kind: 'color', label: 'Color', default: { r: 77, g: 171, b: 247 } },
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 77, g: 171, b: 247 },
+      hint: 'Color of the wave.'
+    },
     wavelength: {
       kind: 'number',
       label: 'Wavelength (fraction)',
@@ -33,12 +38,29 @@ export class SineWavePattern extends Pattern {
     speed: {
       kind: 'number',
       label: 'Speed (turns/s)',
+      hint: 'How fast the wave travels; negative reverses.',
       default: 0.07,
       step: 0.01,
       row: 0
     },
-    min: { kind: 'number', label: 'Min', default: 0, step: 0.05, row: 1, ...UNIT },
-    max: { kind: 'number', label: 'Max', default: 1, step: 0.05, row: 1, ...UNIT }
+    min: {
+      kind: 'number',
+      label: 'Min',
+      default: 0,
+      step: 0.05,
+      row: 1,
+      hint: 'Brightness in the troughs of the wave.',
+      ...UNIT
+    },
+    max: {
+      kind: 'number',
+      label: 'Max',
+      default: 1,
+      step: 0.05,
+      row: 1,
+      hint: 'Brightness at the crests of the wave.',
+      ...UNIT
+    }
   } satisfies PatternSchema;
 
   r!: number;

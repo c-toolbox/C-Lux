@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { TbDeviceFloppy, TbPlus } from 'react-icons/tb';
+import { TbDeviceFloppy, TbInfoCircle, TbPlus } from 'react-icons/tb';
 import {
+  ActionIcon,
   Anchor,
   Button,
   CloseButton,
@@ -11,7 +12,8 @@ import {
   NumberInput,
   Slider,
   Stack,
-  TextInput
+  TextInput,
+  Tooltip
 } from '@mantine/core';
 
 import {
@@ -142,16 +144,51 @@ interface FieldProps {
   onChange: (value: FieldValue) => void;
 }
 
+// Shows `text` on hover, and keeps it open after a click until the icon loses focus.
+function InfoTip({ text }: { text: string }) {
+  const [pinned, setPinned] = useState(false);
+  return (
+    // Left uncontrolled while unpinned so the tooltip's own hover handling applies.
+    <Tooltip label={text} opened={pinned || undefined} multiline maw={300} withArrow>
+      <ActionIcon
+        variant={'subtle'}
+        color={'gray'}
+        size={'xs'}
+        display={'inline-flex'}
+        style={{ verticalAlign: 'text-bottom' }}
+        aria-label={text}
+        onClick={(e) => {
+          // Keep the surrounding <label> from focusing its input.
+          e.preventDefault();
+          setPinned((p) => !p);
+        }}
+        onBlur={() => setPinned(false)}
+      >
+        <TbInfoCircle />
+      </ActionIcon>
+    </Tooltip>
+  );
+}
+
+function fieldLabel(spec: FieldSpec): ReactNode {
+  if (!spec.hint) return spec.label;
+  // Keep the icon on the same line as the label's last word when the label wraps.
+  const split = spec.label.lastIndexOf(' ') + 1;
+  return (
+    <>
+      {spec.label.slice(0, split)}
+      <span style={{ whiteSpace: 'nowrap' }}>
+        {spec.label.slice(split)} <InfoTip text={spec.hint} />
+      </span>
+    </>
+  );
+}
+
 function Field({ spec, value, onChange }: FieldProps) {
+  const label = fieldLabel(spec);
   if (spec.kind === 'color') {
     return (
-      <ColorInput
-        label={spec.label}
-        description={spec.hint}
-        format={'hexa'}
-        value={text(value)}
-        onChange={onChange}
-      />
+      <ColorInput label={label} format={'hexa'} value={text(value)} onChange={onChange} />
     );
   }
 
@@ -160,7 +197,7 @@ function Field({ spec, value, onChange }: FieldProps) {
     const replace = (index: number, color: string) =>
       onChange(colors.map((c, i) => (i === index ? color : c)));
     return (
-      <Input.Wrapper label={spec.label} description={spec.hint}>
+      <Input.Wrapper label={label}>
         <Stack gap={'xs'} mt={'xs'}>
           {colors.map((color, index) => (
             <Group gap={'xs'} key={index} wrap={'nowrap'}>
@@ -194,21 +231,13 @@ function Field({ spec, value, onChange }: FieldProps) {
   }
 
   if (spec.kind === 'colorMap') {
-    return (
-      <ColorMapInput
-        label={spec.label}
-        description={spec.hint}
-        value={asStops(value)}
-        onChange={onChange}
-      />
-    );
+    return <ColorMapInput label={label} value={asStops(value)} onChange={onChange} />;
   }
 
   if (spec.kind === 'select') {
     return (
       <NativeSelect
-        label={spec.label}
-        description={spec.hint}
+        label={label}
         value={text(value)}
         data={spec.options.map((o) => ({ value: String(o.value), label: o.label }))}
         onChange={(e) => onChange(Number(e.currentTarget.value))}
@@ -219,8 +248,7 @@ function Field({ spec, value, onChange }: FieldProps) {
   if (spec.kind === 'text') {
     return (
       <TextInput
-        label={spec.label}
-        description={spec.hint}
+        label={label}
         maxLength={spec.maxLength}
         value={text(value)}
         onChange={(e) => onChange(e.currentTarget.value)}
@@ -230,7 +258,7 @@ function Field({ spec, value, onChange }: FieldProps) {
 
   if (spec.kind === 'slider') {
     return (
-      <Input.Wrapper label={spec.label} description={spec.hint}>
+      <Input.Wrapper label={label}>
         <Slider
           mt={'xs'}
           min={spec.min}
@@ -245,8 +273,7 @@ function Field({ spec, value, onChange }: FieldProps) {
 
   return (
     <NumberInput
-      label={spec.label}
-      description={spec.hint}
+      label={label}
       min={spec.min ?? spec.exclusiveMin}
       max={spec.max}
       step={spec.step}
