@@ -270,6 +270,8 @@ export abstract class Pattern {
   enabled: boolean;
   opacity: number;
   blendMode: number;
+  // How lit a scene timeline has the pattern, from 0 to 1. Runtime only, never saved.
+  timelineGate = 1;
   state: Array<ColorAlpha>;
 
   // The ease an edit started, or null while the parameters sit at their committed
@@ -411,7 +413,7 @@ export abstract class Pattern {
       res.push(c.r);
       res.push(c.g);
       res.push(c.b);
-      res.push(c.a * this.opacity);
+      res.push(c.a * this.opacity * this.timelineGate);
     }
     return res;
   }

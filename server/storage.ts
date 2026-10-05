@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { migratePatterns, PATTERN_DATA_VERSION } from '../shared/migrate';
 import { type Scene } from '../shared/patterns/patterns';
+import { validateTimeline } from '../shared/timeline';
 
 // Scenes are named pattern combinations that can be applied on demand, and the only
 // pattern state that survives a restart. Resolved relative to the project root,
@@ -43,10 +44,23 @@ export function migrate(parsed: unknown): Array<Scene> {
 }
 
 function migrateScenes(scenes: Array<Scene>, version: number): Array<Scene> {
-  return scenes.map((scene) => ({
-    ...scene,
-    patterns: migratePatterns(scene.patterns, version) as Scene['patterns']
-  }));
+  return scenes.map(({ timeline, ...scene }) => {
+    const migrated: Scene = {
+      ...scene,
+      patterns: migratePatterns(scene.patterns, version) as Scene['patterns']
+    };
+    if (timeline === undefined) return migrated;
+    // A broken timeline shouldn't cost the scene its patterns, so only it is dropped.
+    try {
+      return { ...migrated, timeline: validateTimeline(timeline) };
+    } catch (err) {
+      console.warn(
+        `Dropping the timeline of scene ${scene.name}:`,
+        (err as Error).message
+      );
+      return migrated;
+    }
+  });
 }
 
 // Load the saved scenes from disk, upgrading an older file format on the way.

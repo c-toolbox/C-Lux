@@ -44,6 +44,15 @@ export {
   type VideoParameters
 } from '../../shared/patterns/video';
 export { REMAP_DISABLED } from '../../shared/remap';
+export {
+  type Clip,
+  gateAt,
+  MAX_TIMELINE_DURATION,
+  type Timeline,
+  type TimelinePlayback,
+  trackOf,
+  wrapTime
+} from '../../shared/timeline';
 
 import type { ConfigSaved, ConfigStatus, ConfigUpdate } from '../../shared/config';
 import type { DebugStatus, DebugUpdate } from '../../shared/debug';
@@ -59,6 +68,7 @@ import type {
   Scene
 } from '../../shared/patterns/patterns';
 import type { SolidColorStatus, SolidColorUpdate } from '../../shared/patterns/static';
+import type { Timeline, TimelinePlayback } from '../../shared/timeline';
 
 import { authHeaders, editorToken, signOut } from './auth';
 
@@ -158,6 +168,20 @@ export const api = {
     request<Scene[]>(`/scenes/${seg(name)}`, 'PATCH', { newName, overwrite }),
   deleteScene: (name: string) =>
     request<{ name: string }>(`/scenes/${seg(name)}`, 'DELETE'),
+  // Where the timelines of the scenes switched on are at.
+  timelines: () => request<TimelinePlayback[]>('/scenes/timelines'),
+  // Replace the timeline a scene is playing; saving the scene keeps it.
+  setTimeline: (scene: string, timeline: Timeline) =>
+    request<TimelinePlayback[]>(`/scenes/${seg(scene)}/timeline`, 'PUT', timeline),
+  // Stop a scene's timeline; saving the scene drops it.
+  removeTimeline: (scene: string) =>
+    request<TimelinePlayback[]>(`/scenes/${seg(scene)}/timeline`, 'DELETE'),
+  controlTimeline: (scene: string, control: { playing?: boolean; time?: number }) =>
+    request<TimelinePlayback[]>(
+      `/scenes/${seg(scene)}/timeline/playback`,
+      'PUT',
+      control
+    ),
   // config.json, minus the edit password. Editor-only.
   config: () => request<ConfigStatus>('/config'),
   // Rewrite config.json. The server adopts what it can read live and reports the settings

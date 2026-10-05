@@ -169,6 +169,32 @@ describe('scenes file migration', () => {
     };
     expect(migrate(file)[0].patterns[0]).toEqual(sparkle);
   });
+
+  const timeline = {
+    duration: 10,
+    loop: true,
+    tracks: { s: [{ start: 0, end: 5, fadeIn: 1, fadeOut: 0 }] }
+  };
+
+  it('keeps a scene timeline', () => {
+    const file = {
+      version: SCENES_FILE_VERSION,
+      scenes: [{ name: 'one', patterns: [sparkle], timeline }]
+    };
+    expect(migrate(file)[0].timeline).toEqual(timeline);
+  });
+
+  it('drops a broken timeline but keeps the scene', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const file = {
+      version: SCENES_FILE_VERSION,
+      scenes: [{ name: 'one', patterns: [sparkle], timeline: { ...timeline, loop: 1 } }]
+    };
+    const [migrated] = migrate(file);
+    expect(migrated).toEqual({ name: 'one', patterns: [sparkle] });
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
+  });
 });
 
 describe('pattern migration', () => {

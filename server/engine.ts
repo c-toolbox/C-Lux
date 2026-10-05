@@ -20,6 +20,13 @@ import {
   type VideoParameters,
   VideoPattern
 } from '../shared/patterns/video';
+import {
+  gateAt,
+  mapTracks,
+  type TimelinePlayback,
+  trackOf,
+  wrapTime
+} from '../shared/timeline';
 import type { VideoCaptureSettings } from '../shared/video';
 
 import { config } from './config';
@@ -28,6 +35,7 @@ import { loadScenes, saveScenes } from './storage';
 import {
   validateName,
   validateNewPatternProps,
+  validateSceneTimeline,
   validateUpdatedPatternProps
 } from './validation';
 
@@ -60,6 +68,8 @@ interface FadingStack extends StackView {
   weight: number;
 }
 
+type Playback = Omit<TimelinePlayback, 'scene'>;
+
 // Owns all mutable server state (patterns, scenes, blackout) and the logic that
 // ticks animations, blends layers, and broadcasts frames. The active pattern list is
 // deliberately not persisted: it only outlives a restart once saved as a scene.
@@ -70,6 +80,14 @@ export class Engine {
   // Which scenes are switched on, by name. Tracked explicitly rather than inferred from
   // the running patterns, so two scenes that share patterns don't toggle each other.
   private applied = new Set<string>();
+
+  // The timelines of the scenes switched on, by scene name. Each runs a clock of its own
+  // and outlives edits to the pattern list, so a scene being edited keeps playing.
+  private playbacks = new Map<string, Playback>();
+
+  // Scenes whose timeline was removed since they were applied, so the next save drops it
+  // instead of keeping the saved one.
+  private timelineRemoved = new Set<string>();
 
   // Stacks an earlier scene change moved away from, oldest first, each dissolving into
   // the one after it (the current stack for the last of them).
@@ -190,6 +208,7 @@ export class Engine {
     // The removed layer fades out over the scene transition rather than cutting.
     this.beginTransition();
     this.patterns.splice(index, 1);
+    this.dropTracks(name);
     // Any scene that needed this pattern is no longer fully applied.
     for (const scene of this.scenes) {
       if (scene.patterns.some((p) => p.name === name)) this.applied.delete(scene.name);
@@ -202,6 +221,8 @@ export class Engine {
     this.beginTransition();
     this.patterns = [];
     this.applied.clear();
+    this.playbacks.clear();
+    this.timelineRemoved.clear();
     return this.listPatterns();
   }
 
@@ -233,6 +254,7 @@ export class Engine {
     if (replaced !== -1) {
       this.beginTransition();
       this.patterns.splice(replaced, 1);
+      this.dropTracks(newName);
       for (const scene of this.scenes) {
         if (scene.patterns.some((p) => p.name === newName)) {
           this.applied.delete(scene.name);
@@ -246,6 +268,7 @@ export class Engine {
 
     if (newName !== name) {
       instance.name = newName;
+      this.renameTracks((n) => (n === name ? newName : n));
       // Any scene that needed the old name is no longer fully applied.
       for (const scene of this.scenes) {
         if (scene.patterns.some((p) => p.name === name)) this.applied.delete(scene.name);
@@ -261,6 +284,9 @@ export class Engine {
   setPatternEnabled(name: string, enabled: boolean): PatternParameters {
     const instance = this.patterns.find((p) => p.name === name);
     if (!instance) throw new HttpError(404, `No pattern named: ${name}`);
+    if (this.isTimed(name)) {
+      throw new HttpError(400, `${name} is switched on and off by a scene timeline`);
+    }
 
     if (instance.enabled !== enabled) {
       this.beginTransition();
@@ -369,12 +395,25 @@ export class Engine {
       patterns: this.patterns.map((p) => p.serialize() as PatternParameters)
     };
 
+    // The timeline being played wins over the one saved; either keeps only the tracks of
+    // patterns that are part of the scene.
+    const timeline = this.timelineRemoved.has(name)
+      ? undefined
+      : (this.playbacks.get(name)?.timeline ??
+        this.scenes.find((s) => s.name === name)?.timeline);
+    if (timeline) {
+      const names = new Set(scene.patterns.map((p) => p.name));
+      const kept = mapTracks(timeline, (n) => (names.has(n) ? n : null));
+      if (Object.keys(kept.tracks).length > 0) scene.timeline = kept;
+    }
+
     const index = this.scenes.findIndex((s) => s.name === name);
     if (index === -1) this.scenes.push(scene);
     else this.scenes[index] = scene;
 
     // The saved scene is exactly what is running, so it counts as applied.
     this.applied.add(name);
+    this.timelineRemoved.delete(name);
 
     await this.persistScenes('save');
     return this.scenes;
@@ -388,7 +427,12 @@ export class Engine {
       throw new HttpError(400, 'A scene must be an object');
     }
 
-    const { name: rawName, patterns, version = 1 } = raw as Record<string, unknown>;
+    const {
+      name: rawName,
+      patterns,
+      timeline,
+      version = 1
+    } = raw as Record<string, unknown>;
     if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {
       throw new HttpError(400, 'scene.version must be a positive integer');
     }
@@ -436,7 +480,9 @@ export class Engine {
       imported.push(instance.serialize() as PatternParameters);
     }
 
-    this.scenes.push({ name, patterns: imported });
+    const scene: Scene = { name, patterns: imported };
+    if (timeline !== undefined) scene.timeline = validateSceneTimeline(timeline, seen);
+    this.scenes.push(scene);
     await this.persistScenes('import');
     return this.scenes;
   }
@@ -471,6 +517,7 @@ export class Engine {
     }
 
     this.applied.add(name);
+    if (!this.playbacks.has(name)) this.startPlayback(scene);
     this.sortBySceneOrder();
     return this.appliedScenes();
   }
@@ -506,6 +553,8 @@ export class Engine {
     this.beginTransition();
 
     this.applied.delete(name);
+    this.playbacks.delete(name);
+    this.timelineRemoved.delete(name);
 
     const keep = new Set<string>();
     for (const other of this.scenes) {
@@ -541,7 +590,16 @@ export class Engine {
     this.beginTransition();
     this.patterns = replacement;
     this.applied = new Set([name]);
+    this.playbacks.clear();
+    this.timelineRemoved.clear();
+    this.startPlayback(scene);
     return this.appliedScenes();
+  }
+
+  private startPlayback(scene: Scene): void {
+    this.timelineRemoved.delete(scene.name);
+    if (!scene.timeline) return;
+    this.playbacks.set(scene.name, { timeline: scene.timeline, time: 0, playing: true });
   }
 
   async reorderScenes(order: string[]): Promise<Scene[]> {
@@ -579,11 +637,19 @@ export class Engine {
       }
       this.scenes = this.scenes.filter((s) => s.name !== trimmed);
       this.applied.delete(trimmed);
+      this.playbacks.delete(trimmed);
+      this.timelineRemoved.delete(trimmed);
     }
 
     const index = this.scenes.findIndex((s) => s.name === name);
     this.scenes[index] = { ...this.scenes[index], name: trimmed };
     if (this.applied.delete(name)) this.applied.add(trimmed);
+    if (this.timelineRemoved.delete(name)) this.timelineRemoved.add(trimmed);
+    const playback = this.playbacks.get(name);
+    if (playback) {
+      this.playbacks.delete(name);
+      this.playbacks.set(trimmed, playback);
+    }
 
     await this.persistScenes('rename');
     return this.scenes;
@@ -595,9 +661,119 @@ export class Engine {
 
     this.scenes.splice(index, 1);
     this.applied.delete(name);
+    this.playbacks.delete(name);
+    this.timelineRemoved.delete(name);
 
     await this.persistScenes('delete');
     return { name };
+  }
+
+  //
+  // Timelines
+  //
+
+  // The running timelines, in scene-list order.
+  listTimelines(): TimelinePlayback[] {
+    return this.scenes.flatMap((s) => {
+      const playback = this.playbacks.get(s.name);
+      return playback ? [{ scene: s.name, ...playback }] : [];
+    });
+  }
+
+  // Replace the timeline a scene is playing; it reaches the saved scene with the next
+  // save, like the pattern edits it goes with. Tracks may only name running patterns.
+  setTimeline(name: string, raw: unknown): TimelinePlayback[] {
+    if (!this.scenes.some((s) => s.name === name)) {
+      throw new HttpError(404, `No scene named: ${name}`);
+    }
+    const timeline = validateSceneTimeline(
+      raw,
+      new Set(this.patterns.map((p) => p.name))
+    );
+
+    const playback = this.playbacks.get(name);
+    if (playback) {
+      playback.timeline = timeline;
+      playback.time = wrapTime(timeline, playback.time);
+    } else {
+      this.playbacks.set(name, { timeline, time: 0, playing: true });
+    }
+    this.timelineRemoved.delete(name);
+
+    // The timeline takes over from the manual switch, which can't be flipped any more.
+    for (const p of this.patterns) {
+      if (trackOf(timeline, p.name)) p.enabled = true;
+    }
+    return this.listTimelines();
+  }
+
+  // Stop a scene's timeline, leaving its patterns always on; the next save drops it from
+  // the saved scene too.
+  removeTimeline(name: string): TimelinePlayback[] {
+    if (!this.scenes.some((s) => s.name === name)) {
+      throw new HttpError(404, `No scene named: ${name}`);
+    }
+    this.playbacks.delete(name);
+    this.timelineRemoved.add(name);
+    return this.listTimelines();
+  }
+
+  // Play, pause or seek a running timeline. Playing a finished one starts it over.
+  controlTimeline(
+    name: string,
+    { playing, time }: { playing?: boolean; time?: number }
+  ): TimelinePlayback[] {
+    const playback = this.playbacks.get(name);
+    if (!playback) throw new HttpError(404, `Scene ${name} has no running timeline`);
+
+    const { timeline } = playback;
+    if (time !== undefined) playback.time = wrapTime(timeline, time);
+    if (playing !== undefined) {
+      const finished = !timeline.loop && playback.time >= timeline.duration;
+      if (playing && time === undefined && finished) playback.time = 0;
+      playback.playing = playing;
+    }
+    return this.listTimelines();
+  }
+
+  private isTimed(pattern: string): boolean {
+    for (const { timeline } of this.playbacks.values()) {
+      if (trackOf(timeline, pattern)) return true;
+    }
+    return false;
+  }
+
+  private renameTracks(rename: (pattern: string) => string | null): void {
+    for (const playback of this.playbacks.values()) {
+      playback.timeline = mapTracks(playback.timeline, rename);
+    }
+  }
+
+  private dropTracks(pattern: string): void {
+    this.renameTracks((n) => (n === pattern ? null : n));
+  }
+
+  private advancePlaybacks(dt: number): void {
+    for (const playback of this.playbacks.values()) {
+      if (!playback.playing) continue;
+      const { timeline } = playback;
+      const time = playback.time + dt;
+      if (!timeline.loop && time >= timeline.duration) playback.playing = false;
+      playback.time = wrapTime(timeline, time);
+    }
+  }
+
+  // Light each running pattern as its timelines have it, the brightest where several
+  // scenes time the same one. Patterns without a track stay fully lit.
+  private updateGates(): void {
+    for (const p of this.patterns) {
+      let gate: number | null = null;
+      for (const { timeline, time } of this.playbacks.values()) {
+        const clips = trackOf(timeline, p.name);
+        if (clips) gate = Math.max(gate ?? 0, gateAt(clips, time));
+      }
+      p.timelineGate = gate ?? 1;
+    }
   }
 
   // Queue a scene write behind any write already in flight, persisting the snapshot
@@ -660,6 +836,7 @@ export class Engine {
     // the blackout and half-light masks so what the debug page asks for is what ships.
     if (this.debug.light !== null || this.debug.suspended) return this.debugFrame();
 
+    this.updateGates();
     const accum = this.blendAccum;
 
     const oldest = this.stackAt(0);
@@ -719,7 +896,7 @@ export class Engine {
     for (let i = 0; i < stack.patterns.length; i++) {
       const p = stack.patterns[i];
       const on = stack.enabled === null ? p.enabled : stack.enabled[i];
-      if (!on) continue;
+      if (!on || p.timelineGate === 0) continue;
       this.composite(p, accum);
     }
   }
@@ -744,7 +921,8 @@ export class Engine {
           case BlendMode.Multiply:
             // Transparent parts of the layer count as black, so they mask out what is
             // below; only the opacity eases the effect off.
-            accum[dst + c] = d * (1 - pattern.opacity + (alpha * s) / 255);
+            accum[dst + c] =
+              d * (1 - pattern.opacity * pattern.timelineGate + (alpha * s) / 255);
             break;
           case BlendMode.Subtract:
             accum[dst + c] = Math.max(0, d - s * alpha);
@@ -760,11 +938,11 @@ export class Engine {
   // or to one still dissolving. Stacks share instances — applying a scene leaves the
   // patterns already running in place — so each is only ticked once. A fading stack
   // ticks with the enabled flags it captured, so a pattern muted mid-dissolve keeps
-  // animating while it fades out.
+  // animating while it fades out. A pattern its timeline has switched off holds still.
   private tickPatterns(dt: number): void {
     if (this.fading.length === 0) {
       for (const p of this.patterns) {
-        if (!p.enabled) continue;
+        if (!p.enabled || p.timelineGate === 0) continue;
         p.advance(dt);
         p.tick(dt);
       }
@@ -777,7 +955,7 @@ export class Engine {
       for (let j = 0; j < stack.patterns.length; j++) {
         const p = stack.patterns[j];
         const on = stack.enabled === null ? p.enabled : stack.enabled[j];
-        if (!on || ticked.has(p)) continue;
+        if (!on || p.timelineGate === 0 || ticked.has(p)) continue;
         ticked.add(p);
         p.advance(dt);
         p.tick(dt);
@@ -787,6 +965,8 @@ export class Engine {
 
   // Advance every pattern and ease the brightness factors toward their targets.
   tick(dt: number): void {
+    this.advancePlaybacks(dt);
+    this.updateGates();
     this.tickPatterns(dt);
     this.solidColor.tick(dt);
 

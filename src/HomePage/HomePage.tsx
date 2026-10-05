@@ -1,7 +1,18 @@
 import { useEffect, useState } from 'react';
-import { TbBrightnessHalf, TbCheck, TbEdit, TbMoon, TbSun, TbX } from 'react-icons/tb';
+import {
+  TbBrightnessHalf,
+  TbCheck,
+  TbEdit,
+  TbMoon,
+  TbPlayerPause,
+  TbPlayerPlay,
+  TbPlayerSkipBack,
+  TbSun,
+  TbX
+} from 'react-icons/tb';
 import { Link } from 'react-router-dom';
 import {
+  ActionIcon,
   Box,
   Button,
   Checkbox,
@@ -26,6 +37,7 @@ import {
   type Scene,
   type SolidColorStatus,
   type SolidColorUpdate,
+  type TimelinePlayback,
   VIDEO_TYPE,
   type VideoParameters
 } from '../lib/api';
@@ -44,6 +56,7 @@ export function HomePage() {
   // Whatever is running right now, so the capture widgets can be offered for the audio
   // and video patterns the selected scenes brought in.
   const [patterns, setPatterns] = useState<PatternParameters[]>([]);
+  const [timelines, setTimelines] = useState<TimelinePlayback[]>([]);
   // The fixed solid color scene, which lives outside the pattern list and is listed
   // alongside the saved scenes. `solidHex` follows the picker while it is being dragged.
   const [solid, setSolid] = useState<SolidColorStatus | null>(null);
@@ -78,7 +91,24 @@ export function HomePage() {
   }
 
   async function syncPatterns() {
-    setPatterns(await api.listPatterns());
+    const [patternList, timelineList] = await Promise.all([
+      api.listPatterns(),
+      api.timelines()
+    ]);
+    setPatterns(patternList);
+    setTimelines(timelineList);
+  }
+
+  // Play, pause or restart a scene's timeline.
+  async function control(scene: string, change: { playing?: boolean; time?: number }) {
+    setBusy(true);
+    try {
+      setTimelines(await api.controlTimeline(scene, change));
+    } catch (e) {
+      showError(e);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function refresh() {
@@ -89,18 +119,21 @@ export function HomePage() {
         patternList,
         solidColor,
         { blackout },
-        { halfLight }
+        { halfLight },
+        timelineList
       ] = await Promise.all([
         api.listScenes(),
         api.appliedScenes(),
         api.listPatterns(),
         api.solidColor(),
         api.blackout(),
-        api.halfLight()
+        api.halfLight(),
+        api.timelines()
       ]);
       setScenes(sceneList);
       setApplied(appliedList);
       setPatterns(patternList);
+      setTimelines(timelineList);
       trackSolid(solidColor);
       setBlackout(blackout);
       setHalfLight(halfLight);
@@ -188,6 +221,7 @@ export function HomePage() {
       await api.clearPatterns();
       setApplied([]);
       setPatterns([]);
+      setTimelines([]);
       trackSolid(await api.setSolidColor({ enabled: true }));
     } catch (e) {
       showError(e);
@@ -304,6 +338,36 @@ export function HomePage() {
                       />
 
                       <Group gap={'xs'}>
+                        {timelines
+                          .filter((t) => t.scene === scene.name)
+                          .map((t) => (
+                            <Group key={t.scene} gap={4}>
+                              <ActionIcon
+                                variant={'default'}
+                                size={'lg'}
+                                disabled={busy}
+                                aria-label={'Restart timeline'}
+                                onClick={() =>
+                                  void control(t.scene, { time: 0, playing: true })
+                                }
+                              >
+                                <TbPlayerSkipBack />
+                              </ActionIcon>
+                              <ActionIcon
+                                variant={'default'}
+                                size={'lg'}
+                                disabled={busy}
+                                aria-label={
+                                  t.playing ? 'Pause timeline' : 'Play timeline'
+                                }
+                                onClick={() =>
+                                  void control(t.scene, { playing: !t.playing })
+                                }
+                              >
+                                {t.playing ? <TbPlayerPause /> : <TbPlayerPlay />}
+                              </ActionIcon>
+                            </Group>
+                          ))}
                         {isOnlyActive(scene) ? (
                           <Button
                             disabled={busy}

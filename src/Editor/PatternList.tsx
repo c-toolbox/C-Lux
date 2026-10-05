@@ -19,6 +19,8 @@ interface PatternListProps {
   onDuplicate: (pattern: PatternParameters) => void;
   onToggleEnabled: (name: string, enabled: boolean) => void;
   onRemove: (name: string) => void;
+  // Patterns a scene timeline switches on and off, which have no switch of their own.
+  timed?: ReadonlySet<string>;
   // Extra content shown inside a pattern's row, below its controls.
   renderDetails?: (pattern: PatternParameters) => ReactNode;
 }
@@ -31,6 +33,7 @@ export function PatternList({
   onDuplicate,
   onToggleEnabled,
   onRemove,
+  timed,
   renderDetails
 }: PatternListProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -116,17 +119,24 @@ export function PatternList({
                     Disabled
                   </Badge>
                 )}
+                {timed?.has(p.name) && (
+                  <Badge variant={'light'} color={'violet'} size={'sm'}>
+                    Timeline
+                  </Badge>
+                )}
               </Group>
             </Group>
 
             <Group gap={'xs'}>
-              <Switch
-                size={'sm'}
-                checked={p.enabled}
-                disabled={busy}
-                onChange={(e) => onToggleEnabled(p.name, e.currentTarget.checked)}
-                aria-label={p.enabled ? 'Disable pattern' : 'Enable pattern'}
-              />
+              {!timed?.has(p.name) && (
+                <Switch
+                  size={'sm'}
+                  checked={p.enabled}
+                  disabled={busy}
+                  onChange={(e) => onToggleEnabled(p.name, e.currentTarget.checked)}
+                  aria-label={p.enabled ? 'Disable pattern' : 'Enable pattern'}
+                />
+              )}
               <Button
                 size={'xs'}
                 variant={'light'}

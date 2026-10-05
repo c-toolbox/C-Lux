@@ -5,7 +5,7 @@ import { Engine } from '../server/engine';
 import { HttpError } from '../server/errors';
 import { saveScenes } from '../server/storage';
 import { BlendMode, type Color } from '../shared/patterns/pattern';
-import { SOLID_COLOR_NAME } from '../shared/patterns/static';
+import { SOLID_COLOR_NAME, StaticPattern } from '../shared/patterns/static';
 import {
   VIDEO_INPUT_CAMERA,
   VIDEO_INPUT_NDI,
@@ -334,5 +334,219 @@ describe('video capture', () => {
     expect(() => engine.updatePattern('video', { ndiSource: 'A\nB' })).toThrow(
       /control characters/
     );
+  });
+});
+
+describe('scene timelines', () => {
+  const red = { r: 255, g: 0, b: 0 };
+  const green = { r: 0, g: 255, b: 0 };
+  const clip = (start: number, end: number, fadeIn = 0, fadeOut = 0) => ({
+    start,
+    end,
+    fadeIn,
+    fadeOut
+  });
+  const timeline = (tracks: Record<string, ReturnType<typeof clip>[]>, loop = true) => ({
+    duration: 10,
+    loop,
+    tracks
+  });
+  const playback = (scene: string) =>
+    engine.listTimelines().find((t) => t.scene === scene);
+
+  beforeEach(async () => {
+    addStatic('a', red);
+    await engine.saveScene('one');
+  });
+
+  it('switches a pattern on and off over time', () => {
+    engine.setTimeline('one', timeline({ a: [clip(0, 5)] }));
+    expectEveryLight([255, 0, 0]);
+    engine.tick(6);
+    expectEveryLight([0, 0, 0]);
+    engine.tick(5);
+    expect(playback('one')!.time).toBeCloseTo(1);
+    expectEveryLight([255, 0, 0]);
+  });
+
+  it('fades a pattern in', () => {
+    engine.setTimeline('one', timeline({ a: [clip(0, 10, 4)] }));
+    engine.tick(2);
+    expectEveryLight([128, 0, 0]);
+  });
+
+  it('eases a multiplying layer off as it fades out', () => {
+    engine.clearPatterns();
+    addStatic('bottom', { r: 200, g: 100, b: 50 });
+    addStatic('a', { r: 255, g: 0, b: 51 }, { blendMode: BlendMode.Multiply });
+    engine.setTimeline('one', timeline({ a: [clip(0, 10, 0, 10)] }));
+    engine.tick(5);
+    expectEveryLight([200, 50, 30]);
+  });
+
+  it('leaves patterns without a track alone', () => {
+    addStatic('b', green, { start: 0, end: 0.5 });
+    engine.setTimeline('one', timeline({ a: [clip(5, 10)] }));
+    const frame = engine.blend();
+    expect(lightAt(frame, 0)).toEqual([0, 255, 0]);
+    expect(lightAt(frame, N - 1)).toEqual([0, 0, 0]);
+  });
+
+  it('pauses, seeks and restarts', () => {
+    engine.setTimeline('one', timeline({ a: [clip(0, 5)] }));
+    engine.controlTimeline('one', { playing: false });
+    engine.tick(6);
+    expectEveryLight([255, 0, 0]);
+    engine.controlTimeline('one', { time: 7 });
+    expectEveryLight([0, 0, 0]);
+    expect(playback('one')).toMatchObject({ time: 7, playing: false });
+    engine.controlTimeline('one', { time: 0, playing: true });
+    engine.tick(1);
+    expect(playback('one')).toMatchObject({ time: 1, playing: true });
+  });
+
+  it('stops a one-shot timeline at its end and plays it over', () => {
+    engine.setTimeline('one', timeline({ a: [clip(0, 5)] }, false));
+    engine.tick(12);
+    expect(playback('one')).toMatchObject({ time: 10, playing: false });
+    engine.controlTimeline('one', { playing: true });
+    expect(playback('one')).toMatchObject({ time: 0, playing: true });
+  });
+
+  it('holds a pattern still while it is switched off', () => {
+    engine.setTimeline('one', timeline({ a: [clip(5, 10)] }));
+    const tick = vi.spyOn(StaticPattern.prototype, 'tick');
+    engine.tick(1);
+    // Only the solid color layer ticked.
+    expect(tick).toHaveBeenCalledOnce();
+    engine.controlTimeline('one', { time: 6 });
+    tick.mockClear();
+    engine.tick(1);
+    expect(tick).toHaveBeenCalledTimes(2);
+    tick.mockRestore();
+  });
+
+  it('lights a pattern timed by two scenes as the brighter has it', async () => {
+    await engine.saveScene('two');
+    engine.setTimeline('one', timeline({ a: [clip(0, 2)] }));
+    engine.setTimeline('two', timeline({ a: [clip(4, 6)] }));
+    engine.controlTimeline('two', { time: 3 });
+    expectEveryLight([255, 0, 0]);
+    engine.tick(2);
+    expectEveryLight([255, 0, 0]);
+    engine.tick(2);
+    expectEveryLight([0, 0, 0]);
+  });
+
+  it('takes over from the manual switch', async () => {
+    engine.setPatternEnabled('a', false);
+    engine.setTimeline('one', timeline({ a: [clip(0, 5)] }));
+    expect(engine.listPatterns()[0].enabled).toBe(true);
+    await expectRejected(() => engine.setPatternEnabled('a', false), /timeline/);
+  });
+
+  it('rejects a track for a pattern that is not running', async () => {
+    await expectRejected(
+      () => engine.setTimeline('one', timeline({ b: [clip(0, 5)] })),
+      /unknown pattern: b/
+    );
+    await expectRejected(() => engine.setTimeline('one', { duration: -1 }), /duration/);
+    await expectRejected(() => engine.setTimeline('nope', timeline({})), /No scene/);
+    expect(engine.listTimelines()).toEqual([]);
+  });
+
+  it('refuses to control a scene without a running timeline', async () => {
+    await expectRejected(
+      () => engine.controlTimeline('one', { playing: true }),
+      /no running timeline/
+    );
+  });
+
+  it('saves the timeline with the scene, keeping only its own tracks', async () => {
+    addStatic('b', green);
+    engine.setTimeline('one', timeline({ a: [clip(0, 5)], b: [clip(1, 2)] }));
+    engine.removePattern('b');
+    await engine.saveScene('one');
+    expect(engine.listScenes()[0].timeline).toEqual(timeline({ a: [clip(0, 5)] }));
+  });
+
+  it('plays the saved timeline from the start when the scene is applied', async () => {
+    engine.setTimeline('one', timeline({ a: [clip(0, 5)] }));
+    engine.tick(3);
+    await engine.saveScene('one');
+
+    engine.unapplyScene('one');
+    expect(engine.listTimelines()).toEqual([]);
+    engine.applyScene('one');
+    expect(playback('one')).toMatchObject({ time: 0, playing: true });
+    engine.tick(3);
+    engine.replaceWithScene('one');
+    expect(playback('one')).toMatchObject({ time: 0, playing: true });
+  });
+
+  it('removes a timeline, and drops it from the scene on the next save', async () => {
+    engine.setTimeline('one', timeline({ a: [clip(5, 10)] }));
+    await engine.saveScene('one');
+    engine.removeTimeline('one');
+    expect(engine.listTimelines()).toEqual([]);
+    expectEveryLight([255, 0, 0]);
+    expect(engine.setPatternEnabled('a', false).enabled).toBe(false);
+
+    await engine.saveScene('one');
+    expect(engine.listScenes()[0].timeline).toBeUndefined();
+  });
+
+  it('brings a removed timeline back when the scene is applied again', async () => {
+    engine.setTimeline('one', timeline({ a: [clip(5, 10)] }));
+    await engine.saveScene('one');
+    engine.removeTimeline('one');
+    engine.replaceWithScene('one');
+    expect(playback('one')).toMatchObject({ time: 0, playing: true });
+    await engine.saveScene('one');
+    expect(engine.listScenes()[0].timeline).toBeDefined();
+  });
+
+  it('stops the timelines when the patterns are cleared', () => {
+    engine.setTimeline('one', timeline({ a: [clip(0, 5)] }));
+    engine.clearPatterns();
+    expect(engine.listTimelines()).toEqual([]);
+  });
+
+  it('carries a track over a pattern rename', () => {
+    engine.setTimeline('one', timeline({ a: [clip(0, 5)] }));
+    engine.updatePattern('a', { name: 'c' });
+    expect(playback('one')!.timeline.tracks).toEqual({ c: [clip(0, 5)] });
+  });
+
+  it('drops the track of a pattern replaced by a rename', () => {
+    addStatic('b', green);
+    engine.setTimeline('one', timeline({ a: [clip(0, 5)], b: [clip(5, 10)] }));
+    engine.updatePattern('a', { name: 'b' }, true);
+    expect(playback('one')!.timeline.tracks).toEqual({ b: [clip(0, 5)] });
+  });
+
+  it('follows a scene rename and goes with a deleted scene', async () => {
+    engine.setTimeline('one', timeline({ a: [clip(0, 5)] }));
+    await engine.renameScene('one', 'renamed');
+    expect(engine.listTimelines().map((t) => t.scene)).toEqual(['renamed']);
+    await engine.deleteScene('renamed');
+    expect(engine.listTimelines()).toEqual([]);
+  });
+
+  it('imports a scene with its timeline', async () => {
+    const [scene] = engine.listScenes();
+    const imported = timeline({ a: [clip(0, 5)] });
+    await engine.importScene({ ...scene, version: 2, timeline: imported });
+    expect(engine.listScenes().at(-1)!.timeline).toEqual(imported);
+  });
+
+  it('rejects an import whose timeline names a pattern it lacks', async () => {
+    const [scene] = engine.listScenes();
+    vi.mocked(saveScenes).mockClear();
+    await expectRejected(
+      engine.importScene({ ...scene, timeline: timeline({ b: [clip(0, 5)] }) }),
+      /unknown pattern: b/
+    );
+    expect(saveScenes).not.toHaveBeenCalled();
   });
 });

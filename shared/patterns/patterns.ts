@@ -1,4 +1,5 @@
 import { PATTERN_DATA_VERSION } from '../migrate.ts';
+import type { Timeline } from '../timeline.ts';
 
 import { AudioPattern, type AudioProps } from './audio.ts';
 import { AuroraPattern, type AuroraProps } from './aurora.ts';
@@ -153,6 +154,7 @@ export type PatternParameters = ReturnType<
 export interface Scene {
   name: string;
   patterns: PatternParameters[];
+  timeline?: Timeline;
 }
 
 // Version stamped on an exported scene file. Files without one are treated as version 1.

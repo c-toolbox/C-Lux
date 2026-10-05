@@ -34,6 +34,8 @@ import {
   type PatternParameters,
   type Scene,
   SCENE_EXPORT_VERSION,
+  type Timeline,
+  type TimelinePlayback,
   VIDEO_TYPE
 } from '../lib/api';
 import { authRequired, signOut } from '../lib/auth';
@@ -45,7 +47,11 @@ import { AddPatternModal } from './AddPatternModal';
 import { EditPatternModal } from './EditPatternModal';
 import { ManageScenesModal } from './ManageScenesModal';
 import { PatternList } from './PatternList';
+import { type TimelineControl, TimelinePanel } from './TimelinePanel';
 import { copyName, downloadJson, randomName, readJsonFile } from './utils';
+
+// How often the timelines are re-read, so the playhead shown can't drift from the server's.
+const TIMELINE_SYNC_MS = 5000;
 
 function Editor() {
   const [patterns, setPatterns] = useState<PatternParameters[]>([]);
@@ -60,11 +66,25 @@ function Editor() {
   const [newSceneName, setNewSceneName] = useState(randomName());
   // The scene the pattern list was loaded from, if the user is editing one in place.
   const [editingScene, setEditingScene] = useState<string | null>(null);
+  // The running timelines, and `performance.now()` when they were read.
+  const [timelines, setTimelines] = useState<{ list: TimelinePlayback[]; at: number }>({
+    list: [],
+    at: 0
+  });
   const resetFile = useRef<() => void>(null);
+
+  const trackTimelines = useCallback((list: TimelinePlayback[]) => {
+    setTimelines({ list, at: performance.now() });
+  }, []);
 
   async function refresh() {
     try {
-      setPatterns(await api.listPatterns());
+      const [patternList, timelineList] = await Promise.all([
+        api.listPatterns(),
+        api.timelines()
+      ]);
+      setPatterns(patternList);
+      setTimelines({ list: timelineList, at: performance.now() });
       setError(null);
     } catch (e) {
       setError(describeError(e));
@@ -73,7 +93,56 @@ function Editor() {
 
   useEffect(() => {
     void refresh().finally(() => setLoading(false));
+    // A scene selected on the home page (the only one lit) opens straight into editing it.
+    Promise.all([api.appliedScenes(), api.solidColor()]).then(
+      ([applied, solid]) => {
+        if (applied.length === 1 && !solid.enabled) setEditingScene(applied[0]);
+      },
+      () => undefined
+    );
   }, []);
+
+  useEffect(() => {
+    if (editingScene === null) return;
+    const timer = setInterval(() => {
+      api.timelines().then(trackTimelines, () => undefined);
+    }, TIMELINE_SYNC_MS);
+    return () => clearInterval(timer);
+  }, [editingScene, trackTimelines]);
+
+  const timed = new Set(timelines.list.flatMap((t) => Object.keys(t.timeline.tracks)));
+  const editingPlayback = timelines.list.find((t) => t.scene === editingScene) ?? null;
+
+  // Timeline edits skip `run`, so the inputs being typed into don't lose focus to `busy`.
+  async function handleTimelineChange(timeline: Timeline) {
+    if (editingScene === null) return;
+    try {
+      trackTimelines(await api.setTimeline(editingScene, timeline));
+      // A pattern given a track is switched on, so the list has to catch up.
+      setPatterns(await api.listPatterns());
+    } catch (e) {
+      setError(describeError(e));
+      await refresh();
+    }
+  }
+
+  async function handleTimelineControl(control: TimelineControl) {
+    if (editingScene === null) return;
+    try {
+      trackTimelines(await api.controlTimeline(editingScene, control));
+    } catch (e) {
+      setError(describeError(e));
+    }
+  }
+
+  async function handleTimelineRemove() {
+    if (editingScene === null) return;
+    try {
+      trackTimelines(await api.removeTimeline(editingScene));
+    } catch (e) {
+      setError(describeError(e));
+    }
+  }
 
   // A capture panel changed its pattern; nothing else moved, so no full refresh.
   const replacePattern = useCallback((updated: PatternParameters) => {
@@ -425,6 +494,7 @@ function Editor() {
                   onDuplicate={handleDuplicate}
                   onToggleEnabled={handleToggleEnabled}
                   onRemove={handleRemove}
+                  timed={timed}
                   renderDetails={captureDetails}
                 />
               )}
@@ -450,6 +520,25 @@ function Editor() {
           </Box>
         </Box>
       </Group>
+
+      {editingScene !== null && (
+        <ScrollArea.Autosize
+          mah={'40svh'}
+          mt={'md'}
+          type={'auto'}
+          scrollbars={'y'}
+          offsetScrollbars
+        >
+          <TimelinePanel
+            playback={editingPlayback}
+            fetchedAt={timelines.at}
+            patterns={existingNames}
+            onChange={(timeline) => void handleTimelineChange(timeline)}
+            onControl={(control) => void handleTimelineControl(control)}
+            onRemove={() => void handleTimelineRemove()}
+          />
+        </ScrollArea.Autosize>
+      )}
 
       <AddPatternModal
         opened={addOpen}

@@ -65,6 +65,10 @@ const renameSceneBody = z.object({
   newName: z.string('must be a string'),
   overwrite: z.boolean('must be true or false').optional()
 });
+const playbackBody = z.object({
+  playing: z.boolean('must be true or false').optional(),
+  time: z.number('must be a number').min(0).optional()
+});
 const channel = z.int('must be a whole number').min(0).max(255);
 const colorBody = z.object({
   r: channel,
@@ -288,6 +292,24 @@ async function deleteScene(req: express.Request, res: express.Response) {
   res.json(await engine.deleteScene(String(req.params.name)));
 }
 
+function listTimelines(_req: express.Request, res: express.Response) {
+  res.json(engine.listTimelines());
+}
+
+function removeTimeline(req: express.Request, res: express.Response) {
+  res.json(engine.removeTimeline(String(req.params.name)));
+}
+
+// The whole body is the timeline; the engine validates it.
+function setTimeline(req: express.Request, res: express.Response) {
+  res.json(engine.setTimeline(String(req.params.name), req.body));
+}
+
+function controlTimeline(req: express.Request, res: express.Response) {
+  const body = parseBody(playbackBody, req.body);
+  res.json(engine.controlTimeline(String(req.params.name), body));
+}
+
 // The contents of config.json, minus the edit password.
 function getConfig(_req: express.Request, res: express.Response) {
   res.json({ settings: currentSettings(), editPasswordSet: editPasswordSet() });
@@ -359,6 +381,7 @@ async function main() {
   routes.get('/stream', streamFrames);
   routes.get('/scenes', listScenes);
   routes.get('/scenes/applied', appliedScenes);
+  routes.get('/scenes/timelines', listTimelines);
   routes.post('/scenes', requireAuth, saveScene);
   routes.post('/scenes/import', requireAuth, importScene);
   routes.post('/scenes/reorder', requireAuth, reorderScenes);
@@ -367,6 +390,10 @@ async function main() {
   routes.post('/scenes/:name/replace', replaceWithScene);
   routes.patch('/scenes/:name', requireAuth, renameScene);
   routes.delete('/scenes/:name', requireAuth, deleteScene);
+  routes.put('/scenes/:name/timeline', requireAuth, setTimeline);
+  routes.delete('/scenes/:name/timeline', requireAuth, removeTimeline);
+  // Open like apply and unapply: the landing page plays and pauses the timelines too.
+  routes.put('/scenes/:name/timeline/playback', controlTimeline);
   // The config page rewrites config.json, so it sits behind the edit password too.
   routes.get('/config', requireAuth, getConfig);
   routes.put('/config', requireAuth, putConfig);

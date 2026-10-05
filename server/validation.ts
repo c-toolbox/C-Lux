@@ -7,6 +7,7 @@ import {
   UNIT
 } from '../shared/patterns/pattern';
 import { patternByType } from '../shared/patterns/patterns';
+import { type Timeline, validateTimeline } from '../shared/timeline';
 
 import { HttpError } from './errors';
 
@@ -44,6 +45,18 @@ export function validateName(value: unknown, label: string): string {
     );
   }
   return trimmed;
+}
+
+// `validateTimeline` with its complaint turned into a 400.
+export function validateSceneTimeline(
+  raw: unknown,
+  patterns: ReadonlySet<string>
+): Timeline {
+  try {
+    return validateTimeline(raw, patterns);
+  } catch (err) {
+    throw new HttpError(400, (err as Error).message);
+  }
 }
 
 // Recursively verify every leaf value of a pattern's props is a finite number (color
