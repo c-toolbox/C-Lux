@@ -22,7 +22,7 @@ interface ScenesFile {
 // Bring a file written by an older version up to the current one. Files predating the
 // version field are a bare array of scenes, or an object with no version, both treated
 // as version 1.
-function migrate(parsed: unknown): Array<Scene> {
+export function migrate(parsed: unknown): Array<Scene> {
   if (Array.isArray(parsed)) return parsed as Array<Scene>;
 
   const file = parsed as Partial<ScenesFile> | null;

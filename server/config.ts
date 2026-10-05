@@ -97,7 +97,7 @@ function checkRemap(
 
 // Validated at startup so a typo in the user-edited config.json fails fast with a
 // pointed message instead of surfacing as NaN frames or a crash minutes later.
-const configSchema = baseConfigSchema
+export const configSchema = baseConfigSchema
   .extend({
     // Files without a version predate the field and are treated as version 1.
     version: z
