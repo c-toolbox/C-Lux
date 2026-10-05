@@ -9,8 +9,8 @@ import {
 
 export type SparkleProps = PatternBaseProps & {
   // Share of the ring igniting per second (1 = as many sparkles as there are lights), the
-  // fade-in time in seconds (0 = instant), the fade rate, and the hue window each sparkle
-  // draws its color from, in degrees.
+  // fade-in time in seconds (0 = instant), the fade rate, and the hue window, centered on
+  // `hue`, each sparkle draws its color from, in degrees.
   density: number;
   attack: number;
   decay: number;
@@ -145,7 +145,7 @@ export class SparklePattern extends Pattern {
       // Rise from the current brightness so a re-ignited light doesn't dip.
       if (this.attack > 0) this.rising[i] = true;
       else this.intensities[i] = 1;
-      this.hues[i] = this.hue + Math.random() * this.hueRange;
+      this.hues[i] = this.hue + (Math.random() - 0.5) * this.hueRange;
       expected -= 1;
     }
 
