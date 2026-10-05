@@ -14,6 +14,9 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
+    "paths": {
+      "grandi": ["./node_modules/grandi", "./server/types/grandi.d.ts"]
+    },
 
     /* Linting */
     "strict": true,
