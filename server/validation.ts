@@ -146,10 +146,7 @@ function validateAgainstSpec(
         }
       });
     } else if (spec.kind === 'select') {
-      if (!spec.options.some((option) => option.value === value)) {
-        const allowed = spec.options.map((option) => option.value).join(', ');
-        throw new HttpError(400, `props.${key} must be one of ${allowed}`);
-      }
+      requireOption(value, spec.options, `props.${key}`);
     } else {
       requireNumberInRange(value, spec, `props.${key}`);
     }
@@ -159,10 +156,27 @@ function validateAgainstSpec(
   // them existed carry no value for it and fall back to its default.
   for (const [key, spec] of Object.entries(SHARED_FIELDS)) {
     if (validated[key] === undefined) continue;
-    requireNumberInRange(validated[key], spec, `props.${key}`);
+    if (spec.kind === 'select') {
+      requireOption(validated[key], spec.options, `props.${key}`);
+    } else {
+      requireNumberInRange(validated[key], spec, `props.${key}`);
+    }
   }
 
   return validated;
+}
+
+function requireOption(
+  value: unknown,
+  options: ReadonlyArray<{ value: number }>,
+  path: string
+): void {
+  if (!options.some((option) => option.value === value)) {
+    throw new HttpError(
+      400,
+      `${path} must be one of ${options.map((o) => o.value).join(', ')}`
+    );
+  }
 }
 
 // Require a present, in-range number. Finiteness is already guaranteed by

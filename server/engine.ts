@@ -1,5 +1,5 @@
 import type { DebugStatus, DebugUpdate } from '../shared/debug';
-import { type Color, Pattern } from '../shared/patterns/pattern';
+import { BlendMode, type Color, Pattern } from '../shared/patterns/pattern';
 import {
   patternByType,
   patternFromParameters,
@@ -579,8 +579,8 @@ export class Engine {
     );
   }
 
-  // Blend the individual patterns into a single flat RGB array using source-over alpha
-  // compositing (first pattern on the bottom, last on top), scaled by the master
+  // Blend the individual patterns into a single flat RGB array, each by its own blend
+  // mode (first pattern on the bottom, last on top), scaled by the master
   // brightness. Returns a buffer reused across calls; consume it before calling again.
   blend(): number[] {
     const { nLights } = config;
@@ -652,17 +652,35 @@ export class Engine {
     }
   }
 
-  // Source-over composite one pattern's layer onto the accumulator.
+  // Composite one pattern's layer onto the accumulator using its blend mode, with the
+  // layer's alpha as the strength of the effect.
   private composite(pattern: Pattern, accum: number[]): void {
     const layer = pattern.data();
+    const mode = pattern.blendMode;
     for (let i = 0; i < config.nLights; i++) {
       const src = i * 4;
       const dst = i * 3;
       const alpha = layer[src + 3];
 
-      accum[dst] = layer[src] * alpha + accum[dst] * (1 - alpha);
-      accum[dst + 1] = layer[src + 1] * alpha + accum[dst + 1] * (1 - alpha);
-      accum[dst + 2] = layer[src + 2] * alpha + accum[dst + 2] * (1 - alpha);
+      for (let c = 0; c < 3; c++) {
+        const s = layer[src + c];
+        const d = accum[dst + c];
+        switch (mode) {
+          case BlendMode.Additive:
+            accum[dst + c] = Math.min(255, d + s * alpha);
+            break;
+          case BlendMode.Multiply:
+            // Transparent parts of the layer count as black, so they mask out what is
+            // below; only the opacity eases the effect off.
+            accum[dst + c] = d * (1 - pattern.opacity + (alpha * s) / 255);
+            break;
+          case BlendMode.Subtract:
+            accum[dst + c] = Math.max(0, d - s * alpha);
+            break;
+          default:
+            accum[dst + c] = s * alpha + d * (1 - alpha);
+        }
+      }
     }
   }
 

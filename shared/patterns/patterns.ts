@@ -142,7 +142,7 @@ export type PatternProps =
 // shared state `Pattern.serialize()` adds on top.
 export type PatternParameters = ReturnType<
   InstanceType<(typeof PATTERNS)[number]>['parameters']
-> & { enabled: boolean; opacity: number };
+> & { enabled: boolean; opacity: number; blendMode: number };
 
 // A named, reusable combination of patterns.
 export interface Scene {

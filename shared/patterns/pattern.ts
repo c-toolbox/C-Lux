@@ -17,7 +17,18 @@ export interface PatternBaseProps {
   enabled?: boolean;
   // Scales the alpha of every light of the pattern when it is blended. Defaults to 1.
   opacity?: number;
+  // How the pattern combines with the layers below it, a `BlendMode`. Defaults to Alpha.
+  blendMode?: number;
 }
+
+// How a layer is composited onto the ones beneath it. Stored as numbers so they can be
+// used as `select` option values.
+export const BlendMode = {
+  Alpha: 0,
+  Additive: 1,
+  Multiply: 2,
+  Subtract: 3
+} as const;
 
 export interface NumberRange {
   min?: number;
@@ -71,6 +82,18 @@ export const SHARED_FIELDS = {
     default: 1,
     step: 0.01,
     ...UNIT
+  },
+  blendMode: {
+    kind: 'select',
+    label: 'Blend mode',
+    hint: 'How this pattern combines with the ones below it',
+    default: BlendMode.Alpha,
+    options: [
+      { value: BlendMode.Alpha, label: 'Alpha blending' },
+      { value: BlendMode.Additive, label: 'Additive' },
+      { value: BlendMode.Multiply, label: 'Multiplication' },
+      { value: BlendMode.Subtract, label: 'Subtraction' }
+    ]
   }
 } satisfies PatternSchema;
 
@@ -184,16 +207,18 @@ export abstract class Pattern {
   name: string;
   enabled: boolean;
   opacity: number;
+  blendMode: number;
   state: Array<ColorAlpha>;
 
   // The ease an edit started, or null while the parameters sit at their committed
   // values.
   private parameterFade: ParameterFade | null = null;
 
-  constructor({ name, enabled, opacity }: PatternBaseProps) {
+  constructor({ name, enabled, opacity, blendMode }: PatternBaseProps) {
     this.name = name;
     this.enabled = enabled ?? true;
     this.opacity = opacity ?? SHARED_FIELDS.opacity.default;
+    this.blendMode = blendMode ?? SHARED_FIELDS.blendMode.default;
     this.state = Array.from({ length: config.nLights }, () => ({
       r: 0,
       g: 0,
@@ -252,7 +277,11 @@ export abstract class Pattern {
   // fields hold the eased values, so a new edit re-targets from what is lit rather
   // than from where the ease started.
   private parameterValues(): Record<string, unknown> {
-    return { ...(this.parameters() as Record<string, unknown>), opacity: this.opacity };
+    return {
+      ...(this.parameters() as Record<string, unknown>),
+      opacity: this.opacity,
+      blendMode: this.blendMode
+    };
   }
 
   // Apply parameter values the way `update` does: the shared ones directly and the
@@ -260,8 +289,9 @@ export abstract class Pattern {
   // back into `r`/`g`/`b` (and is the identity for already-flat values), the shape
   // `set` expects.
   private applyValues(values: object): void {
-    const { opacity } = values as Partial<PatternBaseProps>;
+    const { opacity, blendMode } = values as Partial<PatternBaseProps>;
     if (opacity !== undefined) this.opacity = opacity;
+    if (blendMode !== undefined) this.blendMode = blendMode;
     this.set(Pattern.propsFromParameters(values));
   }
 
@@ -282,7 +312,12 @@ export abstract class Pattern {
     if (this.parameterFade !== null) {
       return { ...this.parameterFade.to, enabled: this.enabled };
     }
-    return { ...this.parameters(), enabled: this.enabled, opacity: this.opacity };
+    return {
+      ...this.parameters(),
+      enabled: this.enabled,
+      opacity: this.opacity,
+      blendMode: this.blendMode
+    };
   }
 
   /**
