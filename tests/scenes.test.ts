@@ -415,6 +415,19 @@ describe('pattern migration', () => {
     expect(migratePatterns([p], PATTERN_DATA_VERSION)).toEqual([p]);
   });
 
+  it('keeps version 1 Lightning flashes lighting instantly', () => {
+    const old: Params = defaultParameters('Lightning', 'l');
+    delete old.attack;
+    const [migrated] = migratePatterns([old], 1) as Params[];
+    expect(migrated).toEqual({ ...old, attack: 0 });
+    expect(() => validateNewPatternProps('Lightning', propsOf(migrated))).not.toThrow();
+  });
+
+  it('leaves a version 2 Lightning attack alone', () => {
+    const p = { ...defaultParameters('Lightning', 'l'), attack: 0.3 };
+    expect(migratePatterns([p], PATTERN_DATA_VERSION)).toEqual([p]);
+  });
+
   it('leaves other pattern types alone', () => {
     const plasma = { type: 'Plasma', hue: 100, hueRange: 140 };
     expect(migratePatterns([plasma], 1)).toEqual([plasma]);

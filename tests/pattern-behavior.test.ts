@@ -1401,9 +1401,11 @@ describe('Lightning', () => {
 
   const arcStart = Math.floor(0.5 * N);
   const span = (coverage: number) => Math.max(1, Math.round(coverage * N * 0.75));
+  const lightning = (overrides: Record<string, unknown>) =>
+    make('Lightning', { attack: 0, ...overrides });
 
   it('stays dark until the first strike', () => {
-    const p = make('Lightning', { rate: 1 });
+    const p = lightning({ rate: 1 });
     p.tick(0.5);
     expect(litLights(p)).toEqual([]);
     p.tick(0.2);
@@ -1411,7 +1413,7 @@ describe('Lightning', () => {
   });
 
   it('strikes sooner at a higher rate', () => {
-    const p = make('Lightning', { rate: 2 });
+    const p = lightning({ rate: 2 });
     p.tick(0.3);
     expect(litLights(p)).toEqual([]);
     p.tick(0.1);
@@ -1419,7 +1421,7 @@ describe('Lightning', () => {
   });
 
   it.each([0.1, 0.4, 1])('lights an arc sized by coverage %d', (coverage) => {
-    const p = make('Lightning', { rate: 1, coverage, softness: 0 });
+    const p = lightning({ rate: 1, coverage, softness: 0 });
     p.tick(0.7);
     const expected = Array.from({ length: span(coverage) }, (_, k) =>
       mod(arcStart + k, N)
@@ -1429,7 +1431,7 @@ describe('Lightning', () => {
   });
 
   it('tapers the ends of the arc with softness', () => {
-    const p = make('Lightning', { rate: 1, coverage: 0.4, softness: 0.5 });
+    const p = lightning({ rate: 1, coverage: 0.4, softness: 0.5 });
     p.tick(0.7);
     const a = alphas(p);
     const middle = arcStart + Math.floor(span(0.4) / 2);
@@ -1439,7 +1441,7 @@ describe('Lightning', () => {
   });
 
   it.each([2, 8, 20])('fades each flash at decay %d', (decay) => {
-    const p = make('Lightning', { rate: 1, decay, softness: 0 });
+    const p = lightning({ rate: 1, decay, softness: 0 });
     p.tick(0.7);
     p.tick(0.05);
     expect(alphas(p)[arcStart]).toBeCloseTo(0.8 * Math.exp(-decay * 0.05));
@@ -1449,14 +1451,35 @@ describe('Lightning', () => {
     [1, false],
     [3, true]
   ])('fires a follow-up flash with up to %d flashes', (flashes, refires) => {
-    const p = make('Lightning', { rate: 1, flashes, softness: 0 });
+    const p = lightning({ rate: 1, flashes, softness: 0 });
     p.tick(0.7);
     p.tick(0.05);
     p.tick(0.05);
     expect(Math.abs(alphas(p)[arcStart] - 0.8) < 1e-9).toBe(refires);
   });
 
+  it.each([0.05, 0.1, 0.2])('fades each flash in over an attack of %d s', (attack) => {
+    const p = lightning({ rate: 1, flashes: 1, attack, decay: 0, softness: 0 });
+    p.tick(0.7);
+    expect(alphas(p)[arcStart]).toBe(0);
+    p.tick(attack / 4);
+    expect(alphas(p)[arcStart]).toBeCloseTo(0.2);
+    p.tick(attack / 2);
+    expect(alphas(p)[arcStart]).toBeCloseTo(0.6);
+    p.tick(attack);
+    expect(alphas(p)[arcStart]).toBeCloseTo(0.8);
+  });
+
+  it('decays once the attack has peaked', () => {
+    const p = lightning({ rate: 1, flashes: 1, attack: 0.02, decay: 8, softness: 0 });
+    p.tick(0.7);
+    p.tick(0.02);
+    expect(alphas(p)[arcStart]).toBeCloseTo(0.8);
+    p.tick(0.05);
+    expect(alphas(p)[arcStart]).toBeCloseTo(0.8 * Math.exp(-8 * 0.05));
+  });
+
   it('paints every light in its color', () => {
-    allColored(make('Lightning', { color: BLUE }), BLUE);
+    allColored(lightning({ color: BLUE }), BLUE);
   });
 });

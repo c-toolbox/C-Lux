@@ -1,5 +1,6 @@
 import {
   type Color,
+  NON_NEGATIVE,
   Pattern,
   type PatternBaseProps,
   type PatternSchema,
@@ -11,10 +12,12 @@ import {
 export type LightningProps = PatternBaseProps &
   Color & {
     // Strikes per second, the most flashes one strike can fire, the share of the ring a
-    // strike covers, how fast each flash fades and how far its ends taper off.
+    // strike covers, how long each flash takes to rise, how fast it fades and how far
+    // its ends taper off.
     rate: number;
     flashes: number;
     coverage: number;
+    attack: number;
     decay: number;
     softness: number;
   };
@@ -48,14 +51,14 @@ export class LightningPattern extends Pattern {
       min: 1,
       max: 10
     },
-    coverage: {
+    attack: {
       kind: 'number',
-      label: 'Coverage (fraction)',
-      hint: 'Share of the ring a single strike lights.',
-      default: 0.4,
-      step: 0.05,
+      label: 'Fade in (s)',
+      default: 0.05,
+      step: 0.01,
       row: 1,
-      ...POSITIVE_UNIT
+      hint: 'Time a flash takes to reach full brightness; 0 lights it instantly.',
+      ...NON_NEGATIVE
     },
     decay: {
       kind: 'number',
@@ -65,6 +68,15 @@ export class LightningPattern extends Pattern {
       step: 0.5,
       row: 1,
       ...POSITIVE
+    },
+    coverage: {
+      kind: 'number',
+      label: 'Coverage (fraction)',
+      hint: 'Share of the ring a single strike lights.',
+      default: 0.4,
+      step: 0.05,
+      row: 2,
+      ...POSITIVE_UNIT
     },
     softness: {
       kind: 'number',
@@ -84,14 +96,18 @@ export class LightningPattern extends Pattern {
   rate!: number;
   flashes!: number;
   coverage!: number;
+  attack!: number;
   decay!: number;
   softness!: number;
 
-  // The arc the current strike lights, its remaining flashes and the countdown to the
-  // next flash or, once a strike is spent, to the next strike.
+  // The arc the current strike lights, the brightness the current flash rises to, its
+  // remaining flashes and the countdown to the next flash or, once a strike is spent,
+  // to the next strike.
   private start = 0;
   private span = 0;
   private intensity = 0;
+  private peak = 0;
+  private rising = false;
   private remaining = 0;
   private timer = 0;
 
@@ -108,6 +124,7 @@ export class LightningPattern extends Pattern {
     rate: number;
     flashes: number;
     coverage: number;
+    attack: number;
     decay: number;
     softness: number;
   } {
@@ -118,12 +135,24 @@ export class LightningPattern extends Pattern {
       rate: this.rate,
       flashes: this.flashes,
       coverage: this.coverage,
+      attack: this.attack,
       decay: this.decay,
       softness: this.softness
     };
   }
 
-  set({ r, g, b, a, rate, flashes, coverage, decay, softness }: Partial<LightningProps>) {
+  set({
+    r,
+    g,
+    b,
+    a,
+    rate,
+    flashes,
+    coverage,
+    attack,
+    decay,
+    softness
+  }: Partial<LightningProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
@@ -131,13 +160,22 @@ export class LightningPattern extends Pattern {
     this.rate = rate ?? this.rate;
     this.flashes = flashes ?? this.flashes;
     this.coverage = coverage ?? this.coverage;
+    this.attack = attack ?? this.attack;
     this.decay = decay ?? this.decay;
     this.softness = softness ?? this.softness;
     this.render();
   }
 
   tick(dt: number) {
-    this.intensity *= Math.exp(-this.decay * dt);
+    if (this.rising) {
+      this.intensity = Math.min(
+        this.peak,
+        this.intensity + (this.peak * dt) / this.attack
+      );
+      if (this.intensity >= this.peak) this.rising = false;
+    } else {
+      this.intensity *= Math.exp(-this.decay * dt);
+    }
 
     this.timer -= dt;
     if (this.timer <= 0) {
@@ -158,7 +196,10 @@ export class LightningPattern extends Pattern {
   }
 
   private flash() {
-    this.intensity = 0.6 + 0.4 * Math.random();
+    this.peak = 0.6 + 0.4 * Math.random();
+    // Rise from the current brightness so a follow-up flash doesn't dip first.
+    this.rising = this.attack > 0 && this.intensity < this.peak;
+    if (!this.rising) this.intensity = this.peak;
     this.remaining -= 1;
     // Flashes within a strike come in a quick stutter; strikes themselves are spaced by
     // a random wait, so the storm never falls into a rhythm.
