@@ -1,0 +1,355 @@
+{
+  "name": "customized",
+  "patterns": [
+    {
+      "name": "c-StaticPattern",
+      "type": "StaticPattern",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "start": 0,
+      "end": 1,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-MovingGaussian",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "sigma": 0.04,
+      "speed": 0.2,
+      "origin": 0.3,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Sparkle",
+      "type": "Sparkle",
+      "density": 0.3,
+      "decay": 3,
+      "hue": 200,
+      "hueRange": 60,
+      "saturation": 0.7,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Rainbow",
+      "type": "Rainbow",
+      "speed": 60,
+      "saturation": 1,
+      "value": 1,
+      "cycles": 1,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-SineWave",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Comet",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Bounce",
+      "type": "Bounce",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "sigma": 0.04,
+      "speed": 0.3,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Pulse",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "period": 3,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Gradient",
+      "type": "Gradient",
+      "color": {
+        "r": 10,
+        "g": 200,
+        "b": 30
+      },
+      "color2": {
+        "r": 200,
+        "g": 0,
+        "b": 100
+      },
+      "speed": -0.2,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-ColorCycle",
+      "type": "ColorCycle",
+      "speed": 30,
+      "saturation": 1,
+      "value": 1,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Fire",
+      "type": "Fire",
+      "cooling": 55,
+      "sparking": 0.6,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-TheaterChase",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Aurora",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Ripple",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Plasma",
+      "type": "Plasma",
+      "hue": 40,
+      "hueRange": 90,
+      "scale": 2,
+      "speed": 0.06,
+      "saturation": 0.6,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Interference",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Candle",
+      "type": "Candle",
+      "color": {
+        "r": 255,
+        "g": 147,
+        "b": 41
+      },
+      "brightness": 1,
+      "depth": 0.45,
+      "speed": 6,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-ColorTemperature",
+      "type": "ColorTemperature",
+      "kelvin": 2700,
+      "brightness": 1,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Wipe",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Meteors",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Fireworks",
+      "type": "Fireworks",
+      "rate": 0.6,
+      "speed": 0.6,
+      "spread": 0.15,
+      "decay": 1.5,
+      "origin": 0.5,
+      "saturation": 1,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Rain",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": false,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Lightning",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255
+      },
+      "rate": 2,
+      "flashes": 3,
+      "coverage": 0.4,
+      "decay": 4,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Audio",
+      "type": "Audio",
+      "mode": 1,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 90,
+      "hueSpan": -120,
+      "frontHz": 30,
+      "backHz": 16000,
+      "enabled": true,
+      "opacity": 0.6
+    },
+    {
+      "name": "c-Video",
+      "type": "Video",
+      "offset": 0.25,
+      "direction": -1,
+      "fit": 1,
+      "smoothing": 0.2,
+      "saturation": 1.2,
+      "gamma": 1,
+      "enabled": true,
+      "opacity": 0.6
+    }
+  ]
+}
