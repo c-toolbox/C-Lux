@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react';
+import { TbReload } from 'react-icons/tb';
 import { Button, Code, Container, Stack, Text, Title } from '@mantine/core';
 
 interface Props {
@@ -28,7 +29,11 @@ export class ErrorBoundary extends Component<Props, State> {
           <Title order={2}>Something went wrong</Title>
           <Text>The interface hit an unexpected error and could not continue.</Text>
           <Code block>{error.message}</Code>
-          <Button onClick={() => window.location.reload()} w={'fit-content'}>
+          <Button
+            onClick={() => window.location.reload()}
+            w={'fit-content'}
+            leftSection={<TbReload />}
+          >
             Reload
           </Button>
         </Stack>

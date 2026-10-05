@@ -1,4 +1,12 @@
 import { useState } from 'react';
+import {
+  TbChevronDown,
+  TbChevronUp,
+  TbCopy,
+  TbGripVertical,
+  TbPencil,
+  TbTrash
+} from 'react-icons/tb';
 import { ActionIcon, Badge, Button, Group, Stack, Switch, Text } from '@mantine/core';
 
 import { patternDisplayName, type PatternParameters } from '../lib/api';
@@ -67,7 +75,7 @@ export function PatternList({
               style={{ cursor: 'grab' }}
               aria-label={'Drag to reorder'}
             >
-              ⠿
+              <TbGripVertical />
             </ActionIcon>
             <Stack gap={0}>
               <ActionIcon
@@ -78,7 +86,7 @@ export function PatternList({
                 onClick={() => onMove(i, i - 1)}
                 aria-label={'Move pattern up'}
               >
-                ▲
+                <TbChevronUp />
               </ActionIcon>
               <ActionIcon
                 variant={'subtle'}
@@ -88,7 +96,7 @@ export function PatternList({
                 onClick={() => onMove(i, i + 1)}
                 aria-label={'Move pattern down'}
               >
-                ▼
+                <TbChevronDown />
               </ActionIcon>
             </Stack>
             <Group gap={'xs'} wrap={'nowrap'} style={{ opacity: p.enabled ? 1 : 0.5 }}>
@@ -115,13 +123,19 @@ export function PatternList({
               onChange={(e) => onToggleEnabled(p.name, e.currentTarget.checked)}
               aria-label={p.enabled ? 'Disable pattern' : 'Enable pattern'}
             />
-            <Button size={'xs'} variant={'light'} onClick={() => onEdit(p)}>
+            <Button
+              size={'xs'}
+              variant={'light'}
+              leftSection={<TbPencil />}
+              onClick={() => onEdit(p)}
+            >
               Edit
             </Button>
             <Button
               size={'xs'}
               variant={'light'}
               disabled={busy}
+              leftSection={<TbCopy />}
               onClick={() => onDuplicate(p)}
             >
               Duplicate
@@ -131,6 +145,7 @@ export function PatternList({
               color={'red'}
               variant={'light'}
               disabled={busy}
+              leftSection={<TbTrash />}
               onClick={() => onRemove(p.name)}
             >
               Remove

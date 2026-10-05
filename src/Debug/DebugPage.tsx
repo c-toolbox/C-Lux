@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { TbEye, TbEyeOff, TbHome } from 'react-icons/tb';
 import { Link } from 'react-router-dom';
 import {
   Button,
@@ -79,7 +80,7 @@ export function DebugPage() {
         <Title order={1} ta={'left'}>
           C-Lux debug
         </Title>
-        <Button component={Link} to={'/'} variant={'default'}>
+        <Button component={Link} to={'/'} variant={'default'} leftSection={<TbHome />}>
           Home
         </Button>
       </Group>
@@ -97,6 +98,7 @@ export function DebugPage() {
             <Group gap={'xs'}>
               <Button
                 variant={suspended ? 'default' : 'filled'}
+                leftSection={<TbEye />}
                 onClick={() => changeSuspended(false)}
               >
                 Enable scene
@@ -104,6 +106,7 @@ export function DebugPage() {
               <Button
                 color={'red'}
                 variant={suspended ? 'filled' : 'default'}
+                leftSection={<TbEyeOff />}
                 onClick={() => changeSuspended(true)}
               >
                 Disable scene

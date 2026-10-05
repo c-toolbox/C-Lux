@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { TbCursorText } from 'react-icons/tb';
 import { Button, Group, Modal, Stack, Text } from '@mantine/core';
 
 import { type PatternParameters } from '../lib/api';
@@ -116,6 +117,7 @@ export function EditPatternModal({
             <Button
               color={renameTaken ? 'red' : undefined}
               disabled={busy}
+              leftSection={<TbCursorText />}
               onClick={confirmRename}
             >
               {renameTaken ? 'Overwrite' : 'Rename'}

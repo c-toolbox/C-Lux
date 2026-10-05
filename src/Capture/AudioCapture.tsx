@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { TbMicrophone, TbPlayerStop } from 'react-icons/tb';
 import { Button, Group, NativeSelect, Paper, Progress, Stack, Text } from '@mantine/core';
 
 import {
@@ -69,6 +70,7 @@ export function AudioCapture() {
             variant={capturing ? 'filled' : 'default'}
             color={capturing ? 'green' : undefined}
             loading={starting}
+            leftSection={capturing ? <TbPlayerStop /> : <TbMicrophone />}
             onClick={() => (capturing ? stop() : void start())}
           >
             {capturing ? 'Stop capture' : 'Start capture'}

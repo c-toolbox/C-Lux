@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { TbBrightnessHalf, TbCheck, TbEdit, TbMoon, TbSun, TbX } from 'react-icons/tb';
 import { Link } from 'react-router-dom';
 import {
   Box,
@@ -197,7 +198,12 @@ export function HomePage() {
         <Title order={1} ta={'left'}>
           C-Lux
         </Title>
-        <Button component={Link} to={'/editor'} variant={'default'}>
+        <Button
+          component={Link}
+          to={'/editor'}
+          variant={'default'}
+          leftSection={<TbEdit />}
+        >
           Open editor
         </Button>
       </Group>
@@ -252,7 +258,11 @@ export function HomePage() {
                           onDismiss: () => setPickerOpen(false)
                         }}
                       />
-                      <Button disabled={busy} onClick={() => void selectSolid()}>
+                      <Button
+                        disabled={busy}
+                        leftSection={<TbCheck />}
+                        onClick={() => void selectSolid()}
+                      >
                         Select
                       </Button>
                     </Group>
@@ -288,6 +298,7 @@ export function HomePage() {
                             disabled={busy}
                             variant={'default'}
                             style={toggleTransition}
+                            leftSection={<TbX />}
                             onClick={() => void toggle(scene, false)}
                           >
                             Unselect
@@ -296,6 +307,7 @@ export function HomePage() {
                           <Button
                             disabled={busy}
                             style={toggleTransition}
+                            leftSection={<TbCheck />}
                             onClick={() => void select(scene)}
                           >
                             Select
@@ -360,6 +372,7 @@ export function HomePage() {
               size={'lg'}
               h={140}
               px={'xs'}
+              leftSection={blackout ? <TbSun size={24} /> : <TbMoon size={24} />}
               style={{
                 ...toggleTransition,
                 flex: '0 1 175px',
@@ -377,6 +390,7 @@ export function HomePage() {
               size={'lg'}
               h={140}
               px={'xs'}
+              leftSection={<TbBrightnessHalf size={24} />}
               style={{
                 ...toggleTransition,
                 flex: '0 1 175px',

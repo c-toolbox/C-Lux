@@ -1,3 +1,4 @@
+import { TbHome } from 'react-icons/tb';
 import { Link } from 'react-router-dom';
 import { Button, Container, Group, Paper, Stack, Text, Title } from '@mantine/core';
 
@@ -28,7 +29,7 @@ export function RoutesPage() {
         <Title order={1} ta={'left'}>
           C-Lux pages
         </Title>
-        <Button component={Link} to={'/'} variant={'default'}>
+        <Button component={Link} to={'/'} variant={'default'} leftSection={<TbHome />}>
           Home
         </Button>
       </Group>

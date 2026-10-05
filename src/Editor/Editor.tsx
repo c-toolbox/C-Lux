@@ -1,4 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
+import {
+  TbCheck,
+  TbDeviceFloppy,
+  TbFileImport,
+  TbHome,
+  TbListDetails,
+  TbLock,
+  TbPlus,
+  TbSettings,
+  TbX
+} from 'react-icons/tb';
 import { Link } from 'react-router-dom';
 import {
   Alert,
@@ -246,14 +257,23 @@ function Editor() {
         </Title>
         <Group gap={'xs'}>
           {authRequired() && (
-            <Button variant={'default'} onClick={() => void lock()}>
+            <Button
+              variant={'default'}
+              leftSection={<TbLock />}
+              onClick={() => void lock()}
+            >
               Lock
             </Button>
           )}
-          <Button component={Link} to={'/config'} variant={'default'}>
+          <Button
+            component={Link}
+            to={'/config'}
+            variant={'default'}
+            leftSection={<TbSettings />}
+          >
             Config
           </Button>
-          <Button component={Link} to={'/'} variant={'default'}>
+          <Button component={Link} to={'/'} variant={'default'} leftSection={<TbHome />}>
             Home
           </Button>
         </Group>
@@ -269,6 +289,7 @@ function Editor() {
           />
           <Button
             disabled={busy || patterns.length === 0 || newSceneName.trim() === ''}
+            leftSection={<TbDeviceFloppy />}
             onClick={() => handleSaveScene(newSceneName.trim())}
           >
             Save patterns as scene
@@ -284,12 +305,21 @@ function Editor() {
             }}
           >
             {(props) => (
-              <Button {...props} variant={'default'} disabled={busy}>
+              <Button
+                {...props}
+                variant={'default'}
+                disabled={busy}
+                leftSection={<TbFileImport />}
+              >
                 Import scene…
               </Button>
             )}
           </FileButton>
-          <Button variant={'default'} onClick={() => void openManage()}>
+          <Button
+            variant={'default'}
+            leftSection={<TbListDetails />}
+            onClick={() => void openManage()}
+          >
             Manage scenes
           </Button>
         </Group>
@@ -301,6 +331,7 @@ function Editor() {
               setAddOpen(true);
             }}
             px={'xs'}
+            leftSection={<TbPlus />}
           >
             Add pattern
           </Button>
@@ -317,6 +348,7 @@ function Editor() {
                   size={'xs'}
                   variant={'default'}
                   disabled={busy}
+                  leftSection={<TbX />}
                   onClick={() => setEditingScene(null)}
                 >
                   Stop editing
@@ -324,6 +356,7 @@ function Editor() {
                 <Button
                   size={'xs'}
                   disabled={busy || patterns.length === 0}
+                  leftSection={<TbCheck />}
                   onClick={() => handleUpdateScene(editingScene)}
                 >
                   Save changes

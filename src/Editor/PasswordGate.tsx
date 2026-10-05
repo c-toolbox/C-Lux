@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useState } from 'react';
+import { TbHome, TbLockOpen } from 'react-icons/tb';
 import { Link } from 'react-router-dom';
 import {
   Alert,
@@ -68,7 +69,7 @@ export function PasswordGate({ children }: { children: ReactNode }) {
         <Title order={1} ta={'left'}>
           C-Lux
         </Title>
-        <Button component={Link} to={'/'} variant={'default'}>
+        <Button component={Link} to={'/'} variant={'default'} leftSection={<TbHome />}>
           Home
         </Button>
       </Group>
@@ -110,7 +111,12 @@ export function PasswordGate({ children }: { children: ReactNode }) {
                 autoComplete={'current-password'}
                 disabled={busy}
               />
-              <Button type={'submit'} loading={busy} disabled={password === ''}>
+              <Button
+                type={'submit'}
+                loading={busy}
+                disabled={password === ''}
+                leftSection={<TbLockOpen />}
+              >
                 Unlock
               </Button>
             </Stack>

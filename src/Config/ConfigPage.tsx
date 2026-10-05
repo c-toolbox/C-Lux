@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { TbArrowBackUp, TbDeviceFloppy, TbEdit, TbHome } from 'react-icons/tb';
 import { Link } from 'react-router-dom';
 import {
   Alert,
@@ -198,10 +199,15 @@ export function ConfigPage() {
           C-Lux config
         </Title>
         <Group gap={'xs'}>
-          <Button component={Link} to={'/editor'} variant={'default'}>
+          <Button
+            component={Link}
+            to={'/editor'}
+            variant={'default'}
+            leftSection={<TbEdit />}
+          >
             Editor
           </Button>
-          <Button component={Link} to={'/'} variant={'default'}>
+          <Button component={Link} to={'/'} variant={'default'} leftSection={<TbHome />}>
             Home
           </Button>
         </Group>
@@ -311,6 +317,7 @@ export function ConfigPage() {
                       <Button
                         size={'compact-sm'}
                         variant={'default'}
+                        leftSection={<TbArrowBackUp />}
                         onClick={() => setPassword(null)}
                       >
                         Keep current password
@@ -480,6 +487,7 @@ export function ConfigPage() {
                 <Button
                   variant={'default'}
                   disabled={!dirty || saving}
+                  leftSection={<TbArrowBackUp />}
                   onClick={() => saved !== null && adopt(saved, passwordSet)}
                 >
                   Revert
@@ -487,6 +495,7 @@ export function ConfigPage() {
                 <Button
                   loading={saving}
                   disabled={!dirty || remapError !== null}
+                  leftSection={<TbDeviceFloppy />}
                   onClick={() => void save()}
                 >
                   Save

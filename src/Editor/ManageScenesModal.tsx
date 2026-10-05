@@ -1,4 +1,15 @@
 import { useState } from 'react';
+import {
+  TbChevronDown,
+  TbChevronUp,
+  TbCopy,
+  TbCursorText,
+  TbFileExport,
+  TbGripVertical,
+  TbPencil,
+  TbPlayerPlay,
+  TbTrash
+} from 'react-icons/tb';
 import { ActionIcon, Button, Group, Modal, Stack, Text, TextInput } from '@mantine/core';
 
 import { type Scene } from '../lib/api';
@@ -121,7 +132,12 @@ export function ManageScenesModal({
             <Button variant={'default'} onClick={() => setConfirming(null)}>
               Cancel
             </Button>
-            <Button color={'red'} disabled={busy} onClick={confirmDelete}>
+            <Button
+              color={'red'}
+              disabled={busy}
+              leftSection={<TbTrash />}
+              onClick={confirmDelete}
+            >
               Delete
             </Button>
           </Group>
@@ -153,6 +169,7 @@ export function ManageScenesModal({
             <Button
               color={renameTaken ? 'red' : undefined}
               disabled={busy}
+              leftSection={<TbCursorText />}
               onClick={confirmRename}
             >
               {renameTaken ? 'Overwrite' : 'Rename'}
@@ -237,7 +254,7 @@ function SceneRow({
           style={{ cursor: 'grab' }}
           aria-label={'Drag to reorder'}
         >
-          ⠿
+          <TbGripVertical />
         </ActionIcon>
         <Stack gap={2}>
           <ActionIcon
@@ -248,7 +265,7 @@ function SceneRow({
             onClick={() => onMove(index, index - 1)}
             aria-label={'Move scene up'}
           >
-            ▲
+            <TbChevronUp />
           </ActionIcon>
           <ActionIcon
             variant={'subtle'}
@@ -258,7 +275,7 @@ function SceneRow({
             onClick={() => onMove(index, index + 1)}
             aria-label={'Move scene down'}
           >
-            ▼
+            <TbChevronDown />
           </ActionIcon>
         </Stack>
         <TextInput
@@ -274,6 +291,7 @@ function SceneRow({
           size={'xs'}
           variant={'light'}
           disabled={busy}
+          leftSection={<TbPlayerPlay />}
           onClick={() => onApply(scene)}
         >
           Apply
@@ -283,6 +301,7 @@ function SceneRow({
           variant={editing ? 'filled' : 'light'}
           color={'blue'}
           disabled={busy}
+          leftSection={<TbPencil />}
           onClick={() => onEdit(scene)}
         >
           Edit
@@ -290,6 +309,7 @@ function SceneRow({
         <Button
           size={'xs'}
           disabled={busy || !changed}
+          leftSection={<TbCursorText />}
           onClick={() => onRename(scene.name, trimmed)}
         >
           Rename
@@ -299,6 +319,7 @@ function SceneRow({
           variant={'light'}
           color={'gray'}
           disabled={busy}
+          leftSection={<TbCopy />}
           onClick={() => onDuplicate(scene)}
         >
           Duplicate
@@ -307,6 +328,7 @@ function SceneRow({
           size={'xs'}
           variant={'light'}
           color={'gray'}
+          leftSection={<TbFileExport />}
           onClick={() => onExport(scene)}
         >
           Export
@@ -316,6 +338,7 @@ function SceneRow({
           color={'red'}
           variant={'light'}
           disabled={busy}
+          leftSection={<TbTrash />}
           onClick={() => onDelete(scene.name)}
         >
           Delete

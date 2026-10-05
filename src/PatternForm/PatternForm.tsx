@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { TbDeviceFloppy, TbPlus } from 'react-icons/tb';
 import {
   Anchor,
   Button,
@@ -152,6 +153,7 @@ function Field({ spec, value, onChange }: FieldProps) {
             variant={'light'}
             size={'xs'}
             disabled={colors.length >= MAX_COLORS}
+            leftSection={<TbPlus />}
             onClick={() =>
               onChange([...colors, colors[colors.length - 1] ?? '#ffffffff'])
             }
@@ -281,6 +283,7 @@ export function PatternSubForm(props: PatternSubFormProps) {
         onClick={() => onSubmit(values)}
         loading={busy}
         disabled={nameError !== null}
+        leftSection={props.mode === 'add' ? <TbPlus /> : <TbDeviceFloppy />}
       >
         {props.mode === 'add' ? 'Add pattern' : 'Save changes'}
       </Button>

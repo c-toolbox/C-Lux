@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { TbPlayerStop, TbRefresh, TbVideo } from 'react-icons/tb';
 import {
   Box,
   Button,
@@ -380,6 +381,7 @@ export function VideoCapture() {
             color={capturing ? 'green' : undefined}
             loading={starting}
             disabled={!capturing && ndi && source === ''}
+            leftSection={capturing ? <TbPlayerStop /> : <TbVideo />}
             onClick={() => void (capturing ? halt() : start())}
           >
             {capturing ? 'Stop capture' : 'Start capture'}
@@ -405,6 +407,7 @@ export function VideoCapture() {
               variant={'default'}
               loading={scanning}
               disabled={capturing}
+              leftSection={<TbRefresh />}
               onClick={() => void scan()}
             >
               Rescan
