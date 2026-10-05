@@ -1,5 +1,10 @@
 import config from '../config.json' with { type: 'json' };
-import { type Color, MAX_COLORS, Pattern } from '../shared/patterns/pattern';
+import {
+  type Color,
+  colorCountRange,
+  MAX_COLORS,
+  Pattern
+} from '../shared/patterns/pattern';
 import {
   type FieldSpec,
   patternFields,
@@ -103,13 +108,18 @@ export function edgeValues(spec: FieldSpec): unknown[] {
         { r: 0, g: 0, b: 0, a: 0 },
         { r: 255, g: 0, b: 128, a: 0.5 }
       ];
-    case 'colors':
+    case 'colors': {
+      const { min, max } = colorCountRange(spec);
       return [
         spec.default,
-        palette(1),
-        palette(2).map((c) => ({ ...c, a: 0 })),
-        palette(MAX_COLORS).map((c, i) => ({ ...c, a: i % 2 ? 0.5 : 1 }))
+        palette(min),
+        palette(Math.max(min, 2)).map((c) => ({ ...c, a: 0 })),
+        palette(Math.min(max, 2 * MAX_COLORS)).map((c, i) => ({
+          ...c,
+          a: i % 2 ? 0.5 : 1
+        }))
       ];
+    }
     case 'colorMap':
       return [
         spec.default,
@@ -155,12 +165,15 @@ export function randomValue(spec: FieldSpec, random: () => number): unknown {
       return spec.options[Math.floor(random() * spec.options.length)].value;
     case 'color':
       return { r: byte(), g: byte(), b: byte() };
-    case 'colors':
-      return Array.from({ length: 1 + Math.floor(random() * MAX_COLORS) }, () => ({
+    case 'colors': {
+      const { min, max } = colorCountRange(spec);
+      const length = min + Math.floor(random() * (Math.min(max, MAX_COLORS) - min + 1));
+      return Array.from({ length }, () => ({
         r: byte(),
         g: byte(),
         b: byte()
       }));
+    }
     case 'colorMap':
       return Array.from({ length: 1 + Math.floor(random() * MAX_COLORS) }, () => ({
         t: random(),

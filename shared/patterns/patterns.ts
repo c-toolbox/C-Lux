@@ -20,6 +20,7 @@ import { MeteorsPattern, type MeteorsProps } from './meteors.ts';
 import { MovingGaussianPattern, type MovingGaussianProps } from './moving-gaussian.ts';
 import {
   type Color,
+  colorCountRange,
   type ColorStop,
   type FieldSpec,
   isFieldVisible,
@@ -115,7 +116,7 @@ export function patternFields(type: string): PatternSchema | undefined {
 }
 
 export type { Color, ColorStop, FieldSpec, PatternSchema };
-export { isFieldVisible, MAX_COLORS, sampleColorMap };
+export { colorCountRange, isFieldVisible, MAX_COLORS, sampleColorMap };
 
 export type PatternProps =
   | StaticProps

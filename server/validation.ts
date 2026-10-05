@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import {
+  colorCountRange,
   MAX_COLORS,
   type NumberRange,
   SHARED_FIELDS,
@@ -171,11 +172,15 @@ function validateAgainstSpec(
       }
       requireColor(value as Record<string, unknown>, `props.${key}`);
     } else if (spec.kind === 'colors') {
-      if (!Array.isArray(value) || value.length === 0) {
-        throw new HttpError(400, `props.${key} must be a non-empty array of colors`);
+      const count = colorCountRange(spec);
+      if (!Array.isArray(value) || value.length < count.min) {
+        throw new HttpError(
+          400,
+          `props.${key} must be an array of at least ${count.min} colors`
+        );
       }
-      if (value.length > MAX_COLORS) {
-        throw new HttpError(400, `props.${key} must hold at most ${MAX_COLORS} colors`);
+      if (value.length > count.max) {
+        throw new HttpError(400, `props.${key} must hold at most ${count.max} colors`);
       }
       value.forEach((entry, i) => {
         requireColor(entry as Record<string, unknown>, `props.${key}[${i}]`);

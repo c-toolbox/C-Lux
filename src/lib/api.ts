@@ -26,6 +26,7 @@ export type {
   Scene
 } from '../../shared/patterns/patterns';
 export {
+  colorCountRange,
   isFieldVisible,
   MAX_COLORS,
   PATTERN_TYPES,

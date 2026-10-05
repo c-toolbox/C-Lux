@@ -377,6 +377,44 @@ describe('pattern migration', () => {
     expect(migratePatterns([p], PATTERN_DATA_VERSION)).toEqual([p]);
   });
 
+  it('turns the two colors of a version 1 Gradient into its palette', () => {
+    const color = { r: 1, g: 2, b: 3, a: 0.5 };
+    const color2 = { r: 4, g: 5, b: 6 };
+    const old = { name: 'g', type: 'Gradient', color, color2, speed: 0.1 };
+    const [migrated] = migratePatterns([old], 1) as Params[];
+    expect(migrated).toEqual({
+      name: 'g',
+      type: 'Gradient',
+      colors: [color, color2],
+      speed: 0.1
+    });
+    expect(() => validateNewPatternProps('Gradient', propsOf(migrated))).not.toThrow();
+  });
+
+  it('keeps a version 1 Gradient lighting the ring as it used to', () => {
+    const color = { r: 77, g: 171, b: 247, a: 1 };
+    const color2 = { r: 247, g: 77, b: 77, a: 0.25 };
+    const [migrated] = migratePatterns(
+      [{ name: 'g', type: 'Gradient', color, color2, speed: 0.1 }],
+      1
+    ) as Params[];
+    const p = build(migrated);
+    p.tick(1.7);
+    for (let i = 0; i < N; i++) {
+      // Version 1 blended the two colors with a cosine around the ring.
+      const t = 0.5 - 0.5 * Math.cos(2 * Math.PI * (i / N + 0.17));
+      expect(p.state[i].r).toBeCloseTo(77 + 170 * t, 6);
+      expect(p.state[i].g).toBeCloseTo(171 - 94 * t, 6);
+      expect(p.state[i].b).toBeCloseTo(247 - 170 * t, 6);
+      expect(p.state[i].a).toBeCloseTo(1 - 0.75 * t, 6);
+    }
+  });
+
+  it('leaves a version 2 Gradient alone', () => {
+    const p = defaultParameters('Gradient', 'g');
+    expect(migratePatterns([p], PATTERN_DATA_VERSION)).toEqual([p]);
+  });
+
   it('leaves other pattern types alone', () => {
     const plasma = { type: 'Plasma', hue: 100, hueRange: 140 };
     expect(migratePatterns([plasma], 1)).toEqual([plasma]);

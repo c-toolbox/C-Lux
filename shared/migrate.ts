@@ -1,4 +1,5 @@
 import { AudioPattern } from './patterns/audio.ts';
+import { GradientPattern } from './patterns/gradient.ts';
 import { MovingGaussianPattern } from './patterns/moving-gaussian.ts';
 import { hsvToRgb } from './patterns/pattern.ts';
 import { SparklePattern } from './patterns/sparkle.ts';
@@ -11,7 +12,8 @@ type RawPattern = Record<string, unknown>;
 const STEPS: ReadonlyArray<(pattern: RawPattern) => RawPattern> = [
   // 1 -> 2: Sparkle picks a color whose hue its hue window is centered on, instead of a
   // hue the window started at and a saturation,
-  // Moving Gaussian's speed runs the same way as every other pattern's, and fields added
+  // Moving Gaussian's speed runs the same way as every other pattern's, Gradient's two
+  // colors become the first two of its palette, and fields added
   // since get their defaults, which render as before. The Audio and Video capture
   // settings used to live in the capture panel, which started on these same defaults.
   (p) => {
@@ -32,6 +34,11 @@ const STEPS: ReadonlyArray<(pattern: RawPattern) => RawPattern> = [
     if (p.type === MovingGaussianPattern.Type) {
       // `0 - speed` rather than `-speed`, so a still pattern doesn't become -0.
       return typeof p.speed === 'number' ? { ...p, speed: 0 - p.speed } : p;
+    }
+    if (p.type === GradientPattern.Type) {
+      const { color, color2, ...rest } = p;
+      if (color === undefined || color2 === undefined) return p;
+      return { ...rest, colors: [color, color2] };
     }
     if (p.type === VideoPattern.Type) {
       const f = VideoPattern.Fields;

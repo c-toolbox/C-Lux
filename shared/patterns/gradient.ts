@@ -1,32 +1,30 @@
 import {
-  alphaOf,
   type Color,
+  mixColors,
   Pattern,
   type PatternBaseProps,
   type PatternSchema
 } from './pattern.ts';
 
-export type GradientProps = PatternBaseProps &
-  Color & {
-    color2: Color;
-    speed: number;
-  };
+export type GradientProps = PatternBaseProps & {
+  colors: Color[];
+  speed: number;
+};
 
 export class GradientPattern extends Pattern {
   static readonly Type = 'Gradient';
   static readonly DisplayName = 'Gradient';
   static readonly Fields = {
-    color: {
-      kind: 'color',
-      label: 'Color A',
-      default: { r: 77, g: 171, b: 247 },
-      hint: 'Color on one side of the ring.'
-    },
-    color2: {
-      kind: 'color',
-      label: 'Color B',
-      default: { r: 247, g: 77, b: 77 },
-      hint: 'Color on the opposite side of the ring.'
+    colors: {
+      kind: 'colors',
+      label: 'Colors',
+      default: [
+        { r: 77, g: 171, b: 247 },
+        { r: 247, g: 77, b: 77 }
+      ],
+      minCount: 2,
+      maxCount: Infinity,
+      hint: 'Colors spread evenly around the ring, each blending into the next.'
     },
     speed: {
       kind: 'number',
@@ -37,11 +35,7 @@ export class GradientPattern extends Pattern {
     }
   } satisfies PatternSchema;
 
-  r!: number;
-  g!: number;
-  b!: number;
-  a = 1;
-  color2!: Color;
+  colors!: Color[];
   speed!: number;
 
   // Drift offset in cycles that slides the gradient around the ring.
@@ -55,25 +49,19 @@ export class GradientPattern extends Pattern {
   parameters(): {
     name: string;
     type: typeof GradientPattern.Type;
-    color: Color;
-    color2: Color;
+    colors: Color[];
     speed: number;
   } {
     return {
       name: this.name,
       type: GradientPattern.Type,
-      color: { r: this.r, g: this.g, b: this.b, a: this.a },
-      color2: { ...this.color2 },
+      colors: this.colors.map((c) => ({ ...c })),
       speed: this.speed
     };
   }
 
-  set({ r, g, b, a, color2, speed }: Partial<GradientProps>) {
-    this.r = r ?? this.r;
-    this.g = g ?? this.g;
-    this.b = b ?? this.b;
-    this.a = a ?? this.a;
-    this.color2 = color2 ?? this.color2;
+  set({ colors, speed }: Partial<GradientProps>) {
+    this.colors = colors ?? this.colors;
     this.speed = speed ?? this.speed;
     this.render();
   }
@@ -85,16 +73,13 @@ export class GradientPattern extends Pattern {
 
   private render() {
     const n = this.state.length;
-    const a2 = alphaOf(this.color2);
+    const k = this.colors.length;
     for (let i = 0; i < n; i++) {
-      // Cosine blend so the two colors meet seamlessly around the ring.
-      const t = 0.5 - 0.5 * Math.cos(2 * Math.PI * (i / n + this.phase));
-      this.state[i] = {
-        r: this.r + (this.color2.r - this.r) * t,
-        g: this.g + (this.color2.g - this.g) * t,
-        b: this.b + (this.color2.b - this.b) * t,
-        a: this.a + (a2 - this.a) * t
-      };
+      const x = ((((i / n + this.phase) % 1) + 1) % 1) * k;
+      const from = Math.floor(x) % k;
+      // Cosine blend so neighboring colors meet without a visible kink.
+      const t = 0.5 - 0.5 * Math.cos(Math.PI * (x - Math.floor(x)));
+      this.state[i] = mixColors(this.colors[from], this.colors[(from + 1) % k], t);
     }
   }
 }

@@ -85,7 +85,13 @@ export type FieldSpec =
   | (FieldBase & NumberRange & { kind: 'number'; default: number; step?: number })
   | (FieldBase & NumberRange & { kind: 'slider'; default: number; step?: number })
   | (FieldBase & { kind: 'color'; default: Color })
-  | (FieldBase & { kind: 'colors'; default: Color[] })
+  | (FieldBase & {
+      kind: 'colors';
+      default: Color[];
+      // Bounds on the palette length; default to 1 and `MAX_COLORS`.
+      minCount?: number;
+      maxCount?: number;
+    })
   | (FieldBase & { kind: 'colorMap'; default: ColorStop[] })
   | (FieldBase & { kind: 'text'; default: string; maxLength: number })
   | (FieldBase & {
@@ -94,9 +100,16 @@ export type FieldSpec =
       options: ReadonlyArray<{ value: number; label: string }>;
     });
 
-// Upper bound on a `colors` palette or `colorMap`, so a request can't carry an
-// unbounded list.
+// Default upper bound on a `colors` palette and the bound on a `colorMap`, so a request
+// can't carry an unbounded list.
 export const MAX_COLORS = 16;
+
+export function colorCountRange(spec: { minCount?: number; maxCount?: number }): {
+  min: number;
+  max: number;
+} {
+  return { min: spec.minCount ?? 1, max: spec.maxCount ?? MAX_COLORS };
+}
 
 // Every configurable parameter of a pattern, keyed by the name it has in `parameters()`
 // (so `color` / `color2` rather than the flat r/g/b constructor props).

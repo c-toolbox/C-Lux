@@ -8,7 +8,7 @@ import {
   validateNewPatternProps,
   validateUpdatedPatternProps
 } from '../server/validation';
-import { MAX_COLORS, SHARED_FIELDS } from '../shared/patterns/pattern';
+import { colorCountRange, MAX_COLORS, SHARED_FIELDS } from '../shared/patterns/pattern';
 import {
   PATTERN_TYPES,
   patternByType,
@@ -114,10 +114,13 @@ describe.each(PATTERN_TYPES)('%s schema', (type) => {
           expect(Number.isInteger(v) && v >= 0 && v <= 255).toBe(true);
         }
         break;
-      case 'colors':
-        expect(spec.default.length).toBeGreaterThan(0);
-        expect(spec.default.length).toBeLessThanOrEqual(MAX_COLORS);
+      case 'colors': {
+        const { min, max } = colorCountRange(spec);
+        expect(min).toBeGreaterThan(0);
+        expect(spec.default.length).toBeGreaterThanOrEqual(min);
+        expect(spec.default.length).toBeLessThanOrEqual(max);
         break;
+      }
       case 'colorMap':
         expect(spec.default.length).toBeGreaterThan(0);
         expect(spec.default.length).toBeLessThanOrEqual(MAX_COLORS);
@@ -197,13 +200,18 @@ describe.each(PATTERN_TYPES)('%s validation', (type) => {
         reject({ r: 0, g: 0, b: 0, a: -0.1 });
         reject({ r: 0, g: 0, b: 0, a: 'opaque' });
         break;
-      case 'colors':
+      case 'colors': {
+        const { min, max } = colorCountRange(spec);
         reject([]);
-        reject(Array.from({ length: MAX_COLORS + 1 }, () => ({ r: 0, g: 0, b: 0 })));
-        reject([{ r: 0, g: 0, b: 300 }]);
-        reject([{ r: 0, g: 0 }]);
-        reject([{ r: 0, g: 0, b: 0, a: 2 }]);
+        reject(Array.from({ length: min - 1 }, () => ({ r: 0, g: 0, b: 0 })));
+        if (Number.isFinite(max)) {
+          reject(Array.from({ length: max + 1 }, () => ({ r: 0, g: 0, b: 0 })));
+        }
+        reject([...spec.default.slice(1), { r: 0, g: 0, b: 300 }]);
+        reject([...spec.default.slice(1), { r: 0, g: 0 }]);
+        reject([...spec.default.slice(1), { r: 0, g: 0, b: 0, a: 2 }]);
         break;
+      }
       case 'colorMap':
         reject([]);
         reject(

@@ -575,6 +575,45 @@ describe('Pulse', () => {
   });
 });
 
+describe('Gradient', () => {
+  // The color at light 0 once the gradient has drifted `phase` cycles.
+  const firstLight = (colors: Color[], phase: number) => {
+    const p = make('Gradient', { colors, speed: phase });
+    p.tick(1);
+    return rgbAt(p, 0);
+  };
+  const expectColor = (actual: Color, expected: Color) => {
+    expect(actual.r).toBeCloseTo(expected.r, 6);
+    expect(actual.g).toBeCloseTo(expected.g, 6);
+    expect(actual.b).toBeCloseTo(expected.b, 6);
+  };
+
+  it.each([2, 3, 5, 40])('places %d colors evenly around the ring', (k) => {
+    const colors = Array.from({ length: k }, (_, i) => hsvToRgb((i * 360) / k, 1, 1));
+    for (let j = 0; j < k; j++) expectColor(firstLight(colors, j / k), colors[j]);
+  });
+
+  it('blends halfway between neighbors midway', () => {
+    const colors = [RED, GREEN, BLUE, WHITE];
+    expectColor(firstLight(colors, 3 / 8), { r: 0, g: 127.5, b: 127.5 });
+    expectColor(firstLight(colors, 7 / 8), { r: 255, g: 127.5, b: 127.5 });
+  });
+
+  it('blends two colors the way it always has', () => {
+    const p = make('Gradient', { colors: [RED, BLUE], speed: 0.13 });
+    p.tick(1);
+    for (let i = 0; i < N; i++) {
+      const t = 0.5 - 0.5 * Math.cos(2 * Math.PI * (i / N + 0.13));
+      expect(p.state[i].r).toBeCloseTo(255 * (1 - t), 6);
+      expect(p.state[i].b).toBeCloseTo(255 * t, 6);
+    }
+  });
+
+  it('drifts backwards with a negative speed', () => {
+    expectColor(firstLight([RED, GREEN, BLUE, WHITE], -0.25), WHITE);
+  });
+});
+
 describe('ColorCycle', () => {
   it('starts every light at red', () => {
     allColored(make('ColorCycle'), RED);

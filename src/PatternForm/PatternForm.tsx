@@ -18,10 +18,10 @@ import {
 
 import {
   type Color,
+  colorCountRange,
   type ColorStop,
   type FieldSpec,
   isFieldVisible,
-  MAX_COLORS,
   PATTERN_TYPES,
   patternDisplayName,
   patternFields,
@@ -194,6 +194,7 @@ function Field({ spec, value, onChange }: FieldProps) {
 
   if (spec.kind === 'colors') {
     const colors = asList(value);
+    const count = colorCountRange(spec);
     const replace = (index: number, color: string) =>
       onChange(colors.map((c, i) => (i === index ? color : c)));
     return (
@@ -209,7 +210,7 @@ function Field({ spec, value, onChange }: FieldProps) {
               />
               <CloseButton
                 aria-label={'Remove color'}
-                disabled={colors.length <= 1}
+                disabled={colors.length <= count.min}
                 onClick={() => onChange(colors.filter((_, i) => i !== index))}
               />
             </Group>
@@ -217,7 +218,7 @@ function Field({ spec, value, onChange }: FieldProps) {
           <Button
             variant={'light'}
             size={'xs'}
-            disabled={colors.length >= MAX_COLORS}
+            disabled={colors.length >= count.max}
             leftSection={<TbPlus />}
             onClick={() =>
               onChange([...colors, colors[colors.length - 1] ?? '#ffffffff'])
