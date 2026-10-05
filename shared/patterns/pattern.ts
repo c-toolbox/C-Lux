@@ -17,6 +17,34 @@ interface ColorAlpha extends Color {
   a: number;
 }
 
+// A keyframe of a color map: the color shown at position `t` in [0, 1].
+export type ColorStop = Color & { t: number };
+
+// Linear blend from `from` to `to`, alpha included, at `t` in [0, 1].
+export function mixColors(from: Color, to: Color, t: number): ColorAlpha {
+  return {
+    r: from.r + (to.r - from.r) * t,
+    g: from.g + (to.g - from.g) * t,
+    b: from.b + (to.b - from.b) * t,
+    a: alphaOf(from) + (alphaOf(to) - alphaOf(from)) * t
+  };
+}
+
+// The color a map shows at `t`, interpolated between the stops around it. The stops may
+// come in any order; before the first and past the last stop the end color holds.
+export function sampleColorMap(stops: readonly ColorStop[], t: number): ColorAlpha {
+  let below: ColorStop | undefined;
+  let above: ColorStop | undefined;
+  for (const stop of stops) {
+    if (stop.t <= t && (below === undefined || stop.t > below.t)) below = stop;
+    if (stop.t >= t && (above === undefined || stop.t < above.t)) above = stop;
+  }
+  const from = below ?? above;
+  const to = above ?? below;
+  if (from === undefined || to === undefined) return { r: 0, g: 0, b: 0, a: 0 };
+  return mixColors(from, to, to.t > from.t ? (t - from.t) / (to.t - from.t) : 0);
+}
+
 export interface PatternBaseProps {
   name: string;
   // Disabled patterns stay in the list but are skipped when blending. Defaults to true.
@@ -56,13 +84,15 @@ export type FieldSpec =
   | (FieldBase & NumberRange & { kind: 'slider'; default: number; step?: number })
   | (FieldBase & { kind: 'color'; default: Color })
   | (FieldBase & { kind: 'colors'; default: Color[] })
+  | (FieldBase & { kind: 'colorMap'; default: ColorStop[] })
   | (FieldBase & {
       kind: 'select';
       default: number;
       options: ReadonlyArray<{ value: number; label: string }>;
     });
 
-// Upper bound on a `colors` palette, so a request can't carry an unbounded list.
+// Upper bound on a `colors` palette or `colorMap`, so a request can't carry an
+// unbounded list.
 export const MAX_COLORS = 16;
 
 // Every configurable parameter of a pattern, keyed by the name it has in `parameters()`
@@ -160,7 +190,13 @@ function valueEquals(a: unknown, b: unknown): boolean {
     return a.length === b.length && a.every((entry, i) => valueEquals(entry, b[i]));
   }
   if (isColor(a) && isColor(b)) {
-    return a.r === b.r && a.g === b.g && a.b === b.b && alphaOf(a) === alphaOf(b);
+    return (
+      a.r === b.r &&
+      a.g === b.g &&
+      a.b === b.b &&
+      alphaOf(a) === alphaOf(b) &&
+      (a as Partial<ColorStop>).t === (b as Partial<ColorStop>).t
+    );
   }
   return a === b;
 }
@@ -182,8 +218,9 @@ function interpolateParameters(
 }
 
 // Ease one parameter value, using the field's kind to decide how: numbers and colors
-// lerp, palettes lerp color by color (and snap when their length changed), and
-// discrete selects snap outright because they have no meaningful in-between.
+// lerp, palettes lerp color by color and color maps stop by stop (both snap when their
+// length changed), and discrete selects snap outright because they have no meaningful
+// in-between.
 function interpolateValue(
   from: unknown,
   to: unknown,
@@ -192,16 +229,19 @@ function interpolateValue(
 ): unknown {
   if (kind === 'select') return to;
   if (kind === 'color' && isColor(from) && isColor(to)) {
-    return {
-      r: from.r + (to.r - from.r) * t,
-      g: from.g + (to.g - from.g) * t,
-      b: from.b + (to.b - from.b) * t,
-      a: alphaOf(from) + (alphaOf(to) - alphaOf(from)) * t
-    };
+    return mixColors(from, to, t);
   }
   if (kind === 'colors' && Array.isArray(from) && Array.isArray(to)) {
     if (from.length !== to.length) return to;
     return to.map((color, i) => interpolateValue(from[i], color, t, 'color'));
+  }
+  if (kind === 'colorMap' && Array.isArray(from) && Array.isArray(to)) {
+    if (from.length !== to.length) return to;
+    return (to as ColorStop[]).map((stop, i) => {
+      const start = from[i] as ColorStop;
+      if (!isColor(start)) return stop;
+      return { ...mixColors(start, stop, t), t: start.t + (stop.t - start.t) * t };
+    });
   }
   if (typeof from === 'number' && typeof to === 'number') {
     return from + (to - from) * t;

@@ -19,10 +19,12 @@ import { MeteorsPattern, type MeteorsProps } from './meteors.ts';
 import { MovingGaussianPattern, type MovingGaussianProps } from './moving-gaussian.ts';
 import {
   type Color,
+  type ColorStop,
   type FieldSpec,
   MAX_COLORS,
   Pattern,
   type PatternSchema,
+  sampleColorMap,
   SHARED_FIELDS
 } from './pattern.ts';
 import { PlasmaPattern, type PlasmaProps } from './plasma.ts';
@@ -110,8 +112,8 @@ export function patternFields(type: string): PatternSchema | undefined {
   return cls && { ...cls.Fields, ...SHARED_FIELDS };
 }
 
-export type { Color, FieldSpec, PatternSchema };
-export { MAX_COLORS };
+export type { Color, ColorStop, FieldSpec, PatternSchema };
+export { MAX_COLORS, sampleColorMap };
 
 export type PatternProps =
   | StaticProps

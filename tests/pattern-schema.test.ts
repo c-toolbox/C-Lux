@@ -108,6 +108,13 @@ describe.each(PATTERN_TYPES)('%s schema', (type) => {
         expect(spec.default.length).toBeGreaterThan(0);
         expect(spec.default.length).toBeLessThanOrEqual(MAX_COLORS);
         break;
+      case 'colorMap':
+        expect(spec.default.length).toBeGreaterThan(0);
+        expect(spec.default.length).toBeLessThanOrEqual(MAX_COLORS);
+        for (const stop of spec.default) {
+          expect(stop.t >= 0 && stop.t <= 1).toBe(true);
+        }
+        break;
       default:
         expect(Number.isFinite(spec.default)).toBe(true);
         if (spec.step !== undefined) expect(spec.step).toBeGreaterThan(0);
@@ -182,6 +189,19 @@ describe.each(PATTERN_TYPES)('%s validation', (type) => {
         reject([{ r: 0, g: 0, b: 300 }]);
         reject([{ r: 0, g: 0 }]);
         reject([{ r: 0, g: 0, b: 0, a: 2 }]);
+        break;
+      case 'colorMap':
+        reject([]);
+        reject(
+          Array.from({ length: MAX_COLORS + 1 }, () => ({ t: 0, r: 0, g: 0, b: 0 }))
+        );
+        reject([{ r: 0, g: 0, b: 0 }]);
+        reject([{ t: -0.1, r: 0, g: 0, b: 0 }]);
+        reject([{ t: 1.1, r: 0, g: 0, b: 0 }]);
+        reject([{ t: 0, r: 0, g: 0, b: 300 }]);
+        reject([{ t: 0, r: 0, g: 0 }]);
+        reject([{ t: 0, r: 0, g: 0, b: 0, a: 2 }]);
+        reject([0.5]);
         break;
       default:
         if (spec.min !== undefined) reject(spec.min - 1);

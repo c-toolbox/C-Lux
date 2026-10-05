@@ -212,6 +212,90 @@ describe('Audio', () => {
       expect(rgbAt(p, 0)).toEqual(hsvToRgb(hue, 1, 1));
       expect(rgbAt(p, bottom)).toEqual(hsvToRgb(hue + hueSpan, 1, 1));
     });
+
+    const red = { r: 255, g: 0, b: 0 };
+    const blue = { r: 0, g: 0, b: 255 };
+
+    it('blends from the top color to the bottom color', () => {
+      const p = make('Audio', { colorMode: 1, frontColor: red, backColor: blue });
+      expect(rgbAt(p, 0)).toEqual(red);
+      expect(rgbAt(p, bottom)).toEqual(blue);
+      const middle = rgbAt(p, Math.round(bottom / 2));
+      expect(middle.r).toBeCloseTo(255 - middle.b);
+      expect(middle.g).toBe(0);
+    });
+
+    it('follows the color map, whatever order its stops come in', () => {
+      const green = { r: 0, g: 255, b: 0 };
+      const p = make('Audio', {
+        colorMode: 2,
+        colorMap: [
+          { t: 1, ...blue },
+          { t: 0, ...red },
+          { t: 0.5, ...green }
+        ]
+      });
+      expect(rgbAt(p, 0)).toEqual(red);
+      expect(rgbAt(p, bottom)).toEqual(blue);
+      const q = Math.round(bottom / 4);
+      const f = q / bottom / 0.5;
+      expect(rgbAt(p, q).r).toBeCloseTo(255 * (1 - f));
+      expect(rgbAt(p, q).g).toBeCloseTo(255 * f);
+    });
+
+    it('holds the end colors outside the map', () => {
+      const p = make('Audio', {
+        colorMode: 2,
+        colorMap: [
+          { t: 0.25, ...red },
+          { t: 0.75, ...blue }
+        ]
+      });
+      expect(rgbAt(p, 1)).toEqual(red);
+      expect(rgbAt(p, bottom - 1)).toEqual(blue);
+    });
+
+    it.each([1, 2])(
+      'scales the level by the color alpha in color mode %d',
+      (colorMode) => {
+        const half = { ...red, a: 0.5 };
+        const p = make('Audio', {
+          mode: 1,
+          floor: 0,
+          colorMode,
+          frontColor: half,
+          backColor: half,
+          colorMap: [{ t: 0, ...half }]
+        });
+        feed(1);
+        p.tick(1 / 30);
+        alphas(p).forEach((a) => expect(a).toBeCloseTo(0.5));
+      }
+    );
+
+    it('eases a color map edit stop by stop', () => {
+      const p = make('Audio', {
+        colorMode: 2,
+        colorMap: [
+          { t: 0, ...red },
+          { t: 1, ...red }
+        ]
+      });
+      p.update(
+        {
+          colorMap: [
+            { t: 0, ...blue },
+            { t: 1, ...blue }
+          ]
+        },
+        1
+      );
+      p.advance(0.5);
+      expect(rgbAt(p, 0).r).toBeCloseTo(127.5);
+      expect(rgbAt(p, 0).b).toBeCloseTo(127.5);
+      p.advance(0.5);
+      expect(rgbAt(p, 0)).toEqual(blue);
+    });
   });
 });
 

@@ -186,12 +186,38 @@ describe('pattern migration', () => {
   it('defaults the fields added in version 2', () => {
     const [audio, sparkle] = migratePatterns(
       [defaultParameters('Audio', 'a'), defaultParameters('Sparkle', 's')].map(
-        ({ hz: _hz, color: _color, attack: _attack, ...rest }) => rest
+        ({
+          hz: _hz,
+          color: _color,
+          attack: _attack,
+          colorMode: _colorMode,
+          frontColor: _frontColor,
+          backColor: _backColor,
+          colorMap: _colorMap,
+          ...rest
+        }) => rest
       ),
       1
     ) as Params[];
     expect(() => validateNewPatternProps('Audio', propsOf(audio))).not.toThrow();
     expect(() => validateNewPatternProps('Sparkle', propsOf(sparkle))).not.toThrow();
+  });
+
+  it('keeps a version 1 Audio pattern sweeping its hue', () => {
+    const old: Record<string, unknown> = {
+      ...defaultParameters('Audio', 'a'),
+      hue: 120,
+      hueSpan: 0
+    };
+    for (const key of ['colorMode', 'frontColor', 'backColor', 'colorMap']) {
+      delete old[key];
+    }
+    const [migrated] = migratePatterns([old], 1) as Params[];
+    expect(migrated.colorMode).toBe(0);
+    const p = build(migrated);
+    for (const light of p.state) {
+      expect({ r: light.r, g: light.g, b: light.b }).toEqual({ r: 0, g: 255, b: 0 });
+    }
   });
 
   it.each([

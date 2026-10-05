@@ -110,6 +110,18 @@ export function edgeValues(spec: FieldSpec): unknown[] {
         palette(2).map((c) => ({ ...c, a: 0 })),
         palette(MAX_COLORS).map((c, i) => ({ ...c, a: i % 2 ? 0.5 : 1 }))
       ];
+    case 'colorMap':
+      return [
+        spec.default,
+        palette(1).map((c) => ({ ...c, t: 0.5 })),
+        palette(2).map((c, i) => ({ ...c, t: 1 - i, a: 0 })),
+        palette(3).map((c) => ({ ...c, t: 0.3 })),
+        palette(MAX_COLORS).map((c, i) => ({
+          ...c,
+          t: i / (MAX_COLORS - 1),
+          a: i % 2 ? 0.5 : 1
+        }))
+      ];
     default: {
       const far = Math.max(10, Math.abs(spec.default) * 10);
       const values = [spec.default];
@@ -146,6 +158,14 @@ export function randomValue(spec: FieldSpec, random: () => number): unknown {
         r: byte(),
         g: byte(),
         b: byte()
+      }));
+    case 'colorMap':
+      return Array.from({ length: 1 + Math.floor(random() * MAX_COLORS) }, () => ({
+        t: random(),
+        r: byte(),
+        g: byte(),
+        b: byte(),
+        a: random()
       }));
     default: {
       const span = Math.max(10, Math.abs(spec.default) * 10);

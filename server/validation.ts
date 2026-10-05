@@ -153,6 +153,18 @@ function validateAgainstSpec(
       value.forEach((entry, i) => {
         requireColor(entry as Record<string, unknown>, `props.${key}[${i}]`);
       });
+    } else if (spec.kind === 'colorMap') {
+      if (!Array.isArray(value) || value.length === 0) {
+        throw new HttpError(400, `props.${key} must be a non-empty array of color stops`);
+      }
+      if (value.length > MAX_COLORS) {
+        throw new HttpError(400, `props.${key} must hold at most ${MAX_COLORS} stops`);
+      }
+      value.forEach((entry, i) => {
+        const stop = entry as Record<string, unknown>;
+        requireNumberInRange(stop.t, UNIT, `props.${key}[${i}].t`);
+        requireColor(stop, `props.${key}[${i}]`);
+      });
     } else if (spec.kind === 'select') {
       requireOption(value, spec.options, `props.${key}`);
     } else {

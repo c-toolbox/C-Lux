@@ -16,6 +16,7 @@ import {
 
 import {
   type Color,
+  type ColorStop,
   type FieldSpec,
   MAX_COLORS,
   PATTERN_TYPES,
@@ -29,27 +30,34 @@ import {
 import { hexToRgb, rgbToHex } from '../lib/color';
 import { PatternPreview } from '../PatternVisualizer/PatternPreview';
 
+import { ColorMapInput, type StopValue } from './ColorMapInput';
+
 export interface FormValues {
   type: PatternType;
   name: string;
   // Keyed by the pattern's schema fields: hex strings for colors, a list of them for
-  // palettes, numbers otherwise.
+  // palettes, positioned hex colors for color maps, numbers otherwise.
   values: Record<string, FieldValue>;
 }
 
-type FieldValue = number | string | string[];
+type FieldValue = number | string | string[] | StopValue[];
 
 function schemaFor(type: PatternType): PatternSchema {
   return patternFields(type) ?? {};
 }
 
 const num = (v: FieldValue) => (typeof v === 'number' ? v : Number(v) || 0);
+const text = (v: FieldValue) => (Array.isArray(v) ? '' : String(v));
+
+const toStopValues = (stops: ColorStop[]): StopValue[] =>
+  stops.map(({ t, ...color }) => ({ t, color: rgbToHex(color) }));
 
 function defaultsFor(type: PatternType, name: string): FormValues {
   const values: Record<string, FieldValue> = {};
   for (const [key, spec] of Object.entries(schemaFor(type))) {
     if (spec.kind === 'color') values[key] = rgbToHex(spec.default);
     else if (spec.kind === 'colors') values[key] = spec.default.map(rgbToHex);
+    else if (spec.kind === 'colorMap') values[key] = toStopValues(spec.default);
     else values[key] = spec.default;
   }
   return { type, name, values };
@@ -61,13 +69,15 @@ export function toProps(values: FormValues): PatternProps {
     const value = values.values[key];
     if (spec.kind === 'colors') {
       props[key] = asList(value).map(hexToRgb);
+    } else if (spec.kind === 'colorMap') {
+      props[key] = asStops(value).map((s) => ({ t: s.t, ...hexToRgb(s.color) }));
     } else if (spec.kind !== 'color') {
       props[key] = num(value);
     } else if (key === 'color') {
       // The primary color is flattened into r/g/b, the shape pattern constructors take.
-      Object.assign(props, hexToRgb(String(value)));
+      Object.assign(props, hexToRgb(text(value)));
     } else {
-      props[key] = hexToRgb(String(value));
+      props[key] = hexToRgb(text(value));
     }
   }
   return props as unknown as PatternProps;
@@ -83,6 +93,9 @@ export function fromParameters(p: PatternParameters): FormValues {
     } else if (spec.kind === 'colors') {
       const palette = Array.isArray(value) && value.length > 0 ? value : spec.default;
       values[key] = (palette as Color[]).map(rgbToHex);
+    } else if (spec.kind === 'colorMap') {
+      const stops = Array.isArray(value) && value.length > 0 ? value : spec.default;
+      values[key] = toStopValues(stops as ColorStop[]);
     } else {
       values[key] = typeof value === 'number' ? value : spec.default;
     }
@@ -90,7 +103,11 @@ export function fromParameters(p: PatternParameters): FormValues {
   return { type: p.type, name: p.name, values };
 }
 
-const asList = (value: FieldValue) => (Array.isArray(value) ? value : []);
+const asList = (value: FieldValue): string[] =>
+  Array.isArray(value) ? value.filter((v) => typeof v === 'string') : [];
+
+const asStops = (value: FieldValue): StopValue[] =>
+  Array.isArray(value) ? value.filter((v) => typeof v === 'object') : [];
 
 type Entry = [string, FieldSpec];
 
@@ -121,7 +138,7 @@ function Field({ spec, value, onChange }: FieldProps) {
         label={spec.label}
         description={spec.hint}
         format={'hexa'}
-        value={String(value)}
+        value={text(value)}
         onChange={onChange}
       />
     );
@@ -165,12 +182,23 @@ function Field({ spec, value, onChange }: FieldProps) {
     );
   }
 
+  if (spec.kind === 'colorMap') {
+    return (
+      <ColorMapInput
+        label={spec.label}
+        description={spec.hint}
+        value={asStops(value)}
+        onChange={onChange}
+      />
+    );
+  }
+
   if (spec.kind === 'select') {
     return (
       <NativeSelect
         label={spec.label}
         description={spec.hint}
-        value={String(value)}
+        value={text(value)}
         data={spec.options.map((o) => ({ value: String(o.value), label: o.label }))}
         onChange={(e) => onChange(Number(e.currentTarget.value))}
       />

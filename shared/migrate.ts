@@ -12,8 +12,17 @@ const STEPS: ReadonlyArray<(pattern: RawPattern) => RawPattern> = [
   // since get their defaults, which render as before.
   (p) => {
     if (p.type === AudioPattern.Type) {
-      const { hz, color } = AudioPattern.Fields;
-      return { hz: hz.default, color: { ...color.default }, ...p };
+      const { hz, color, colorMode, frontColor, backColor, colorMap } =
+        AudioPattern.Fields;
+      return {
+        hz: hz.default,
+        color: { ...color.default },
+        colorMode: colorMode.default,
+        frontColor: { ...frontColor.default },
+        backColor: { ...backColor.default },
+        colorMap: colorMap.default.map((stop) => ({ ...stop })),
+        ...p
+      };
     }
     if (p.type === MovingGaussianPattern.Type) {
       // `0 - speed` rather than `-speed`, so a still pattern doesn't become -0.

@@ -9,12 +9,15 @@ import {
 import {
   alphaOf,
   type Color,
+  type ColorStop,
   hsvToRgb,
+  mixColors,
   NON_NEGATIVE,
   type NumberRange,
   Pattern,
   type PatternBaseProps,
   type PatternSchema,
+  sampleColorMap,
   UNIT
 } from './pattern.ts';
 
@@ -24,6 +27,10 @@ export const AUDIO_TYPE = 'Audio';
 const AUDIO_MODE_SPECTRUM = 0;
 const AUDIO_MODE_VU = 1;
 const AUDIO_MODE_FREQUENCY = 2;
+
+const COLOR_MODE_HUE = 0;
+const COLOR_MODE_TWO_COLORS = 1;
+const COLOR_MODE_MAP = 2;
 
 const DEGREES: NumberRange = { min: 0, max: 360 };
 const SIGNED_DEGREES: NumberRange = { min: -360, max: 360 };
@@ -39,6 +46,10 @@ export type AudioProps = PatternBaseProps &
     decay: number;
     hue: number;
     hueSpan: number;
+    colorMode?: number;
+    frontColor?: Color;
+    backColor?: Color;
+    colorMap?: ColorStop[];
     frontHz?: number;
     backHz?: number;
     hz?: number;
@@ -90,12 +101,24 @@ export class AudioPattern extends Pattern {
       hint: 'How fast a peak falls back; 0 holds it.',
       ...NON_NEGATIVE
     },
+    colorMode: {
+      kind: 'select',
+      label: 'Colors',
+      default: COLOR_MODE_HUE,
+      hint: 'How the spectrum and VU meter are colored from the top of the ring to the bottom.',
+      options: [
+        { value: COLOR_MODE_HUE, label: 'Hue sweep' },
+        { value: COLOR_MODE_TWO_COLORS, label: 'Two colors' },
+        { value: COLOR_MODE_MAP, label: 'Color map' }
+      ]
+    },
     hue: {
       kind: 'number',
       label: 'Base hue',
       default: 0,
       step: 10,
       row: 2,
+      hint: 'Hue sweep only.',
       ...DEGREES
     },
     hueSpan: {
@@ -106,12 +129,35 @@ export class AudioPattern extends Pattern {
       row: 2,
       ...SIGNED_DEGREES
     },
+    frontColor: {
+      kind: 'color',
+      label: 'Top color',
+      default: { r: 77, g: 171, b: 247 },
+      row: 3,
+      hint: 'Two colors only.'
+    },
+    backColor: {
+      kind: 'color',
+      label: 'Bottom color',
+      default: { r: 255, g: 64, b: 129 },
+      row: 3
+    },
+    colorMap: {
+      kind: 'colorMap',
+      label: 'Color map',
+      default: [
+        { t: 0, r: 32, g: 0, b: 255 },
+        { t: 0.5, r: 255, g: 0, b: 128 },
+        { t: 1, r: 255, g: 200, b: 0 }
+      ],
+      hint: 'Color map only. Position 0 is the top of the ring, 1 the bottom.'
+    },
     frontHz: {
       kind: 'number',
       label: 'Front frequency',
       default: AUDIO_MIN_HZ,
       step: 10,
-      row: 3,
+      row: 4,
       hint: 'Frequency shown at the top of the ring.',
       ...HERTZ
     },
@@ -120,7 +166,7 @@ export class AudioPattern extends Pattern {
       label: 'Back frequency',
       default: AUDIO_MAX_HZ,
       step: 100,
-      row: 3,
+      row: 4,
       hint: 'Frequency shown at the bottom of the ring.',
       ...HERTZ
     },
@@ -129,7 +175,7 @@ export class AudioPattern extends Pattern {
       label: 'Frequency',
       default: 100,
       step: 10,
-      row: 4,
+      row: 5,
       hint: 'Single-frequency mode: drives the whole dome.',
       ...HERTZ
     },
@@ -148,6 +194,10 @@ export class AudioPattern extends Pattern {
   hue!: number;
   hueSpan!: number;
   // Defaulted rather than required so scenes saved before these existed still load.
+  colorMode: number = AudioPattern.Fields.colorMode.default;
+  frontColor: Color = { ...AudioPattern.Fields.frontColor.default };
+  backColor: Color = { ...AudioPattern.Fields.backColor.default };
+  colorMap: ColorStop[] = AudioPattern.Fields.colorMap.default.map((s) => ({ ...s }));
   frontHz: number = AudioPattern.Fields.frontHz.default;
   backHz: number = AudioPattern.Fields.backHz.default;
   hz: number = AudioPattern.Fields.hz.default;
@@ -175,6 +225,10 @@ export class AudioPattern extends Pattern {
     decay: number;
     hue: number;
     hueSpan: number;
+    colorMode: number;
+    frontColor: Color;
+    backColor: Color;
+    colorMap: ColorStop[];
     frontHz: number;
     backHz: number;
     hz: number;
@@ -189,6 +243,10 @@ export class AudioPattern extends Pattern {
       decay: this.decay,
       hue: this.hue,
       hueSpan: this.hueSpan,
+      colorMode: this.colorMode,
+      frontColor: { ...this.frontColor },
+      backColor: { ...this.backColor },
+      colorMap: this.colorMap.map((stop) => ({ ...stop })),
       frontHz: this.frontHz,
       backHz: this.backHz,
       hz: this.hz,
@@ -203,6 +261,10 @@ export class AudioPattern extends Pattern {
     decay,
     hue,
     hueSpan,
+    colorMode,
+    frontColor,
+    backColor,
+    colorMap,
     frontHz,
     backHz,
     hz,
@@ -217,6 +279,10 @@ export class AudioPattern extends Pattern {
     this.decay = decay ?? this.decay;
     this.hue = hue ?? this.hue;
     this.hueSpan = hueSpan ?? this.hueSpan;
+    this.colorMode = colorMode ?? this.colorMode;
+    this.frontColor = frontColor ?? this.frontColor;
+    this.backColor = backColor ?? this.backColor;
+    this.colorMap = colorMap ?? this.colorMap;
     this.frontHz = frontHz ?? this.frontHz;
     this.backHz = backHz ?? this.backHz;
     this.hz = hz ?? this.hz;
@@ -274,8 +340,18 @@ export class AudioPattern extends Pattern {
             clampUnit(filled - distance)
           : this.bandAt(t);
 
-      this.state[i] = { ...hsvToRgb(this.hue + t * this.hueSpan, 1, 1), a: value };
+      const color = this.colorAt(t);
+      this.state[i] = { r: color.r, g: color.g, b: color.b, a: value * color.a };
     }
+  }
+
+  // Color at a normalized position across the ring, where 0 is the top and 1 the bottom.
+  private colorAt(t: number): Color & { a: number } {
+    if (this.colorMode === COLOR_MODE_TWO_COLORS) {
+      return mixColors(this.frontColor, this.backColor, t);
+    }
+    if (this.colorMode === COLOR_MODE_MAP) return sampleColorMap(this.colorMap, t);
+    return { ...hsvToRgb(this.hue + t * this.hueSpan, 1, 1), a: 1 };
   }
 
   // Band magnitude at a normalized position across the ring, where 0 is the front and 1

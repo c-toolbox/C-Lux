@@ -12,6 +12,7 @@ export type { NdiSource, NdiStatus, NdiUpdate } from '../../shared/ndi';
 export { AUDIO_TYPE } from '../../shared/patterns/audio';
 export type {
   Color,
+  ColorStop,
   FieldSpec,
   PatternParameters,
   PatternProps,
@@ -22,6 +23,7 @@ export type {
 export {
   MAX_COLORS,
   PATTERN_TYPES,
+  sampleColorMap,
   SCENE_EXPORT_VERSION
 } from '../../shared/patterns/patterns';
 export {
