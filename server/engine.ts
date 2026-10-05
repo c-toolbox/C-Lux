@@ -5,8 +5,8 @@ import {
   patternFromParameters,
   type PatternParameters,
   type PatternProps,
-  type Scene
-} from '../shared/patterns/patterns';
+  type Scene,
+  SCENE_EXPORT_VERSION} from '../shared/patterns/patterns';
 import {
   SOLID_COLOR_NAME,
   type SolidColorStatus,
@@ -325,7 +325,16 @@ export class Engine {
       throw new HttpError(400, 'A scene must be an object');
     }
 
-    const { name: rawName, patterns } = raw as Record<string, unknown>;
+    const { name: rawName, patterns, version = 1 } = raw as Record<string, unknown>;
+    if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {
+      throw new HttpError(400, 'scene.version must be a positive integer');
+    }
+    if (version > SCENE_EXPORT_VERSION) {
+      throw new HttpError(
+        400,
+        `Scene file version ${version} is newer than the supported version ${SCENE_EXPORT_VERSION}`
+      );
+    }
     const name = this.uniqueSceneName(validateName(rawName, 'scene name'));
     if (!Array.isArray(patterns)) {
       throw new HttpError(400, 'scene.patterns must be an array');

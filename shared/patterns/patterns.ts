@@ -149,3 +149,6 @@ export interface Scene {
   name: string;
   patterns: PatternParameters[];
 }
+
+// Version stamped on an exported scene file. Files without one are treated as version 1.
+export const SCENE_EXPORT_VERSION = 1;

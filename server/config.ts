@@ -17,6 +17,8 @@ import { REMAP_DISABLED } from '../shared/remap';
 // Resolved relative to the project root, regardless of cwd.
 const configPath = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'config.json');
 
+const CONFIG_FILE_VERSION = 1;
+
 const serverSchema = z.object({
   tickRate: z.number().positive(),
   port: z.int().min(1).max(65535),
@@ -95,7 +97,18 @@ function checkRemap(
 
 // Validated at startup so a typo in the user-edited config.json fails fast with a
 // pointed message instead of surfacing as NaN frames or a crash minutes later.
-const configSchema = baseConfigSchema.superRefine(checkRemap);
+const configSchema = baseConfigSchema
+  .extend({
+    // Files without a version predate the field and are treated as version 1.
+    version: z
+      .int()
+      .positive()
+      .max(CONFIG_FILE_VERSION, {
+        message: `is newer than the supported version ${CONFIG_FILE_VERSION}`
+      })
+      .default(1)
+  })
+  .superRefine(checkRemap);
 
 // The body of a save from the config page: the file's contents minus the password, which
 // the browser never receives and only sends when the user is changing it.
@@ -178,6 +191,7 @@ export async function saveConfig(update: ConfigUpdate): Promise<string[]> {
   // Written out in the order the file uses, so a save keeps config.json readable for
   // whoever edits it by hand next.
   const next: Config = {
+    version: CONFIG_FILE_VERSION,
     nLights,
     server: {
       tickRate: server.tickRate,

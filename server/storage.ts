@@ -20,17 +20,22 @@ interface ScenesFile {
 }
 
 // Bring a file written by an older version up to the current one. Files predating the
-// version field are a bare array of scenes.
+// version field are a bare array of scenes, or an object with no version, both treated
+// as version 1.
 function migrate(parsed: unknown): Array<Scene> {
   if (Array.isArray(parsed)) return parsed as Array<Scene>;
 
-  const file = parsed as Partial<ScenesFile>;
-  if (typeof file.version !== 'number' || !Array.isArray(file.scenes)) {
+  const file = parsed as Partial<ScenesFile> | null;
+  if (typeof file !== 'object' || file === null || !Array.isArray(file.scenes)) {
     throw new Error('scenes file is not in a recognized format');
   }
-  if (file.version > SCENES_FILE_VERSION) {
+  const version = file.version ?? 1;
+  if (typeof version !== 'number') {
+    throw new Error('scenes file version must be a number');
+  }
+  if (version > SCENES_FILE_VERSION) {
     throw new Error(
-      `scenes file version ${file.version} is newer than the supported version ${SCENES_FILE_VERSION}`
+      `scenes file version ${version} is newer than the supported version ${SCENES_FILE_VERSION}`
     );
   }
   return file.scenes;

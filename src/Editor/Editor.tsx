@@ -22,6 +22,7 @@ import {
   AUDIO_TYPE,
   type PatternParameters,
   type Scene,
+  SCENE_EXPORT_VERSION,
   VIDEO_TYPE
 } from '../lib/api';
 import { authRequired, signOut } from '../lib/auth';
@@ -151,7 +152,7 @@ function Editor() {
   function handleExportScene(scene: Scene) {
     setError(null);
     try {
-      downloadJson(scene.name, scene);
+      downloadJson(scene.name, { version: SCENE_EXPORT_VERSION, ...scene });
     } catch (e) {
       setError(describeError(e));
     }

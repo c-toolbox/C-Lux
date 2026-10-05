@@ -19,7 +19,11 @@ export type {
   PatternType,
   Scene
 } from '../../shared/patterns/patterns';
-export { MAX_COLORS, PATTERN_TYPES } from '../../shared/patterns/patterns';
+export {
+  MAX_COLORS,
+  PATTERN_TYPES,
+  SCENE_EXPORT_VERSION
+} from '../../shared/patterns/patterns';
 export {
   patternByType,
   patternDisplayName,

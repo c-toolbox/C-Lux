@@ -1,4 +1,5 @@
 {
+  "version": 1,
   "nLights": 142,
   "server": {
     "tickRate": 30,
