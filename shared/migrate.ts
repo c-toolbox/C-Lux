@@ -1,4 +1,5 @@
 import { AudioPattern } from './patterns/audio.ts';
+import { MovingGaussianPattern } from './patterns/moving-gaussian.ts';
 import { SparklePattern } from './patterns/sparkle.ts';
 
 type RawPattern = Record<string, unknown>;
@@ -6,12 +7,17 @@ type RawPattern = Record<string, unknown>;
 // Step `i` upgrades a saved pattern from version `i + 1` to `i + 2`. Patterns are
 // untrusted here, so anything unexpected passes through for validation to reject.
 const STEPS: ReadonlyArray<(pattern: RawPattern) => RawPattern> = [
-  // 1 -> 2: Sparkle's hue window is centered on `hue` rather than starting at it, and
-  // fields added since get their defaults, which render as before.
+  // 1 -> 2: Sparkle's hue window is centered on `hue` rather than starting at it,
+  // Moving Gaussian's speed runs the same way as every other pattern's, and fields added
+  // since get their defaults, which render as before.
   (p) => {
     if (p.type === AudioPattern.Type) {
       const { hz, color } = AudioPattern.Fields;
       return { hz: hz.default, color: { ...color.default }, ...p };
+    }
+    if (p.type === MovingGaussianPattern.Type) {
+      // `0 - speed` rather than `-speed`, so a still pattern doesn't become -0.
+      return typeof p.speed === 'number' ? { ...p, speed: 0 - p.speed } : p;
     }
     if (p.type !== SparklePattern.Type) return p;
     if (typeof p.hue !== 'number' || typeof p.hueRange !== 'number') return p;

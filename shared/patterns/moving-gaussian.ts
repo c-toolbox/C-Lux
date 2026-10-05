@@ -116,7 +116,8 @@ export class MovingGaussianPattern extends Pattern {
     const steps = Math.trunc(this.offset);
     if (steps !== 0) {
       this.offset -= steps;
-      this.rotate(steps);
+      // Rotating backwards walks the bump to higher indices, like every other pattern.
+      this.rotate(-steps);
     }
   }
 }

@@ -17,7 +17,16 @@ import {
 } from '../shared/patterns/patterns';
 import { SOLID_COLOR_NAME } from '../shared/patterns/static';
 
-import { animate, build, defaultParameters, type Params, propsOf } from './helpers';
+import {
+  alphas,
+  animate,
+  argmax,
+  build,
+  defaultParameters,
+  N_LIGHTS as N,
+  type Params,
+  propsOf
+} from './helpers';
 
 // Never let a test overwrite the real scenes.json.
 vi.mock('../server/storage', async (importOriginal) => ({
@@ -185,6 +194,33 @@ describe('pattern migration', () => {
     expect(() => validateNewPatternProps('Sparkle', propsOf(sparkle))).not.toThrow();
   });
 
+  it.each([
+    [0.07, -0.07],
+    [-0.2, 0.2],
+    [0, 0]
+  ])('reverses a version 1 Moving Gaussian speed %d to %d', (speed, reversed) => {
+    const [p] = migratePatterns([{ type: 'MovingGaussian', speed }], 1);
+    expect(p).toEqual({ type: 'MovingGaussian', speed: reversed });
+  });
+
+  it('keeps a version 1 Moving Gaussian travelling the way it used to', () => {
+    // Version 1 walked a positive speed toward lower light indices.
+    const old = {
+      ...defaultParameters('MovingGaussian', 'g'),
+      speed: 5.5 / N,
+      origin: 0
+    };
+    const [migrated] = migratePatterns([old], 1) as Params[];
+    const p = build(migrated);
+    p.tick(1);
+    expect(argmax(alphas(p))).toBe(N - 5);
+  });
+
+  it('leaves a version 2 Moving Gaussian speed alone', () => {
+    const p = { type: 'MovingGaussian', speed: 0.07 };
+    expect(migratePatterns([p], PATTERN_DATA_VERSION)).toEqual([p]);
+  });
+
   it('leaves other pattern types alone', () => {
     const plasma = { type: 'Plasma', hue: 100, hueRange: 140 };
     expect(migratePatterns([plasma], 1)).toEqual([plasma]);
@@ -261,6 +297,14 @@ describe('engine with the saved scenes', () => {
       await engine.importScene({ version, name: 'old', patterns: [pattern] });
       expect(engine.listScenes().at(-1)!.patterns[0]).toMatchObject({ hue: 170 });
     }
+  });
+
+  it('reverses the speed of an imported version 1 Moving Gaussian only', async () => {
+    const pattern = { ...defaultParameters('MovingGaussian', 'g'), speed: 0.1 };
+    await engine.importScene({ version: 1, name: 'old', patterns: [pattern] });
+    expect(engine.listScenes().at(-1)!.patterns[0]).toMatchObject({ speed: -0.1 });
+    await engine.importScene({ version: 2, name: 'new', patterns: [pattern] });
+    expect(engine.listScenes().at(-1)!.patterns[0]).toMatchObject({ speed: 0.1 });
   });
 
   it('rejects an import with an unknown pattern type', async () => {

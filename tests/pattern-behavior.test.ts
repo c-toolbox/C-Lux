@@ -167,10 +167,9 @@ describe('MovingGaussian', () => {
     expect(alphas(p)).toEqual(before);
   });
 
-  // A positive speed rotates the ring buffer forward, walking the bump to lower indices.
   it.each([
-    [5.5 / N, N - 5],
-    [-5.5 / N, 5]
+    [5.5 / N, 5],
+    [-5.5 / N, N - 5]
   ])('moves whole lights at speed %d', (speed, expected) => {
     const p = make('MovingGaussian', { speed, origin: 0 });
     p.tick(1);
@@ -183,7 +182,15 @@ describe('MovingGaussian', () => {
     p.tick(1);
     expect(argmax(alphas(p))).toBe(0);
     p.tick(1);
-    expect(argmax(alphas(p))).toBe(N - 1);
+    expect(argmax(alphas(p))).toBe(1);
+  });
+
+  it('travels the same way as the other patterns', () => {
+    const gaussian = make('MovingGaussian', { speed: 10 / N, origin: 0, sigma: 0.02 });
+    const bounce = make('Bounce', { speed: 10 / N, sigma: 0.02 });
+    gaussian.tick(1);
+    bounce.tick(1);
+    expect(argmax(alphas(gaussian))).toBe(argmax(alphas(bounce)));
   });
 
   it('comes back to the origin after a full turn', () => {
