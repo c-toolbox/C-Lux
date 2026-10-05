@@ -80,6 +80,32 @@ code {
   background: var(--code-bg);
 }
 
+/* Pattern form with the preview floated top-right; rows below it use the full width. */
+.pattern-layout {
+  container-type: inline-size;
+}
+.pattern-layout-preview {
+  float: right;
+  width: min(360px, 45%);
+  margin: 0 0 var(--mantine-spacing-md) var(--mantine-spacing-lg);
+}
+@container (max-width: 560px) {
+  .pattern-layout-preview {
+    float: none;
+    width: auto;
+    max-width: 360px;
+    margin: 0 auto var(--mantine-spacing-md);
+  }
+}
+/* Each row is its own formatting context so it narrows beside the float instead of
+   running under it. */
+.pattern-layout-rows > * {
+  display: flow-root;
+}
+.pattern-layout-rows > * + * {
+  margin-top: var(--mantine-spacing-md);
+}
+
 @keyframes logo-spin {
   from {
     rotate: 0deg;

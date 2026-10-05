@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { TbDeviceFloppy, TbPlus } from 'react-icons/tb';
 import {
   Anchor,
@@ -260,6 +260,10 @@ type PatternSubFormProps = {
   onSubmit: (values: FormValues) => void;
 } & ({ mode: 'add'; namePlaceholder: string } | { mode: 'edit' }) & {
     onValuesChange?: (values: FormValues) => void;
+    // Inputs shown above the name.
+    header?: ReactNode;
+    // Floated top-right, with the inputs flowing around and below it.
+    preview?: ReactNode;
   };
 
 // Renders the inputs for a pattern's parameters straight from its `Fields` schema.
@@ -287,53 +291,63 @@ export function PatternSubForm(props: PatternSubFormProps) {
   const setField = (key: string, value: FieldValue) =>
     setValues((v) => ({ ...v, values: { ...v.values, [key]: value } }));
 
-  return (
-    <Stack gap={'md'}>
-      <TextInput
-        label={'Name'}
-        placeholder={props.mode === 'add' ? props.namePlaceholder : undefined}
-        value={values.name}
-        error={nameError}
-        description={nameWarning}
-        styles={
-          nameWarning
-            ? { description: { color: 'var(--mantine-color-orange-6)' } }
-            : undefined
-        }
-        onChange={(e) => {
-          // Read the value now: React nulls out `currentTarget` before the lazy
-          // updater below runs.
-          const name = e.currentTarget.value;
-          setValues((v) => ({ ...v, name }));
-        }}
+  const fieldRows = rows(schemaFor(values.type), values.values).map((row) => {
+    const fields = row.map(([key, spec]) => (
+      <Field
+        key={key}
+        spec={spec}
+        value={values.values[key]}
+        onChange={(value) => setField(key, value)}
       />
+    ));
+    return (
+      <div key={row[0][0]}>
+        {fields.length === 1 ? fields[0] : <Group grow>{fields}</Group>}
+      </div>
+    );
+  });
 
-      {rows(schemaFor(values.type), values.values).map((row) => {
-        const fields = row.map(([key, spec]) => (
-          <Field
-            key={key}
-            spec={spec}
-            value={values.values[key]}
-            onChange={(value) => setField(key, value)}
+  return (
+    <div className={'pattern-layout'}>
+      <div className={'pattern-layout-preview'}>{props.preview}</div>
+      <div className={'pattern-layout-rows'}>
+        {props.header !== undefined && <div>{props.header}</div>}
+        <div>
+          <TextInput
+            label={'Name'}
+            placeholder={props.mode === 'add' ? props.namePlaceholder : undefined}
+            value={values.name}
+            error={nameError}
+            description={nameWarning}
+            styles={
+              nameWarning
+                ? { description: { color: 'var(--mantine-color-orange-6)' } }
+                : undefined
+            }
+            onChange={(e) => {
+              // Read the value now: React nulls out `currentTarget` before the lazy
+              // updater below runs.
+              const name = e.currentTarget.value;
+              setValues((v) => ({ ...v, name }));
+            }}
           />
-        ));
-        if (fields.length === 1) return fields[0];
-        return (
-          <Group grow key={row[0][0]}>
-            {fields}
-          </Group>
-        );
-      })}
+        </div>
 
-      <Button
-        onClick={() => onSubmit(values)}
-        loading={busy}
-        disabled={nameError !== null}
-        leftSection={props.mode === 'add' ? <TbPlus /> : <TbDeviceFloppy />}
-      >
-        {props.mode === 'add' ? 'Add pattern' : 'Save changes'}
-      </Button>
-    </Stack>
+        {fieldRows}
+
+        <div>
+          <Button
+            fullWidth
+            onClick={() => onSubmit(values)}
+            loading={busy}
+            disabled={nameError !== null}
+            leftSection={props.mode === 'add' ? <TbPlus /> : <TbDeviceFloppy />}
+          >
+            {props.mode === 'add' ? 'Add pattern' : 'Save changes'}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -371,8 +385,17 @@ export function PatternForm({
   );
 
   return (
-    <Group align={'flex-start'} gap={'lg'} wrap={'wrap'}>
-      <Stack gap={'md'} style={{ flex: '1 1 300px', minWidth: 0 }}>
+    <PatternSubForm
+      key={type}
+      mode={'add'}
+      initial={defaultsFor(type, namePlaceholder)}
+      namePlaceholder={namePlaceholder}
+      existingNames={existingNames}
+      busy={busy}
+      onSubmit={onSubmit}
+      onValuesChange={setCurrent}
+      preview={previewProps && <PatternPreview type={type} props={previewProps} />}
+      header={
         <NativeSelect
           label={'Type'}
           description={
@@ -390,22 +413,7 @@ export function PatternForm({
           data={TYPE_OPTIONS}
           onChange={(e) => setType(e.currentTarget.value as PatternType)}
         />
-
-        <PatternSubForm
-          key={type}
-          mode={'add'}
-          initial={defaultsFor(type, namePlaceholder)}
-          namePlaceholder={namePlaceholder}
-          existingNames={existingNames}
-          busy={busy}
-          onSubmit={onSubmit}
-          onValuesChange={setCurrent}
-        />
-      </Stack>
-
-      <div style={{ flex: '1 1 260px', maxWidth: 360, margin: '0 auto' }}>
-        {previewProps && <PatternPreview type={type} props={previewProps} />}
-      </div>
-    </Group>
+      }
+    />
   );
 }

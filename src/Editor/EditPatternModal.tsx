@@ -72,24 +72,17 @@ export function EditPatternModal({
         centered
       >
         {editing && (
-          <Group align={'flex-start'} gap={'lg'} wrap={'wrap'}>
-            <div style={{ flex: '1 1 300px', minWidth: 0 }}>
-              <PatternSubForm
-                mode={'edit'}
-                initial={fromParameters(editing)}
-                existingNames={otherNames}
-                busy={busy}
-                onSubmit={submit}
-                onValuesChange={onValuesChange}
-              />
-            </div>
-
-            <div style={{ flex: '1 1 260px', maxWidth: 360, margin: '0 auto' }}>
-              {previewProps && (
-                <PatternPreview type={editing.type} props={previewProps} />
-              )}
-            </div>
-          </Group>
+          <PatternSubForm
+            mode={'edit'}
+            initial={fromParameters(editing)}
+            existingNames={otherNames}
+            busy={busy}
+            onSubmit={submit}
+            onValuesChange={onValuesChange}
+            preview={
+              previewProps && <PatternPreview type={editing.type} props={previewProps} />
+            }
+          />
         )}
       </Modal>
 
