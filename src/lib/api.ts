@@ -8,8 +8,13 @@ export type {
   Settings
 } from '../../shared/config';
 export type { DebugStatus, DebugUpdate } from '../../shared/debug';
-export type { NdiSource, NdiStatus, NdiUpdate } from '../../shared/ndi';
-export { AUDIO_TYPE } from '../../shared/patterns/audio';
+export type { NdiSource, NdiStatus } from '../../shared/ndi';
+export {
+  AUDIO_INPUT_DEVICE,
+  AUDIO_INPUT_SYSTEM,
+  AUDIO_TYPE,
+  type AudioParameters
+} from '../../shared/patterns/audio';
 export type {
   Color,
   ColorStop,
@@ -33,7 +38,11 @@ export {
   patternFields
 } from '../../shared/patterns/patterns';
 export type { SolidColorStatus, SolidColorUpdate } from '../../shared/patterns/static';
-export { VIDEO_TYPE } from '../../shared/patterns/video';
+export {
+  VIDEO_TYPE,
+  videoCaptureOf,
+  type VideoParameters
+} from '../../shared/patterns/video';
 export { REMAP_DISABLED } from '../../shared/remap';
 
 import type { ConfigSaved, ConfigStatus, ConfigUpdate } from '../../shared/config';
@@ -41,8 +50,7 @@ import type { DebugStatus, DebugUpdate } from '../../shared/debug';
 import {
   NDI_PREVIEW_HEADER_BYTES,
   type NdiSource,
-  type NdiStatus,
-  type NdiUpdate
+  type NdiStatus
 } from '../../shared/ndi';
 import type {
   PatternParameters,
@@ -119,11 +127,10 @@ export const api = {
   // The debug page's overrides on the output. Editor-only, and never persisted.
   debug: () => request<DebugStatus>('/debug'),
   setDebug: (update: DebugUpdate) => request<DebugStatus>('/debug', 'PUT', update),
-  // The server's own NDI receiver: what it is doing, what it can see on the network, and
-  // which source it should be sampling.
+  // The server's own NDI receiver, which opens whatever the enabled Video pattern names,
+  // and the senders it can see on the network.
   ndi: () => request<NdiStatus>('/ndi'),
   ndiSources: () => request<NdiSource[]>('/ndi/sources'),
-  setNdi: (update: NdiUpdate) => request<NdiStatus>('/ndi', 'PUT', update),
   removePattern: (name: string) =>
     request<{ name: string }>(`/patterns/${seg(name)}`, 'DELETE'),
   reorderPatterns: (order: string[]) =>

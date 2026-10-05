@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   TbCheck,
   TbDeviceFloppy,
@@ -31,10 +31,12 @@ import { VideoCapture } from '../Capture/VideoCapture';
 import {
   api,
   AUDIO_TYPE,
+  type AudioParameters,
   type PatternParameters,
   type Scene,
   SCENE_EXPORT_VERSION,
-  VIDEO_TYPE
+  VIDEO_TYPE,
+  type VideoParameters
 } from '../lib/api';
 import { authRequired, signOut } from '../lib/auth';
 import { describeError } from '../lib/errors';
@@ -74,6 +76,37 @@ function Editor() {
   useEffect(() => {
     void refresh().finally(() => setLoading(false));
   }, []);
+
+  // A capture panel changed its pattern; nothing else moved, so no full refresh.
+  const replacePattern = useCallback((updated: PatternParameters) => {
+    setPatterns((list) => list.map((p) => (p.name === updated.name ? updated : p)));
+  }, []);
+
+  // Only one audio and one video feed are captured at a time, for the first enabled
+  // pattern of each kind.
+  const audio = patterns.find(
+    (p): p is PatternParameters & AudioParameters => p.type === AUDIO_TYPE && p.enabled
+  );
+  const video = patterns.find(
+    (p): p is PatternParameters & VideoParameters => p.type === VIDEO_TYPE && p.enabled
+  );
+
+  // The capture controls live in the row of the pattern they feed.
+  function captureDetails(p: PatternParameters) {
+    if (p === audio) {
+      return <AudioCapture pattern={audio} editable embedded onChange={replacePattern} />;
+    }
+    if (p === video) {
+      return <VideoCapture pattern={video} editable embedded onChange={replacePattern} />;
+    }
+    const feeder = p.type === AUDIO_TYPE ? audio : p.type === VIDEO_TYPE ? video : null;
+    if (!p.enabled || !feeder) return null;
+    return (
+      <Text size={'sm'} c={'dimmed'}>
+        Shows the feed captured for “{feeder.name}”.
+      </Text>
+    );
+  }
 
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
@@ -407,16 +440,8 @@ function Editor() {
                   onDuplicate={handleDuplicate}
                   onToggleEnabled={handleToggleEnabled}
                   onRemove={handleRemove}
+                  renderDetails={captureDetails}
                 />
-              )}
-
-              {/* Inside the scroller: a short window would otherwise clip the previews
-                against the visualiser with no way to reach what was cut off. */}
-              {patterns.some((p) => p.type === AUDIO_TYPE && p.enabled) && (
-                <AudioCapture />
-              )}
-              {patterns.some((p) => p.type === VIDEO_TYPE && p.enabled) && (
-                <VideoCapture />
               )}
             </Stack>
           </ScrollArea>

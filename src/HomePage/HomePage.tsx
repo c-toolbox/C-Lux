@@ -21,11 +21,13 @@ import { VideoCapture } from '../Capture/VideoCapture';
 import {
   api,
   AUDIO_TYPE,
+  type AudioParameters,
   type PatternParameters,
   type Scene,
   type SolidColorStatus,
   type SolidColorUpdate,
-  VIDEO_TYPE
+  VIDEO_TYPE,
+  type VideoParameters
 } from '../lib/api';
 import { hexToRgb, rgbToHex } from '../lib/color';
 import { describeError } from '../lib/errors';
@@ -54,6 +56,15 @@ export function HomePage() {
   const [halfLight, setHalfLight] = useState(false);
 
   const appliedNames = new Set(applied);
+
+  // Only one audio and one video feed are captured at a time, for the first enabled
+  // pattern of each kind. What they capture is set up in the editor.
+  const audio = patterns.find(
+    (p): p is PatternParameters & AudioParameters => p.type === AUDIO_TYPE && p.enabled
+  );
+  const video = patterns.find(
+    (p): p is PatternParameters & VideoParameters => p.type === VIDEO_TYPE && p.enabled
+  );
 
   const isApplied = (scene: Scene) => appliedNames.has(scene.name);
 
@@ -321,12 +332,8 @@ export function HomePage() {
                 {/* The audio and video patterns are fed from the browser, so wherever they
                   can be switched on their capture widgets have to be reachable too.
                   Inside the scroller: they are tall enough to bury the controls below. */}
-                {patterns.some((p) => p.type === AUDIO_TYPE && p.enabled) && (
-                  <AudioCapture />
-                )}
-                {patterns.some((p) => p.type === VIDEO_TYPE && p.enabled) && (
-                  <VideoCapture />
-                )}
+                {audio && <AudioCapture pattern={audio} />}
+                {video && <VideoCapture pattern={video} />}
               </Stack>
             </ScrollArea>
           )}

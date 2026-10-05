@@ -24,6 +24,11 @@ import {
 // Exported so the browser can tell whether a capture panel needs to be offered.
 export const AUDIO_TYPE = 'Audio';
 
+// What the browser captures for the pattern: whatever the sound card is playing, or a
+// capture device such as a line-in, a microphone, or a loopback device.
+export const AUDIO_INPUT_SYSTEM = 0;
+export const AUDIO_INPUT_DEVICE = 1;
+
 const AUDIO_MODE_SPECTRUM = 0;
 const AUDIO_MODE_VU = 1;
 const AUDIO_MODE_FREQUENCY = 2;
@@ -43,6 +48,7 @@ const HERTZ: NumberRange = { min: AUDIO_MIN_HZ, max: AUDIO_MAX_HZ };
 
 export type AudioProps = PatternBaseProps &
   Partial<Color> & {
+    input?: number;
     mode: number;
     gain: number;
     floor: number;
@@ -58,6 +64,8 @@ export type AudioProps = PatternBaseProps &
     hz?: number;
   };
 
+export type AudioParameters = ReturnType<AudioPattern['parameters']>;
+
 const clampUnit = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
 
 // Visualizes the audio a capture client streams to `POST /api/audio`. The spectrum puts
@@ -68,6 +76,16 @@ export class AudioPattern extends Pattern {
   static readonly Type = AUDIO_TYPE;
   static readonly DisplayName = 'Audio';
   static readonly Fields = {
+    input: {
+      kind: 'select',
+      label: 'Source',
+      default: AUDIO_INPUT_SYSTEM,
+      hint: 'What the capture panel records.',
+      options: [
+        { value: AUDIO_INPUT_SYSTEM, label: 'System audio' },
+        { value: AUDIO_INPUT_DEVICE, label: 'Input device' }
+      ]
+    },
     mode: {
       kind: 'select',
       label: 'Mode',
@@ -204,6 +222,7 @@ export class AudioPattern extends Pattern {
   hue!: number;
   hueSpan!: number;
   // Defaulted rather than required so scenes saved before these existed still load.
+  input: number = AudioPattern.Fields.input.default;
   colorMode: number = AudioPattern.Fields.colorMode.default;
   frontColor: Color = { ...AudioPattern.Fields.frontColor.default };
   backColor: Color = { ...AudioPattern.Fields.backColor.default };
@@ -229,6 +248,7 @@ export class AudioPattern extends Pattern {
   parameters(): {
     name: string;
     type: typeof AudioPattern.Type;
+    input: number;
     mode: number;
     gain: number;
     floor: number;
@@ -247,6 +267,7 @@ export class AudioPattern extends Pattern {
     return {
       name: this.name,
       type: AudioPattern.Type,
+      input: this.input,
       mode: this.mode,
       gain: this.gain,
       floor: this.floor,
@@ -265,6 +286,7 @@ export class AudioPattern extends Pattern {
   }
 
   set({
+    input,
     mode,
     gain,
     floor,
@@ -283,6 +305,7 @@ export class AudioPattern extends Pattern {
     b,
     a
   }: Partial<AudioProps>) {
+    this.input = input ?? this.input;
     this.mode = mode ?? this.mode;
     this.gain = gain ?? this.gain;
     this.floor = floor ?? this.floor;

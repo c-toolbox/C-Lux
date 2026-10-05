@@ -1,7 +1,18 @@
-import { type VideoStrip, videoStrip } from '../video.ts';
+import {
+  DEFAULT_VIDEO_GEOMETRY,
+  VIDEO_INPUT_CAMERA,
+  VIDEO_INPUT_NDI,
+  VIDEO_INPUT_SCREEN,
+  VIDEO_SAMPLING_FISHEYE,
+  VIDEO_SAMPLING_STRIP,
+  type VideoCaptureSettings,
+  type VideoStrip,
+  videoStrip
+} from '../video.ts';
 
 import {
   NON_NEGATIVE,
+  type NumberRange,
   Pattern,
   type PatternBaseProps,
   type PatternSchema,
@@ -11,6 +22,15 @@ import {
 
 // Exported so the browser can tell whether a capture panel needs to be offered.
 export const VIDEO_TYPE = 'Video';
+
+const FISHEYE = { sampling: [VIDEO_SAMPLING_FISHEYE] };
+const STRIP = { sampling: [VIDEO_SAMPLING_STRIP] };
+
+// Lets the ring reach a little past the frame's shorter side, into the corners.
+const RADIUS: NumberRange = { min: 0, max: 1.4 };
+
+// A usable strip band is only a few percent of the frame, but never empty.
+const STRIP_HEIGHT: NumberRange = { min: 0.005, max: 1 };
 
 const FIT_SMOOTH = 0;
 const FIT_SHARP = 1;
@@ -37,24 +57,146 @@ export type VideoProps = PatternBaseProps & {
   smoothing: number;
   saturation: number;
   gamma: number;
+  input?: number;
+  ndiSource?: string;
+  sampling?: number;
+  centerX?: number;
+  centerY?: number;
+  radius?: number;
+  ringWidth?: number;
+  rotation?: number;
+  stripY?: number;
+  stripHeight?: number;
 };
+
+export type VideoParameters = ReturnType<VideoPattern['parameters']>;
+
+// What a Video pattern asks to be captured, read from its serialized parameters.
+export function videoCaptureOf(params: VideoParameters): VideoCaptureSettings {
+  const { input, ndiSource, sampling } = params;
+  const { centerX, centerY, radius, ringWidth, rotation, stripY, stripHeight } = params;
+  return {
+    input,
+    ndiSource,
+    sampling,
+    geometry: { centerX, centerY, radius, ringWidth, rotation, stripY, stripHeight }
+  };
+}
 
 const clampByte = (value: number) =>
   value < 0 ? 0 : value > 255 ? 255 : Math.round(value);
 
-// Maps the strip a capture client streams to `POST /api/video` onto the ring. The client
-// decides what the strip means — the pixel columns of a wide video, or the rim of a
-// fisheye feed — so everything here is about placing an existing row of colors.
+// Maps the strip a capture client streams to `POST /api/video` (or the server's NDI
+// receiver samples) onto the ring. The capture settings stored here say where the feed
+// comes from and which part of the frame becomes the strip; the browser's capture panel
+// and the NDI receiver read them, the rendering below only places the resulting row of
+// colors.
 export class VideoPattern extends Pattern {
   static readonly Type = VIDEO_TYPE;
   static readonly DisplayName = 'Video';
   static readonly Fields = {
+    input: {
+      kind: 'select',
+      label: 'Source',
+      default: VIDEO_INPUT_SCREEN,
+      row: 0,
+      hint: 'Camera and screen are captured by a browser tab, NDI by the server.',
+      options: [
+        { value: VIDEO_INPUT_CAMERA, label: 'Camera' },
+        { value: VIDEO_INPUT_SCREEN, label: 'Screen or window' },
+        { value: VIDEO_INPUT_NDI, label: 'NDI stream' }
+      ]
+    },
+    sampling: {
+      kind: 'select',
+      label: 'Sampling',
+      default: VIDEO_SAMPLING_FISHEYE,
+      row: 0,
+      hint: 'Aim it by eye in the capture panel next to the pattern list.',
+      options: [
+        { value: VIDEO_SAMPLING_STRIP, label: 'Strip' },
+        { value: VIDEO_SAMPLING_FISHEYE, label: 'Fisheye rim' }
+      ]
+    },
+    ndiSource: {
+      kind: 'text',
+      label: 'NDI source',
+      default: '',
+      maxLength: 256,
+      hint: 'The sender name, as the capture panel lists it.',
+      visibleWhen: { input: [VIDEO_INPUT_NDI] }
+    },
+    centerX: {
+      kind: 'number',
+      label: 'Center X',
+      default: DEFAULT_VIDEO_GEOMETRY.centerX,
+      step: 0.001,
+      row: 1,
+      visibleWhen: FISHEYE,
+      ...UNIT
+    },
+    centerY: {
+      kind: 'number',
+      label: 'Center Y',
+      default: DEFAULT_VIDEO_GEOMETRY.centerY,
+      step: 0.001,
+      row: 1,
+      visibleWhen: FISHEYE,
+      ...UNIT
+    },
+    radius: {
+      kind: 'number',
+      label: 'Radius',
+      default: DEFAULT_VIDEO_GEOMETRY.radius,
+      step: 0.001,
+      row: 2,
+      hint: "As a fraction of half the frame's shorter side.",
+      visibleWhen: FISHEYE,
+      ...RADIUS
+    },
+    ringWidth: {
+      kind: 'number',
+      label: 'Ring width',
+      default: DEFAULT_VIDEO_GEOMETRY.ringWidth,
+      step: 0.001,
+      row: 2,
+      hint: 'As a fraction of the radius.',
+      visibleWhen: FISHEYE,
+      ...UNIT
+    },
+    rotation: {
+      kind: 'number',
+      label: 'Rim rotation',
+      default: DEFAULT_VIDEO_GEOMETRY.rotation,
+      step: 0.001,
+      hint: 'Where the first light reads from, as a fraction of a turn from the top.',
+      visibleWhen: FISHEYE,
+      ...UNIT
+    },
+    stripY: {
+      kind: 'number',
+      label: 'Strip position',
+      default: DEFAULT_VIDEO_GEOMETRY.stripY,
+      step: 0.001,
+      row: 3,
+      visibleWhen: STRIP,
+      ...UNIT
+    },
+    stripHeight: {
+      kind: 'number',
+      label: 'Strip height',
+      default: DEFAULT_VIDEO_GEOMETRY.stripHeight,
+      step: 0.005,
+      row: 3,
+      visibleWhen: STRIP,
+      ...STRIP_HEIGHT
+    },
     offset: {
       kind: 'number',
       label: 'Rotation',
       default: 0,
       step: 0.01,
-      row: 0,
+      row: 4,
       hint: 'Fraction of the ring to turn the strip by, to line it up with the room.',
       ...UNIT
     },
@@ -62,7 +204,7 @@ export class VideoPattern extends Pattern {
       kind: 'select',
       label: 'Direction',
       default: DIRECTION_CW,
-      row: 0,
+      row: 4,
       options: [
         { value: DIRECTION_CW, label: 'Clockwise' },
         { value: DIRECTION_CCW, label: 'Counter-clockwise' }
@@ -72,7 +214,7 @@ export class VideoPattern extends Pattern {
       kind: 'select',
       label: 'Fit',
       default: FIT_SMOOTH,
-      row: 1,
+      row: 5,
       options: [
         { value: FIT_SMOOTH, label: 'Smooth' },
         { value: FIT_SHARP, label: 'Sharp' }
@@ -83,7 +225,7 @@ export class VideoPattern extends Pattern {
       label: 'Smoothing',
       default: 0.2,
       step: 0.05,
-      row: 1,
+      row: 5,
       hint: 'Averages over time; steadies a noisy feed at the cost of response.',
       ...UNIT
     },
@@ -92,7 +234,7 @@ export class VideoPattern extends Pattern {
       label: 'Saturation',
       default: 1.2,
       step: 0.1,
-      row: 2,
+      row: 6,
       ...NON_NEGATIVE
     },
     gamma: {
@@ -100,7 +242,7 @@ export class VideoPattern extends Pattern {
       label: 'Gamma',
       default: 1,
       step: 0.1,
-      row: 2,
+      row: 6,
       hint: 'Above 1 deepens the darks, below 1 lifts them.',
       ...POSITIVE
     }
@@ -112,6 +254,17 @@ export class VideoPattern extends Pattern {
   smoothing!: number;
   saturation!: number;
   gamma!: number;
+  // Defaulted rather than required so scenes saved before these existed still load.
+  input: number = VideoPattern.Fields.input.default;
+  ndiSource: string = VideoPattern.Fields.ndiSource.default;
+  sampling: number = VideoPattern.Fields.sampling.default;
+  centerX: number = DEFAULT_VIDEO_GEOMETRY.centerX;
+  centerY: number = DEFAULT_VIDEO_GEOMETRY.centerY;
+  radius: number = DEFAULT_VIDEO_GEOMETRY.radius;
+  ringWidth: number = DEFAULT_VIDEO_GEOMETRY.ringWidth;
+  rotation: number = DEFAULT_VIDEO_GEOMETRY.rotation;
+  stripY: number = DEFAULT_VIDEO_GEOMETRY.stripY;
+  stripHeight: number = DEFAULT_VIDEO_GEOMETRY.stripHeight;
 
   // Rises to 1 while frames arrive and falls back once the feed goes stale.
   private presence = 0;
@@ -130,6 +283,16 @@ export class VideoPattern extends Pattern {
   parameters(): {
     name: string;
     type: typeof VideoPattern.Type;
+    input: number;
+    ndiSource: string;
+    sampling: number;
+    centerX: number;
+    centerY: number;
+    radius: number;
+    ringWidth: number;
+    rotation: number;
+    stripY: number;
+    stripHeight: number;
     offset: number;
     direction: number;
     fit: number;
@@ -140,6 +303,16 @@ export class VideoPattern extends Pattern {
     return {
       name: this.name,
       type: VideoPattern.Type,
+      input: this.input,
+      ndiSource: this.ndiSource,
+      sampling: this.sampling,
+      centerX: this.centerX,
+      centerY: this.centerY,
+      radius: this.radius,
+      ringWidth: this.ringWidth,
+      rotation: this.rotation,
+      stripY: this.stripY,
+      stripHeight: this.stripHeight,
       offset: this.offset,
       direction: this.direction,
       fit: this.fit,
@@ -149,7 +322,34 @@ export class VideoPattern extends Pattern {
     };
   }
 
-  set({ offset, direction, fit, smoothing, saturation, gamma }: Partial<VideoProps>) {
+  set({
+    input,
+    ndiSource,
+    sampling,
+    centerX,
+    centerY,
+    radius,
+    ringWidth,
+    rotation,
+    stripY,
+    stripHeight,
+    offset,
+    direction,
+    fit,
+    smoothing,
+    saturation,
+    gamma
+  }: Partial<VideoProps>) {
+    this.input = input ?? this.input;
+    this.ndiSource = ndiSource ?? this.ndiSource;
+    this.sampling = sampling ?? this.sampling;
+    this.centerX = centerX ?? this.centerX;
+    this.centerY = centerY ?? this.centerY;
+    this.radius = radius ?? this.radius;
+    this.ringWidth = ringWidth ?? this.ringWidth;
+    this.rotation = rotation ?? this.rotation;
+    this.stripY = stripY ?? this.stripY;
+    this.stripHeight = stripHeight ?? this.stripHeight;
     this.offset = offset ?? this.offset;
     this.direction = direction ?? this.direction;
     this.fit = fit ?? this.fit;

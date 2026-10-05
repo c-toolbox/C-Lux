@@ -49,14 +49,20 @@ export function validateName(value: unknown, label: string): string {
 // Recursively verify every leaf value of a pattern's props is a finite number (color
 // sub-objects like `color2` are checked the same way), so malformed client input -
 // missing fields, strings, NaN - fails fast with a clear 400 instead of silently
-// corrupting pattern state with NaN. Arrays are walked too, for palette props.
-function validatePatternProps(props: unknown, path = 'props'): Record<string, unknown> {
+// corrupting pattern state with NaN. Arrays are walked too, for palette props. Only the
+// top-level keys in `textKeys` may hold a string; `validateAgainstSpec` checks those.
+function validatePatternProps(
+  props: unknown,
+  path = 'props',
+  textKeys: ReadonlySet<string> = new Set()
+): Record<string, unknown> {
   if (typeof props !== 'object' || props === null || Array.isArray(props)) {
     throw new HttpError(400, `${path} must be an object`);
   }
 
   for (const [key, value] of Object.entries(props)) {
     if (key === 'name') continue; // validated separately via validateName
+    if (textKeys.has(key) && typeof value === 'string') continue;
 
     const fieldPath = `${path}.${key}`;
     if (typeof value === 'number') {
@@ -116,10 +122,18 @@ function validateAgainstSpec(
   props: unknown,
   requireAll: boolean
 ): Record<string, unknown> {
-  const validated = validatePatternProps(props);
-
   const fields = patternByType(type)?.Fields;
-  if (!fields) throw new HttpError(400, `Unknown pattern type: ${type}`);
+  if (!fields) {
+    validatePatternProps(props);
+    throw new HttpError(400, `Unknown pattern type: ${type}`);
+  }
+
+  const textKeys = new Set(
+    Object.entries(fields)
+      .filter(([, spec]) => spec.kind === 'text')
+      .map(([key]) => key)
+  );
+  const validated = validatePatternProps(props, 'props', textKeys);
 
   const missing = (value: unknown) => !requireAll && value === undefined;
 
@@ -167,6 +181,8 @@ function validateAgainstSpec(
       });
     } else if (spec.kind === 'select') {
       requireOption(value, spec.options, `props.${key}`);
+    } else if (spec.kind === 'text') {
+      requireText(value, spec.maxLength, `props.${key}`);
     } else {
       requireNumberInRange(value, spec, `props.${key}`);
     }
@@ -184,6 +200,18 @@ function validateAgainstSpec(
   }
 
   return validated;
+}
+
+// Free text ends up in saved scenes and in what the server is asked to look up, so it
+// stays bounded and free of control characters.
+function requireText(value: unknown, maxLength: number, path: string): void {
+  if (typeof value !== 'string') throw new HttpError(400, `${path} must be a string`);
+  if (value.length > maxLength) {
+    throw new HttpError(400, `${path} must be at most ${maxLength} characters`);
+  }
+  if (/\p{Cc}/u.test(value)) {
+    throw new HttpError(400, `${path} must not contain control characters`);
+  }
 }
 
 function requireOption(

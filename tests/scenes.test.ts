@@ -9,6 +9,7 @@ import { HttpError } from '../server/errors';
 import { loadScenes, migrate, saveScenes, SCENES_FILE_VERSION } from '../server/storage';
 import { validateName, validateNewPatternProps } from '../server/validation';
 import { migratePatterns, PATTERN_DATA_VERSION } from '../shared/migrate';
+import { AUDIO_INPUT_SYSTEM } from '../shared/patterns/audio';
 import {
   PATTERN_TYPES,
   patternByType,
@@ -16,6 +17,13 @@ import {
   SCENE_EXPORT_VERSION
 } from '../shared/patterns/patterns';
 import { SOLID_COLOR_NAME } from '../shared/patterns/static';
+import { videoCaptureOf, type VideoParameters } from '../shared/patterns/video';
+import {
+  DEFAULT_VIDEO_GEOMETRY,
+  VIDEO_INPUT_NDI,
+  VIDEO_INPUT_SCREEN,
+  VIDEO_SAMPLING_FISHEYE
+} from '../shared/video';
 
 import {
   alphas,
@@ -187,6 +195,7 @@ describe('pattern migration', () => {
     const [audio, sparkle] = migratePatterns(
       [defaultParameters('Audio', 'a'), defaultParameters('Sparkle', 's')].map(
         ({
+          input: _input,
           hz: _hz,
           color: _color,
           attack: _attack,
@@ -201,6 +210,52 @@ describe('pattern migration', () => {
     ) as Params[];
     expect(() => validateNewPatternProps('Audio', propsOf(audio))).not.toThrow();
     expect(() => validateNewPatternProps('Sparkle', propsOf(sparkle))).not.toThrow();
+  });
+
+  // The capture panels used to hold these, starting on system audio, a shared screen and
+  // the default fisheye rim.
+  it('gives a version 1 Audio pattern the capture the panel started on', () => {
+    const old: Record<string, unknown> = defaultParameters('Audio', 'a');
+    delete old.input;
+    const [migrated] = migratePatterns([old], 1) as Params[];
+    expect(migrated.input).toBe(AUDIO_INPUT_SYSTEM);
+  });
+
+  it('gives a version 1 Video pattern the capture the panel started on', () => {
+    const look = {
+      offset: 0.25,
+      direction: -1,
+      fit: 1,
+      smoothing: 0.5,
+      saturation: 1,
+      gamma: 2
+    };
+    const old = { name: 'v', type: 'Video', ...look };
+    const [migrated] = migratePatterns([old], 1) as Params[];
+    expect(migrated).toEqual({
+      ...old,
+      input: VIDEO_INPUT_SCREEN,
+      ndiSource: '',
+      sampling: VIDEO_SAMPLING_FISHEYE,
+      ...DEFAULT_VIDEO_GEOMETRY
+    });
+    expect(() => validateNewPatternProps('Video', propsOf(migrated))).not.toThrow();
+    expect(videoCaptureOf(build(migrated).serialize() as VideoParameters)).toEqual({
+      input: VIDEO_INPUT_SCREEN,
+      ndiSource: '',
+      sampling: VIDEO_SAMPLING_FISHEYE,
+      geometry: DEFAULT_VIDEO_GEOMETRY
+    });
+  });
+
+  it('keeps the capture settings of a version 2 Video pattern', () => {
+    const p = {
+      ...defaultParameters('Video', 'v'),
+      input: VIDEO_INPUT_NDI,
+      ndiSource: 'STUDIO (Fisheye)',
+      radius: 0.8
+    };
+    expect(migratePatterns([p], PATTERN_DATA_VERSION)).toEqual([p]);
   });
 
   it('keeps a version 1 Audio pattern sweeping its hue', () => {

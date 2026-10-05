@@ -4,8 +4,7 @@ import {
   NDI_PREVIEW_MAX_HEIGHT,
   NDI_PREVIEW_WIDTH,
   type NdiSource,
-  type NdiStatus,
-  type NdiUpdate
+  type NdiStatus
 } from '../shared/ndi';
 import {
   buildRimLut,
@@ -17,8 +16,9 @@ import {
   SRGB_TO_LINEAR,
   stripBand,
   VIDEO_MAX_WIDTH,
-  type VideoGeometry,
-  type VideoMode
+  VIDEO_SAMPLING_FISHEYE,
+  VIDEO_SAMPLING_STRIP,
+  type VideoGeometry
 } from '../shared/video';
 
 import { config } from './config';
@@ -38,6 +38,10 @@ const FRAME_TIMEOUT_MS = 250;
 // transient error - a dropped packet, a momentary sender hiccup - doesn't itself force
 // the strip to go stale and the pattern to visibly flash to black.
 const RETRY_MS = 50;
+
+// How long to wait before trying again to open a source a Video pattern asks for but
+// that could not be opened, e.g. because its sender is not on the network yet.
+const REOPEN_MS = 5000;
 
 // Stop rendering previews once no one has asked for one for this long.
 const PREVIEW_IDLE_MS = 2000;
@@ -138,14 +142,20 @@ export async function ndiSources(): Promise<NdiSource[]> {
 
 //
 // Receiving. One receiver at a time, pumped by a loop that publishes each frame into the
-// shared video store the way the browser's POST /api/video does.
+// shared video store the way the browser's POST /api/video does. Which source it opens
+// and how it samples are whatever the enabled Video pattern asks for; see `syncNdi`.
 //
 
 let receiver: Receiver | null = null;
-let sourceName: string | null = null;
-let mode: VideoMode = 'fisheye';
+let sampling = VIDEO_SAMPLING_FISHEYE;
 let geometry: VideoGeometry = DEFAULT_VIDEO_GEOMETRY;
 let error: string | null = null;
+
+// The source the Video pattern asks for, the open in flight, and when a failed open
+// may be retried.
+let wanted: string | null = null;
+let opening = false;
+let reopenAt = 0;
 
 // Bumped on every stop and start, so a pump that is mid-await knows it has been replaced
 // and stops without publishing a frame the new receiver should own.
@@ -317,7 +327,7 @@ function publish(frame: ReceivedVideoFrame): void {
   if (xres < 1 || yres < 1 || data.length < lineStrideBytes * yres) return;
 
   const width =
-    mode === 'strip'
+    sampling === VIDEO_SAMPLING_STRIP
       ? sampleStrip(data, lineStrideBytes, xres, yres)
       : sampleFisheye(data, lineStrideBytes, xres, yres);
 
@@ -360,7 +370,6 @@ function stop(): void {
     holdTimer = null;
   }
   receiver = null;
-  sourceName = null;
   preview = null;
   stripWidth = 0;
   lastVideoAt = 0;
@@ -394,8 +403,13 @@ async function start(name: string): Promise<void> {
     throw new HttpError(502, `Could not open "${source.name}": ${describe(err)}`);
   }
 
+  // The pattern may have moved on to another source, or none, while this one opened.
+  if (wanted !== name) {
+    opened.destroy();
+    return;
+  }
+
   receiver = opened;
-  sourceName = source.name;
   error = null;
   lutKey = '';
 
@@ -422,28 +436,48 @@ export function ndiStatus(): NdiStatus {
     supported: unavailable === null,
     reason: unavailable,
     running: receiver !== null,
-    source: sourceName,
-    mode,
-    geometry,
+    source: wanted,
     connections: receiver?.connections() ?? 0,
     error
   };
 }
 
-// Apply a change from the capture panel: re-aim the sampling, and open or close a source.
-// The mode and geometry are kept whether or not anything is running, so they also seed
-// the next source that is opened.
-export async function setNdi(update: NdiUpdate): Promise<NdiStatus> {
-  const { source, mode: nextMode, geometry: nextGeometry } = update;
+// What the enabled Video pattern asks the receiver for, or null when no pattern wants an
+// NDI stream.
+export interface NdiRequest {
+  source: string;
+  sampling: number;
+  geometry: VideoGeometry;
+}
 
-  if (nextMode !== undefined) mode = nextMode;
-  if (nextGeometry !== undefined) geometry = nextGeometry;
+// Bring the receiver in line with what the patterns ask for. Called every tick, so it
+// only acts on a change: re-aiming is free, a new source is opened in the background,
+// and a source that could not be opened is retried every `REOPEN_MS`.
+export function syncNdi(request: NdiRequest | null): void {
+  if (request !== null) ({ sampling, geometry } = request);
 
-  if (source !== undefined) {
-    if (source === null) stop();
-    else await start(source);
+  const next = request?.source || null;
+  if (next !== wanted) {
+    wanted = next;
+    error = null;
+    reopenAt = 0;
+    if (receiver !== null) stop();
   }
-  return ndiStatus();
+
+  if (wanted === null || receiver !== null || opening || Date.now() < reopenAt) return;
+
+  const name = wanted;
+  opening = true;
+  start(name)
+    .catch((err: unknown) => {
+      const message = describe(err);
+      if (message !== error) console.warn(`NDI: ${message}`);
+      if (wanted === name) error = message;
+      reopenAt = Date.now() + REOPEN_MS;
+    })
+    .finally(() => {
+      opening = false;
+    });
 }
 
 export interface NdiPreview {
@@ -466,6 +500,7 @@ export function ndiPreview(): NdiPreview | null {
 
 // Release the receiver and the finder so the process can exit cleanly.
 export function stopNdi(): void {
+  wanted = null;
   stop();
   finder?.destroy();
   finder = null;

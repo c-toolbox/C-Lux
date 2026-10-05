@@ -76,10 +76,17 @@ export function videoStrip(): VideoStrip | null {
 // the server is actually reading.
 //
 
-// 'strip' treats the feed as one row of colors, so a universe-wide, short video maps
-// straight onto the lights. 'fisheye' samples a ring inside a circular image and throws
+// Where a Video pattern's feed comes from. Camera and screen are captured by a browser
+// tab; NDI is received by the server itself. Numbers so they can be `select` values.
+export const VIDEO_INPUT_CAMERA = 0;
+export const VIDEO_INPUT_SCREEN = 1;
+export const VIDEO_INPUT_NDI = 2;
+
+// Strip treats the feed as one row of colors, so a universe-wide, short video maps
+// straight onto the lights. Fisheye samples a ring inside a circular image and throws
 // it outwards, the way an ambient backlight follows the edges of a screen.
-export type VideoMode = 'strip' | 'fisheye';
+export const VIDEO_SAMPLING_STRIP = 0;
+export const VIDEO_SAMPLING_FISHEYE = 1;
 
 // Which part of the frame each mode reads, all as fractions so the numbers survive a
 // change of resolution. `radius` is the ring's radius as a fraction of half the frame's
@@ -95,6 +102,15 @@ export interface VideoGeometry {
   rotation: number;
   stripY: number;
   stripHeight: number;
+}
+
+// Everything a Video pattern stores about what to capture and how to reduce it.
+export interface VideoCaptureSettings {
+  input: number;
+  // The NDI sender to receive, by name; empty while none has been picked.
+  ndiSource: string;
+  sampling: number;
+  geometry: VideoGeometry;
 }
 
 export const DEFAULT_VIDEO_GEOMETRY: VideoGeometry = {

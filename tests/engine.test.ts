@@ -6,6 +6,12 @@ import { HttpError } from '../server/errors';
 import { saveScenes } from '../server/storage';
 import { BlendMode, type Color } from '../shared/patterns/pattern';
 import { SOLID_COLOR_NAME } from '../shared/patterns/static';
+import {
+  VIDEO_INPUT_CAMERA,
+  VIDEO_INPUT_NDI,
+  VIDEO_SAMPLING_FISHEYE,
+  VIDEO_SAMPLING_STRIP
+} from '../shared/video';
 
 import { defaultParameters, N_LIGHTS as N, propsOf } from './helpers';
 
@@ -266,5 +272,55 @@ describe('renaming a scene', () => {
   it('still refuses an unknown scene with overwrite', async () => {
     await expectRejected(engine.renameScene('nope', 'two', true), /No scene named/);
     expect(names()).toEqual(['one', 'two']);
+  });
+});
+
+describe('video capture', () => {
+  function addVideo(name: string, extra: Record<string, unknown> = {}) {
+    const params: Record<string, unknown> = defaultParameters('Video', name);
+    delete params.name;
+    engine.addPattern('Video', { ...propsOf({ ...params, ...extra }), name });
+  }
+
+  it('asks for nothing without an enabled Video pattern', () => {
+    addStatic('static', { r: 0, g: 0, b: 0 });
+    expect(engine.videoCapture()).toBeNull();
+    addVideo('video');
+    engine.setPatternEnabled('video', false);
+    expect(engine.videoCapture()).toBeNull();
+  });
+
+  it('follows the first enabled Video pattern', () => {
+    addVideo('first', { input: VIDEO_INPUT_NDI, ndiSource: 'A', radius: 0.5 });
+    addVideo('second', { input: VIDEO_INPUT_CAMERA, sampling: VIDEO_SAMPLING_STRIP });
+    expect(engine.videoCapture()).toMatchObject({
+      input: VIDEO_INPUT_NDI,
+      ndiSource: 'A',
+      sampling: VIDEO_SAMPLING_FISHEYE,
+      geometry: { radius: 0.5 }
+    });
+
+    engine.setPatternEnabled('first', false);
+    expect(engine.videoCapture()).toMatchObject({
+      input: VIDEO_INPUT_CAMERA,
+      sampling: VIDEO_SAMPLING_STRIP
+    });
+  });
+
+  it('re-aims at once while the edit is still easing in', () => {
+    config.server.sceneTransition = 1;
+    addVideo('video', { input: VIDEO_INPUT_NDI, ndiSource: 'A' });
+    engine.updatePattern('video', { ndiSource: 'B', centerX: 0.25 });
+    expect(engine.videoCapture()).toMatchObject({
+      ndiSource: 'B',
+      geometry: { centerX: 0.25 }
+    });
+  });
+
+  it('rejects an NDI source name with control characters', () => {
+    addVideo('video');
+    expect(() => engine.updatePattern('video', { ndiSource: 'A\nB' })).toThrow(
+      /control characters/
+    );
   });
 });

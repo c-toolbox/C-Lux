@@ -5,8 +5,8 @@ import {
   sampleRim,
   stripBand,
   VIDEO_MAX_WIDTH,
-  type VideoGeometry,
-  type VideoMode
+  VIDEO_SAMPLING_STRIP,
+  type VideoGeometry
 } from '../../shared/video';
 
 import { authHeaders } from './auth';
@@ -16,10 +16,12 @@ import { startStandaloneTicker } from './ticker';
 // the same pixels for the same settings; re-exported here because the capture panel and
 // the calibration overlay are browser-side.
 export {
-  DEFAULT_VIDEO_GEOMETRY,
   rimScale,
-  type VideoGeometry,
-  type VideoMode
+  VIDEO_INPUT_CAMERA,
+  VIDEO_INPUT_NDI,
+  VIDEO_SAMPLING_FISHEYE,
+  VIDEO_SAMPLING_STRIP,
+  type VideoGeometry
 } from '../../shared/video';
 
 // Where the strip this tab samples is sent so the server-side pattern can read it.
@@ -29,19 +31,14 @@ const ENDPOINT = '/api/video';
 // how a player or a VJ tool gets its output in here without a native integration.
 export type VideoSource = 'camera' | 'screen';
 
-// What the capture panel can be pointed at. 'ndi' is not a browser capture at all: the
-// server joins the stream itself and does the sampling, so it never reaches the code
-// below.
-export type VideoInput = VideoSource | 'ndi';
-
 export interface VideoCaptureHandle {
   stop: () => void;
 }
 
 interface VideoCaptureOptions {
   source: VideoSource;
-  // Read every frame, so the mode can be switched without tearing the stream down.
-  mode: () => VideoMode;
+  // Read every frame, so the sampling can be switched without tearing the stream down.
+  sampling: () => number;
   // Owned by the caller so the stream can be shown while it is being sampled; the
   // element also has to be in the page, or browsers may stop decoding frames into it.
   video: HTMLVideoElement;
@@ -68,7 +65,7 @@ async function openStream(source: VideoSource): Promise<MediaStream> {
 // until the returned handle is stopped.
 export async function startVideoCapture({
   source,
-  mode,
+  sampling,
   video,
   geometry,
   onStrip,
@@ -178,7 +175,7 @@ export async function startVideoCapture({
     if (video.readyState < video.HAVE_CURRENT_DATA) return;
     if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
-    const width = mode() === 'strip' ? takeStrip() : takeRim();
+    const width = sampling() === VIDEO_SAMPLING_STRIP ? takeStrip() : takeRim();
     if (width === 0) return;
 
     onStrip(width, strip);

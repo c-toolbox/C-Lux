@@ -1,6 +1,7 @@
 import { AudioPattern } from './patterns/audio.ts';
 import { MovingGaussianPattern } from './patterns/moving-gaussian.ts';
 import { SparklePattern } from './patterns/sparkle.ts';
+import { VideoPattern } from './patterns/video.ts';
 
 type RawPattern = Record<string, unknown>;
 
@@ -9,12 +10,14 @@ type RawPattern = Record<string, unknown>;
 const STEPS: ReadonlyArray<(pattern: RawPattern) => RawPattern> = [
   // 1 -> 2: Sparkle's hue window is centered on `hue` rather than starting at it,
   // Moving Gaussian's speed runs the same way as every other pattern's, and fields added
-  // since get their defaults, which render as before.
+  // since get their defaults, which render as before. The Audio and Video capture
+  // settings used to live in the capture panel, which started on these same defaults.
   (p) => {
     if (p.type === AudioPattern.Type) {
-      const { hz, color, colorMode, frontColor, backColor, colorMap } =
+      const { input, hz, color, colorMode, frontColor, backColor, colorMap } =
         AudioPattern.Fields;
       return {
+        input: input.default,
         hz: hz.default,
         color: { ...color.default },
         colorMode: colorMode.default,
@@ -27,6 +30,22 @@ const STEPS: ReadonlyArray<(pattern: RawPattern) => RawPattern> = [
     if (p.type === MovingGaussianPattern.Type) {
       // `0 - speed` rather than `-speed`, so a still pattern doesn't become -0.
       return typeof p.speed === 'number' ? { ...p, speed: 0 - p.speed } : p;
+    }
+    if (p.type === VideoPattern.Type) {
+      const f = VideoPattern.Fields;
+      return {
+        input: f.input.default,
+        ndiSource: f.ndiSource.default,
+        sampling: f.sampling.default,
+        centerX: f.centerX.default,
+        centerY: f.centerY.default,
+        radius: f.radius.default,
+        ringWidth: f.ringWidth.default,
+        rotation: f.rotation.default,
+        stripY: f.stripY.default,
+        stripHeight: f.stripHeight.default,
+        ...p
+      };
     }
     if (p.type !== SparklePattern.Type) return p;
     if (typeof p.hue !== 'number' || typeof p.hueRange !== 'number') return p;

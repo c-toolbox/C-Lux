@@ -122,6 +122,8 @@ export function edgeValues(spec: FieldSpec): unknown[] {
           a: i % 2 ? 0.5 : 1
         }))
       ];
+    case 'text':
+      return [spec.default, '', 'Studio (Camera 1)', 'x'.repeat(spec.maxLength)];
     default: {
       const far = Math.max(10, Math.abs(spec.default) * 10);
       const values = [spec.default];
@@ -167,6 +169,8 @@ export function randomValue(spec: FieldSpec, random: () => number): unknown {
         b: byte(),
         a: random()
       }));
+    case 'text':
+      return `Source ${Math.floor(random() * 100)}`;
     default: {
       const span = Math.max(10, Math.abs(spec.default) * 10);
       const low =

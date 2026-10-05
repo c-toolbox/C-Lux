@@ -37,7 +37,7 @@ export interface FormValues {
   type: PatternType;
   name: string;
   // Keyed by the pattern's schema fields: hex strings for colors, a list of them for
-  // palettes, positioned hex colors for color maps, numbers otherwise.
+  // palettes, positioned hex colors for color maps, strings for text, numbers otherwise.
   values: Record<string, FieldValue>;
 }
 
@@ -72,6 +72,8 @@ export function toProps(values: FormValues): PatternProps {
       props[key] = asList(value).map(hexToRgb);
     } else if (spec.kind === 'colorMap') {
       props[key] = asStops(value).map((s) => ({ t: s.t, ...hexToRgb(s.color) }));
+    } else if (spec.kind === 'text') {
+      props[key] = text(value).trim();
     } else if (spec.kind !== 'color') {
       props[key] = num(value);
     } else if (key === 'color') {
@@ -97,6 +99,8 @@ export function fromParameters(p: PatternParameters): FormValues {
     } else if (spec.kind === 'colorMap') {
       const stops = Array.isArray(value) && value.length > 0 ? value : spec.default;
       values[key] = toStopValues(stops as ColorStop[]);
+    } else if (spec.kind === 'text') {
+      values[key] = typeof value === 'string' ? value : spec.default;
     } else {
       values[key] = typeof value === 'number' ? value : spec.default;
     }
@@ -203,6 +207,18 @@ function Field({ spec, value, onChange }: FieldProps) {
         value={text(value)}
         data={spec.options.map((o) => ({ value: String(o.value), label: o.label }))}
         onChange={(e) => onChange(Number(e.currentTarget.value))}
+      />
+    );
+  }
+
+  if (spec.kind === 'text') {
+    return (
+      <TextInput
+        label={spec.label}
+        description={spec.hint}
+        maxLength={spec.maxLength}
+        value={text(value)}
+        onChange={(e) => onChange(e.currentTarget.value)}
       />
     );
   }

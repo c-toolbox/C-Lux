@@ -87,6 +87,7 @@ export type FieldSpec =
   | (FieldBase & { kind: 'color'; default: Color })
   | (FieldBase & { kind: 'colors'; default: Color[] })
   | (FieldBase & { kind: 'colorMap'; default: ColorStop[] })
+  | (FieldBase & { kind: 'text'; default: string; maxLength: number })
   | (FieldBase & {
       kind: 'select';
       default: number;
@@ -239,7 +240,7 @@ function interpolateValue(
   t: number,
   kind: FieldSpec['kind'] | undefined
 ): unknown {
-  if (kind === 'select') return to;
+  if (kind === 'select' || kind === 'text') return to;
   if (kind === 'color' && isColor(from) && isColor(to)) {
     return mixColors(from, to, t);
   }

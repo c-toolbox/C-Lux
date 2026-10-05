@@ -180,13 +180,14 @@ describe.each(PATTERN_TYPES)('%s pattern', (type) => {
 
   // The editor hides a field when it can't matter, so it must really have no effect.
   it('ignores every field while the editor hides it', () => {
-    if (type === AUDIO_TYPE) {
-      setAudioFrame(
-        Array.from({ length: AUDIO_BANDS }, (_, k) => (k % 3) / 2),
-        0.7
-      );
-    }
     const frames = (params: Params) => {
+      // Re-published per run, so the feed can't go stale partway through the test.
+      if (type === AUDIO_TYPE) {
+        setAudioFrame(
+          Array.from({ length: AUDIO_BANDS }, (_, k) => (k % 3) / 2),
+          0.7
+        );
+      }
       vi.spyOn(Math, 'random').mockImplementation(mulberry32(3));
       const pattern = build(params);
       const out: number[][] = [];

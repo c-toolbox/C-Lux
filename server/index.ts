@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
 import { NDI_PREVIEW_HEADER_BYTES } from '../shared/ndi';
+import { VIDEO_INPUT_NDI } from '../shared/video';
 
 import { publishAudioFrame } from './audio';
 import { getAuth, login, logout, requireAuth, signOutEveryone } from './auth';
@@ -18,7 +19,7 @@ import {
 } from './config';
 import { Engine } from './engine';
 import { HttpError } from './errors';
-import { ndiPreview, ndiSources, ndiStatus, setNdi, stopNdi } from './ndi';
+import { ndiPreview, ndiSources, ndiStatus, stopNdi, syncNdi } from './ndi';
 import { startOutputs } from './output';
 import { parseBody } from './validation';
 import { publishVideoStrip } from './video';
@@ -75,25 +76,6 @@ const debugBody = z.object({
     .nullable()
     .optional(),
   color: colorBody.optional()
-});
-
-// Every part of the sampling geometry is a fraction of the frame, so the whole body is
-// bounded and a slider can't ask the receiver to read outside the image.
-const fraction = z.number('must be a number').min(0).max(1);
-const ndiBody = z.object({
-  source: z.string('must be a string').nullable().optional(),
-  mode: z.enum(['strip', 'fisheye']).optional(),
-  geometry: z
-    .object({
-      centerX: fraction,
-      centerY: fraction,
-      radius: z.number('must be a number').min(0).max(2),
-      ringWidth: fraction,
-      rotation: fraction,
-      stripY: fraction,
-      stripHeight: fraction
-    })
-    .optional()
 });
 
 //
@@ -185,18 +167,15 @@ function postVideo(req: express.Request, res: express.Response) {
   res.status(204).end();
 }
 
-// NDI is a LAN protocol a browser cannot speak, so the server receives the stream itself
-// and the capture panel only picks a source and aims the sampling.
+// NDI is a LAN protocol a browser cannot speak, so the server receives the stream itself,
+// from the source the enabled Video pattern names. The capture panel only lists the
+// senders and watches what the receiver reads.
 function getNdi(_req: express.Request, res: express.Response) {
   res.json(ndiStatus());
 }
 
 async function listNdiSources(_req: express.Request, res: express.Response) {
   res.json(await ndiSources());
-}
-
-async function putNdi(req: express.Request, res: express.Response) {
-  res.json(await setNdi(parseBody(ndiBody, req.body)));
 }
 
 // What the receiver is reading, so the calibration sliders can be aimed by eye, plus the
@@ -352,12 +331,10 @@ async function main() {
     express.raw({ type: 'application/octet-stream', limit: VIDEO_BODY_LIMIT }),
     postVideo
   );
-  // Open like the capture endpoints above: the landing page runs the capture panel too,
-  // and only a source discovery has already seen can be opened, so this cannot point the
-  // receiver at an arbitrary host.
+  // Open like the capture endpoints above: the landing page shows the receiver's state
+  // and preview too. Listing the senders is only needed to pick one for a pattern.
   routes.get('/ndi', getNdi);
-  routes.get('/ndi/sources', listNdiSources);
-  routes.put('/ndi', putNdi);
+  routes.get('/ndi/sources', requireAuth, listNdiSources);
   routes.get('/ndi/preview', getNdiPreview);
   routes.get('/stream', streamFrames);
   routes.get('/scenes', listScenes);
@@ -414,6 +391,13 @@ async function main() {
     const dt = (now - last) / 1000;
     last = now;
     engine.tick(dt);
+
+    const video = engine.videoCapture();
+    syncNdi(
+      video?.input === VIDEO_INPUT_NDI
+        ? { source: video.ndiSource, sampling: video.sampling, geometry: video.geometry }
+        : null
+    );
   }, 1000 / config.server.tickRate);
 
   // Share the blended frame over Art-Net when enabled in config.json.

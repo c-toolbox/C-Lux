@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import {
   TbChevronDown,
   TbChevronUp,
@@ -19,6 +19,8 @@ interface PatternListProps {
   onDuplicate: (pattern: PatternParameters) => void;
   onToggleEnabled: (name: string, enabled: boolean) => void;
   onRemove: (name: string) => void;
+  // Extra content shown inside a pattern's row, below its controls.
+  renderDetails?: (pattern: PatternParameters) => ReactNode;
 }
 
 export function PatternList({
@@ -28,7 +30,8 @@ export function PatternList({
   onEdit,
   onDuplicate,
   onToggleEnabled,
-  onRemove
+  onRemove,
+  renderDetails
 }: PatternListProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -42,9 +45,9 @@ export function PatternList({
   return (
     <Stack gap={'xs'}>
       {patterns.map((p, i) => (
-        <Group
+        <Stack
           key={p.name}
-          justify={'space-between'}
+          gap={'xs'}
           px={'md'}
           py={'xs'}
           onDragOver={(e) => {
@@ -62,96 +65,99 @@ export function PatternList({
                 : '1px solid var(--mantine-color-default-border)'
           }}
         >
-          <Group>
-            <ActionIcon
-              variant={'subtle'}
-              color={'gray'}
-              draggable={!busy}
-              onDragStart={() => setDragIndex(i)}
-              onDragEnd={() => {
-                setDragIndex(null);
-                setDragOverIndex(null);
-              }}
-              style={{ cursor: 'grab' }}
-              aria-label={'Drag to reorder'}
-            >
-              <TbGripVertical />
-            </ActionIcon>
-            <Stack gap={0}>
+          <Group justify={'space-between'}>
+            <Group>
               <ActionIcon
                 variant={'subtle'}
                 color={'gray'}
-                size={'xs'}
-                disabled={busy || i === 0}
-                onClick={() => onMove(i, i - 1)}
-                aria-label={'Move pattern up'}
+                draggable={!busy}
+                onDragStart={() => setDragIndex(i)}
+                onDragEnd={() => {
+                  setDragIndex(null);
+                  setDragOverIndex(null);
+                }}
+                style={{ cursor: 'grab' }}
+                aria-label={'Drag to reorder'}
               >
-                <TbChevronUp />
+                <TbGripVertical />
               </ActionIcon>
-              <ActionIcon
-                variant={'subtle'}
-                color={'gray'}
-                size={'xs'}
-                disabled={busy || i === patterns.length - 1}
-                onClick={() => onMove(i, i + 1)}
-                aria-label={'Move pattern down'}
-              >
-                <TbChevronDown />
-              </ActionIcon>
-            </Stack>
-            <Group gap={'xs'} wrap={'nowrap'} style={{ opacity: p.enabled ? 1 : 0.5 }}>
-              {/* Fixed width so the type badges line up down the list. */}
-              <Text fw={600} w={180} truncate>
-                {p.name}
-              </Text>
-              <Badge variant={'light'} size={'sm'}>
-                {patternDisplayName(p.type)}
-              </Badge>
-              {!p.enabled && (
-                <Badge variant={'light'} color={'gray'} size={'sm'}>
-                  Disabled
+              <Stack gap={0}>
+                <ActionIcon
+                  variant={'subtle'}
+                  color={'gray'}
+                  size={'xs'}
+                  disabled={busy || i === 0}
+                  onClick={() => onMove(i, i - 1)}
+                  aria-label={'Move pattern up'}
+                >
+                  <TbChevronUp />
+                </ActionIcon>
+                <ActionIcon
+                  variant={'subtle'}
+                  color={'gray'}
+                  size={'xs'}
+                  disabled={busy || i === patterns.length - 1}
+                  onClick={() => onMove(i, i + 1)}
+                  aria-label={'Move pattern down'}
+                >
+                  <TbChevronDown />
+                </ActionIcon>
+              </Stack>
+              <Group gap={'xs'} wrap={'nowrap'} style={{ opacity: p.enabled ? 1 : 0.5 }}>
+                {/* Fixed width so the type badges line up down the list. */}
+                <Text fw={600} w={180} truncate>
+                  {p.name}
+                </Text>
+                <Badge variant={'light'} size={'sm'}>
+                  {patternDisplayName(p.type)}
                 </Badge>
-              )}
+                {!p.enabled && (
+                  <Badge variant={'light'} color={'gray'} size={'sm'}>
+                    Disabled
+                  </Badge>
+                )}
+              </Group>
+            </Group>
+
+            <Group gap={'xs'}>
+              <Switch
+                size={'sm'}
+                checked={p.enabled}
+                disabled={busy}
+                onChange={(e) => onToggleEnabled(p.name, e.currentTarget.checked)}
+                aria-label={p.enabled ? 'Disable pattern' : 'Enable pattern'}
+              />
+              <Button
+                size={'xs'}
+                variant={'light'}
+                leftSection={<TbPencil />}
+                onClick={() => onEdit(p)}
+              >
+                Edit
+              </Button>
+              <Button
+                size={'xs'}
+                variant={'light'}
+                disabled={busy}
+                leftSection={<TbCopy />}
+                onClick={() => onDuplicate(p)}
+              >
+                Duplicate
+              </Button>
+              <Button
+                size={'xs'}
+                color={'red'}
+                variant={'light'}
+                disabled={busy}
+                leftSection={<TbTrash />}
+                onClick={() => onRemove(p.name)}
+              >
+                Remove
+              </Button>
             </Group>
           </Group>
-
-          <Group gap={'xs'}>
-            <Switch
-              size={'sm'}
-              checked={p.enabled}
-              disabled={busy}
-              onChange={(e) => onToggleEnabled(p.name, e.currentTarget.checked)}
-              aria-label={p.enabled ? 'Disable pattern' : 'Enable pattern'}
-            />
-            <Button
-              size={'xs'}
-              variant={'light'}
-              leftSection={<TbPencil />}
-              onClick={() => onEdit(p)}
-            >
-              Edit
-            </Button>
-            <Button
-              size={'xs'}
-              variant={'light'}
-              disabled={busy}
-              leftSection={<TbCopy />}
-              onClick={() => onDuplicate(p)}
-            >
-              Duplicate
-            </Button>
-            <Button
-              size={'xs'}
-              color={'red'}
-              variant={'light'}
-              disabled={busy}
-              leftSection={<TbTrash />}
-              onClick={() => onRemove(p.name)}
-            >
-              Remove
-            </Button>
-          </Group>
-        </Group>
+          {renderDetails?.(p)}
+        </Stack>
       ))}
     </Stack>
   );

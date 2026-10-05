@@ -15,6 +15,12 @@ import {
   type SolidColorUpdate,
   StaticPattern
 } from '../shared/patterns/static';
+import {
+  videoCaptureOf,
+  type VideoParameters,
+  VideoPattern
+} from '../shared/patterns/video';
+import type { VideoCaptureSettings } from '../shared/video';
 
 import { config } from './config';
 import { HttpError } from './errors';
@@ -131,6 +137,15 @@ export class Engine {
 
   listPatterns(): PatternParameters[] {
     return this.patterns.map((p) => p.serialize() as PatternParameters);
+  }
+
+  // What the first enabled Video pattern asks to capture, or null when none is enabled.
+  // Only one feed is captured at a time, so any further Video pattern shows that one too.
+  // Read from the committed parameters, so an edit re-aims the capture at once instead of
+  // easing over the transition.
+  videoCapture(): VideoCaptureSettings | null {
+    const video = this.patterns.find((p) => p.enabled && p instanceof VideoPattern);
+    return video ? videoCaptureOf(video.serialize() as VideoParameters) : null;
   }
 
   // Props arrive as an untyped record from the HTTP boundary; `validateName` and

@@ -124,6 +124,10 @@ describe.each(PATTERN_TYPES)('%s schema', (type) => {
           expect(stop.t >= 0 && stop.t <= 1).toBe(true);
         }
         break;
+      case 'text':
+        expect(spec.maxLength).toBeGreaterThan(0);
+        expect(spec.default.length).toBeLessThanOrEqual(spec.maxLength);
+        break;
       default:
         expect(Number.isFinite(spec.default)).toBe(true);
         if (spec.step !== undefined) expect(spec.step).toBeGreaterThan(0);
@@ -212,6 +216,13 @@ describe.each(PATTERN_TYPES)('%s validation', (type) => {
         reject([{ t: 0, r: 0, g: 0, b: 0, a: 2 }]);
         reject([0.5]);
         break;
+      case 'text':
+        reject('x'.repeat(spec.maxLength + 1));
+        reject('line\nbreak');
+        reject('nul\u0000');
+        reject(42);
+        reject(null);
+        break;
       default:
         if (spec.min !== undefined) reject(spec.min - 1);
         if (spec.max !== undefined) reject(spec.max + 1);
@@ -219,19 +230,29 @@ describe.each(PATTERN_TYPES)('%s validation', (type) => {
     }
   });
 
-  it.each(Object.keys(fields))('rejects a non-numeric %s', (key) => {
-    const props = propsOf({ ...defaultParameters(type), [key]: 'oops' });
-    expectRejected(type, props, /must be/);
-    expectRejected(
-      type,
-      propsOf({ ...defaultParameters(type), [key]: null }),
-      /Missing|must be/
-    );
-    expectRejected(
-      type,
-      propsOf({ ...defaultParameters(type), [key]: Number.POSITIVE_INFINITY }),
-      /./
-    );
+  it.each(Object.entries(fields).filter(([, spec]) => spec.kind !== 'text'))(
+    'rejects a non-numeric %s',
+    (key) => {
+      const props = propsOf({ ...defaultParameters(type), [key]: 'oops' });
+      expectRejected(type, props, /must be/);
+      expectRejected(
+        type,
+        propsOf({ ...defaultParameters(type), [key]: null }),
+        /Missing|must be/
+      );
+      expectRejected(
+        type,
+        propsOf({ ...defaultParameters(type), [key]: Number.POSITIVE_INFINITY }),
+        /./
+      );
+    }
+  );
+
+  it('accepts a string only for a text field', () => {
+    for (const key of Object.keys(defaults)) {
+      if (fields[key]?.kind === 'text' || key === 'name') continue;
+      expectRejected(type, { ...defaults, [key]: 'oops' }, /must be/);
+    }
   });
 
   it('rejects props that are not an object', () => {

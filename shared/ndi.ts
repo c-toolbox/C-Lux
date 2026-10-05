@@ -1,23 +1,14 @@
 // The NDI contract shared by the capture panel in the browser and the receiver on the
 // server. NDI is a LAN protocol a browser cannot speak, so unlike camera and screen
-// capture the whole feed is handled server-side: the browser only picks a source, aims
-// the sampling geometry, and watches a preview of what the server is reading.
+// capture the whole feed is handled server-side: the enabled Video pattern names the
+// source and the sampling geometry, and the browser only lists the senders on the
+// network and watches a preview of what the server is reading.
 
-import type { VideoGeometry, VideoMode } from './video.ts';
-
-// One sender the finder has seen on the network. `name` is what the user picks from and
-// what the server matches an incoming request against.
+// One sender the finder has seen on the network. `name` is what a Video pattern stores
+// as its `ndiSource`.
 export interface NdiSource {
   name: string;
   urlAddress?: string;
-}
-
-// A change to the receiver. `source` names the sender to open, or null to stop; leaving
-// it out keeps whatever is running and only re-aims the sampling.
-export interface NdiUpdate {
-  source?: string | null;
-  mode?: VideoMode;
-  geometry?: VideoGeometry;
 }
 
 export interface NdiStatus {
@@ -26,12 +17,11 @@ export interface NdiStatus {
   supported: boolean;
   reason: string | null;
   running: boolean;
+  // The source the enabled Video pattern asks for, whether or not it could be opened.
   source: string | null;
-  mode: VideoMode;
-  geometry: VideoGeometry;
   // Senders currently connected to our receiver: 0 means the source has gone away.
   connections: number;
-  // The last receive failure, cleared when a new source is opened.
+  // Why the requested source is not running, or the last receive failure.
   error: string | null;
 }
 

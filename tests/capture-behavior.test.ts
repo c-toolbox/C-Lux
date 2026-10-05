@@ -305,7 +305,7 @@ describe('Audio', () => {
       Object.entries(fields)
         .filter(([, spec]) => isFieldVisible(spec, values))
         .map(([key]) => key);
-    const common = ['mode', 'gain', 'floor', 'decay'];
+    const common = ['input', 'mode', 'gain', 'floor', 'decay'];
 
     it.each([
       [0, 0, ['colorMode', 'hue', 'hueSpan', 'frontHz', 'backHz']],
