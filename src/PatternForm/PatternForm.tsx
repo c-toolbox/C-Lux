@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Anchor,
   Button,
   CloseButton,
   ColorInput,
@@ -281,6 +282,13 @@ const TYPE_OPTIONS = PATTERN_TYPES.map((t) => ({
   label: patternDisplayName(t)
 })).sort((a, b) => a.label.localeCompare(b.label));
 
+const WIKI_URL = 'https://github.com/c-toolbox/C-Lux/wiki';
+
+// The wiki's headings are the display names, so GitHub's heading slug is the anchor.
+function wikiUrl(type: PatternType): string {
+  return `${WIKI_URL}#${patternDisplayName(type).toLowerCase().replace(/\s+/g, '-')}`;
+}
+
 interface PatternFormProps {
   namePlaceholder: string;
   existingNames: string[];
@@ -307,6 +315,17 @@ export function PatternForm({
       <Stack gap={'md'} style={{ flex: '1 1 300px', minWidth: 0 }}>
         <NativeSelect
           label={'Type'}
+          description={
+            <Anchor
+              href={wikiUrl(type)}
+              target={'_blank'}
+              rel={'noopener noreferrer'}
+              size={'xs'}
+            >
+              Get more information on the documentation page
+            </Anchor>
+          }
+          inputWrapperOrder={['label', 'input', 'description', 'error']}
           value={type}
           data={TYPE_OPTIONS}
           onChange={(e) => setType(e.currentTarget.value as PatternType)}
