@@ -429,8 +429,43 @@ describe('pattern migration', () => {
   });
 
   it('leaves other pattern types alone', () => {
-    const plasma = { type: 'Plasma', hue: 100, hueRange: 140 };
-    expect(migratePatterns([plasma], 1)).toEqual([plasma]);
+    const rainbow = { type: 'Rainbow', hue: 100, hueRange: 140, saturation: 1 };
+    expect(migratePatterns([rainbow], 1)).toEqual([rainbow]);
+  });
+
+  it('turns the hue window of a version 1 Plasma into a color', () => {
+    const old = { type: 'Plasma', hue: 300, hueRange: 120, saturation: 0.5, scale: 2 };
+    expect(migratePatterns([old], 1)).toEqual([
+      { type: 'Plasma', hueRange: 120, scale: 2, color: hsvToRgb(0, 0.5, 1) }
+    ]);
+  });
+
+  it('keeps a version 1 Plasma lighting the colors it used to', () => {
+    const old: Params = {
+      ...defaultParameters('Plasma', 'p'),
+      hue: 200,
+      hueRange: 140,
+      saturation: 0.9,
+      scale: 2,
+      speed: 0
+    };
+    delete old.color;
+    const [migrated] = migratePatterns([old], 1) as Params[];
+    expect(() => validateNewPatternProps('Plasma', propsOf(migrated))).not.toThrow();
+    const p = build(migrated);
+    for (let i = 0; i < N; i++) {
+      // Version 1 read the field as a hue from `hue` up to `hue + hueRange`.
+      const x = i / N;
+      const w =
+        0.5 * Math.sin(2 * Math.PI * 2 * x) +
+        0.3 * Math.sin(2 * Math.PI * 3 * x + 1.7) +
+        0.2 * Math.sin(2 * Math.PI * 5 * x + 4.1);
+      const expected = hsvToRgb(200 + 140 * (0.5 + 0.5 * w), 0.9, 1);
+      const lit = p.state[i];
+      expect(Math.abs(lit.r - expected.r), `light ${i}`).toBeLessThanOrEqual(1);
+      expect(Math.abs(lit.g - expected.g), `light ${i}`).toBeLessThanOrEqual(1);
+      expect(Math.abs(lit.b - expected.b), `light ${i}`).toBeLessThanOrEqual(1);
+    }
   });
 
   it('passes malformed entries through for validation', () => {

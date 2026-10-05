@@ -3,6 +3,7 @@ import { GradientPattern } from './patterns/gradient.ts';
 import { LightningPattern } from './patterns/lightning.ts';
 import { MovingGaussianPattern } from './patterns/moving-gaussian.ts';
 import { hsvToRgb } from './patterns/pattern.ts';
+import { PlasmaPattern } from './patterns/plasma.ts';
 import { SparklePattern } from './patterns/sparkle.ts';
 import { VideoPattern } from './patterns/video.ts';
 
@@ -11,8 +12,8 @@ type RawPattern = Record<string, unknown>;
 // Step `i` upgrades a saved pattern from version `i + 1` to `i + 2`. Patterns are
 // untrusted here, so anything unexpected passes through for validation to reject.
 const STEPS: ReadonlyArray<(pattern: RawPattern) => RawPattern> = [
-  // 1 -> 2: Sparkle picks a color whose hue its hue window is centered on, instead of a
-  // hue the window started at and a saturation,
+  // 1 -> 2: Sparkle and Plasma pick a color whose hue their hue window is centered on,
+  // instead of a hue the window started at and a saturation,
   // Moving Gaussian's speed runs the same way as every other pattern's, Lightning
   // flashes keep lighting instantly, Gradient's two
   // colors become the first two of its palette, and fields added
@@ -61,20 +62,23 @@ const STEPS: ReadonlyArray<(pattern: RawPattern) => RawPattern> = [
         ...p
       };
     }
+    if (p.type === PlasmaPattern.Type) return hueWindowToColor(p);
     if (p.type !== SparklePattern.Type) return p;
-    const { hue, hueRange, saturation, ...rest } = p;
-    if (typeof hue !== 'number' || typeof hueRange !== 'number') return p;
-    if (typeof saturation !== 'number') return p;
-    const { attack } = SparklePattern.Fields;
-    const center = (hue + hueRange / 2) % 360;
-    return {
-      attack: attack.default,
-      ...rest,
-      hueRange,
-      color: hsvToRgb(center, saturation, 1)
-    };
+    const converted = hueWindowToColor(p);
+    if (converted === p) return p;
+    return { attack: SparklePattern.Fields.attack.default, ...converted };
   }
 ];
+
+// Turn a hue window starting at `hue` plus a saturation into a color at the window's
+// center, the hue `hueRange` now spreads around.
+function hueWindowToColor(p: RawPattern): RawPattern {
+  const { hue, hueRange, saturation, ...rest } = p;
+  if (typeof hue !== 'number' || typeof hueRange !== 'number') return p;
+  if (typeof saturation !== 'number') return p;
+  const center = (hue + hueRange / 2) % 360;
+  return { ...rest, hueRange, color: hsvToRgb(center, saturation, 1) };
+}
 
 // Version of the saved pattern data, stamped on scenes.json and exported scene files.
 export const PATTERN_DATA_VERSION = STEPS.length + 1;

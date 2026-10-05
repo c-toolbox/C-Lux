@@ -1,21 +1,21 @@
 import {
+  type Color,
   hsvToRgb,
   Pattern,
   type PatternBaseProps,
   type PatternSchema,
   POSITIVE,
-  UNIT
+  rgbToHsv
 } from './pattern.ts';
 
-export type PlasmaProps = PatternBaseProps & {
-  // Hue and hue range in degrees, scale in whole turns of the ring and speed in turns
-  // per second.
-  hue: number;
-  hueRange: number;
-  scale: number;
-  speed: number;
-  saturation: number;
-};
+export type PlasmaProps = PatternBaseProps &
+  Color & {
+    // Hue range in degrees, centered on the color's hue, scale in whole turns of the
+    // ring and speed in turns per second.
+    hueRange: number;
+    scale: number;
+    speed: number;
+  };
 
 const TAU = 2 * Math.PI;
 
@@ -25,14 +25,11 @@ export class PlasmaPattern extends Pattern {
   static readonly Type = 'Plasma';
   static readonly DisplayName = 'Plasma';
   static readonly Fields = {
-    hue: {
-      kind: 'number',
-      label: 'Hue (°)',
-      default: 200,
-      step: 10,
-      row: 0,
-      hint: 'Center hue of the palette.',
-      ...DEGREES
+    color: {
+      kind: 'color',
+      label: 'Color',
+      default: { r: 140, g: 26, b: 255 },
+      hint: 'Center color of the palette; the hue range spreads around its hue.'
     },
     hueRange: {
       kind: 'number',
@@ -40,7 +37,6 @@ export class PlasmaPattern extends Pattern {
       hint: 'How far the colors stray from the center hue.',
       default: 140,
       step: 10,
-      row: 0,
       ...DEGREES
     },
     scale: {
@@ -60,23 +56,16 @@ export class PlasmaPattern extends Pattern {
       default: 0.06,
       step: 0.01,
       row: 1
-    },
-    saturation: {
-      kind: 'number',
-      label: 'Saturation',
-      hint: '0 is white, 1 is full color.',
-      default: 0.9,
-      step: 0.05,
-      row: 1,
-      ...UNIT
     }
   } satisfies PatternSchema;
 
-  hue!: number;
+  r!: number;
+  g!: number;
+  b!: number;
+  a = 1;
   hueRange!: number;
   scale!: number;
   speed!: number;
-  saturation!: number;
 
   private time = 0;
 
@@ -88,29 +77,29 @@ export class PlasmaPattern extends Pattern {
   parameters(): {
     name: string;
     type: typeof PlasmaPattern.Type;
-    hue: number;
+    color: Color;
     hueRange: number;
     scale: number;
     speed: number;
-    saturation: number;
   } {
     return {
       name: this.name,
       type: PlasmaPattern.Type,
-      hue: this.hue,
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       hueRange: this.hueRange,
       scale: this.scale,
-      speed: this.speed,
-      saturation: this.saturation
+      speed: this.speed
     };
   }
 
-  set({ hue, hueRange, scale, speed, saturation }: Partial<PlasmaProps>) {
-    this.hue = hue ?? this.hue;
+  set({ r, g, b, a, hueRange, scale, speed }: Partial<PlasmaProps>) {
+    this.r = r ?? this.r;
+    this.g = g ?? this.g;
+    this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.hueRange = hueRange ?? this.hueRange;
     this.scale = scale ?? this.scale;
     this.speed = speed ?? this.speed;
-    this.saturation = saturation ?? this.saturation;
     this.render();
   }
 
@@ -121,6 +110,7 @@ export class PlasmaPattern extends Pattern {
 
   private render() {
     const n = this.state.length;
+    const { h, s, v } = rgbToHsv(this);
     const k1 = Math.max(1, Math.round(this.scale));
     const k2 = Math.max(k1 + 1, Math.round(1.6 * this.scale));
     const k3 = Math.max(k2 + 1, Math.round(2.3 * this.scale));
@@ -131,8 +121,8 @@ export class PlasmaPattern extends Pattern {
         0.5 * Math.sin(TAU * (k1 * x + this.speed * this.time)) +
         0.3 * Math.sin(TAU * (k2 * x - 0.73 * this.speed * this.time) + 1.7) +
         0.2 * Math.sin(TAU * (k3 * x + 0.41 * this.speed * this.time) + 4.1);
-      const hue = this.hue + this.hueRange * (0.5 + 0.5 * w);
-      this.state[i] = { ...hsvToRgb(hue, this.saturation, 1), a: 1 };
+      const hue = h + this.hueRange * 0.5 * w;
+      this.state[i] = { ...hsvToRgb(hue, s, v), a: this.a };
     }
   }
 }

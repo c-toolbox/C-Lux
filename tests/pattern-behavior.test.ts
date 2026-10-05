@@ -891,18 +891,19 @@ describe('Ripple', () => {
 });
 
 describe('Plasma', () => {
-  it('shows a single hue with no hue range', () => {
-    const p = make('Plasma', { hue: 120, hueRange: 0, saturation: 1 });
+  it('shows the color with no hue range', () => {
+    const color = { r: 200, g: 120, b: 40 };
+    const p = make('Plasma', { color, hueRange: 0 });
     run(p, 2);
-    allColored(p, GREEN);
+    allColored(p, color);
   });
 
-  it('turns white without saturation', () => {
-    allColored(make('Plasma', { saturation: 0 }), WHITE);
+  it('stays white for a white color', () => {
+    allColored(make('Plasma', { color: WHITE }), WHITE);
   });
 
   it('spans many colors with a wide hue range', () => {
-    const p = make('Plasma', { hueRange: 360, saturation: 1 });
+    const p = make('Plasma', { hueRange: 360, color: RED });
     const colors = new Set(p.state.map((l) => JSON.stringify([l.r, l.g, l.b])));
     expect(colors.size).toBeGreaterThan(30);
   });
@@ -911,6 +912,11 @@ describe('Plasma', () => {
     const p = make('Plasma');
     run(p, 1);
     expect(alphas(p).every((a) => a === 1)).toBe(true);
+  });
+
+  it('covers the lights at the color alpha', () => {
+    const p = make('Plasma', { color: { ...RED, a: 0.4 } });
+    expect(alphas(p).every((a) => a === 0.4)).toBe(true);
   });
 
   it('drifts with speed and holds still without it', () => {
