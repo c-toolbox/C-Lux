@@ -117,7 +117,9 @@ export function HomePage() {
       setApplied(appliedList);
       syncCaptures(patternList);
       setTimelines(timelineList);
-      trackSolid(solidColor);
+      // Not `trackSolid`, so the mount effect only depends on stable values.
+      setSolid(solidColor);
+      setSolidHex(rgbToHex(solidColor.target));
       setBlackout(blackout);
       setHalfLight(halfLight);
     } catch (e) {
@@ -423,7 +425,7 @@ export function HomePage() {
               leftSection={blackout ? <TbSun size={24} /> : <TbMoon size={24} />}
               style={{
                 ...toggleTransition,
-                flex: '0 1 175px',
+                flex: '0 1 250px',
                 whiteSpace: 'normal'
               }}
             >
@@ -441,7 +443,7 @@ export function HomePage() {
               leftSection={<TbBrightnessHalf size={24} />}
               style={{
                 ...toggleTransition,
-                flex: '0 1 175px',
+                flex: '0 1 250px',
                 whiteSpace: 'normal'
               }}
             >

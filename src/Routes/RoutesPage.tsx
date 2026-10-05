@@ -24,17 +24,17 @@ const ROUTES = [
 
 export function RoutesPage() {
   return (
-    <Container fluid w={'100%'} px={'5%'} py={'xl'}>
+    <Container fluid w={'100%'} px={'2%'} py={'2%'}>
       <Group justify={'space-between'} align={'center'} gap={'xs'}>
         <Title order={1} ta={'left'}>
-          C-Lux pages
+          C-Lux
         </Title>
         <Button component={Link} to={'/'} variant={'default'} leftSection={<TbHome />}>
           Home
         </Button>
       </Group>
 
-      <Stack mt={'xl'} maw={520} mx={'auto'}>
+      <Stack mt={'md'} maw={520} mx={'auto'}>
         {ROUTES.map((route) => (
           <Paper
             key={route.path}

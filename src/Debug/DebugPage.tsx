@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TbEye, TbEyeOff, TbHome } from 'react-icons/tb';
+import { TbEdit, TbEye, TbEyeOff } from 'react-icons/tb';
 import { Link } from 'react-router-dom';
 import {
   Button,
@@ -75,13 +75,18 @@ export function DebugPage() {
   }
 
   return (
-    <Container fluid w={'100%'} px={'5%'} py={'xl'}>
+    <Container fluid w={'100%'} px={'2%'} py={'2%'}>
       <Group justify={'space-between'} align={'center'} gap={'xs'}>
         <Title order={1} ta={'left'}>
-          C-Lux debug
+          C-Lux
         </Title>
-        <Button component={Link} to={'/'} variant={'default'} leftSection={<TbHome />}>
-          Home
+        <Button
+          component={Link}
+          to={'/editor'}
+          variant={'default'}
+          leftSection={<TbEdit />}
+        >
+          Editor
         </Button>
       </Group>
 
@@ -90,7 +95,7 @@ export function DebugPage() {
           <Loader />
         </Group>
       ) : (
-        <Stack mt={'xl'} maw={520} mx={'auto'}>
+        <Stack mt={'md'} maw={520} mx={'auto'}>
           <PatternVisualizer />
 
           <Stack gap={'xs'}>

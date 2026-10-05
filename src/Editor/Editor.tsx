@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  TbBug,
   TbCheck,
   TbDeviceFloppy,
   TbFileImport,
@@ -7,6 +8,7 @@ import {
   TbListDetails,
   TbLock,
   TbPlus,
+  TbRoute,
   TbSettings,
   TbX
 } from 'react-icons/tb';
@@ -352,6 +354,22 @@ function Editor() {
             leftSection={<TbSettings />}
           >
             Config
+          </Button>
+          <Button
+            component={Link}
+            to={'/debug'}
+            variant={'default'}
+            leftSection={<TbBug />}
+          >
+            Debug
+          </Button>
+          <Button
+            component={Link}
+            to={'/routes'}
+            variant={'default'}
+            leftSection={<TbRoute />}
+          >
+            Routes
           </Button>
           <Button component={Link} to={'/'} variant={'default'} leftSection={<TbHome />}>
             Home

@@ -115,6 +115,16 @@ code {
   }
 }
 
+.app-version {
+  position: fixed;
+  right: 8px;
+  bottom: 4px;
+  font-size: 11px;
+  color: var(--mantine-color-dimmed);
+  pointer-events: none;
+  user-select: none;
+}
+
 .logo-spinning {
   animation: logo-spin 900ms cubic-bezier(0.65, 0, 0.35, 1);
 }

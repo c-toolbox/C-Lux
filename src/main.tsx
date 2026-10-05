@@ -4,6 +4,8 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { createTheme, MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 
+import { version } from '../package.json';
+
 import { ConfigPage } from './Config/ConfigPage.tsx';
 import { DebugPage } from './Debug/DebugPage.tsx';
 import Editor from './Editor/Editor.tsx';
@@ -70,6 +72,7 @@ createRoot(document.getElementById('root')!).render(
       <ErrorBoundary>
         <RouterProvider router={router} />
       </ErrorBoundary>
+      <div className={'app-version'}>v{version}</div>
     </MantineProvider>
   </StrictMode>
 );

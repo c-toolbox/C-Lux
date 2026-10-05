@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TbArrowBackUp, TbDeviceFloppy, TbEdit, TbHome } from 'react-icons/tb';
+import { TbArrowBackUp, TbDeviceFloppy, TbEdit } from 'react-icons/tb';
 import { Link } from 'react-router-dom';
 import {
   Alert,
@@ -193,24 +193,19 @@ export function ConfigPage() {
     (password !== null || JSON.stringify(draft) !== JSON.stringify(saved));
 
   return (
-    <Container fluid w={'100%'} px={'5%'} py={'xl'}>
+    <Container fluid w={'100%'} px={'2%'} py={'2%'}>
       <Group justify={'space-between'} align={'center'} gap={'xs'}>
         <Title order={1} ta={'left'}>
-          C-Lux config
+          C-Lux
         </Title>
-        <Group gap={'xs'}>
-          <Button
-            component={Link}
-            to={'/editor'}
-            variant={'default'}
-            leftSection={<TbEdit />}
-          >
-            Editor
-          </Button>
-          <Button component={Link} to={'/'} variant={'default'} leftSection={<TbHome />}>
-            Home
-          </Button>
-        </Group>
+        <Button
+          component={Link}
+          to={'/editor'}
+          variant={'default'}
+          leftSection={<TbEdit />}
+        >
+          Editor
+        </Button>
       </Group>
 
       {loading ? (
@@ -218,7 +213,7 @@ export function ConfigPage() {
           <Loader />
         </Group>
       ) : (
-        <Stack mt={'xl'} maw={560} mx={'auto'}>
+        <Stack mt={'md'} maw={560} mx={'auto'}>
           {error && (
             <Alert
               color={'red'}
