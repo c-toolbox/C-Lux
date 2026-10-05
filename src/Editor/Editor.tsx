@@ -307,10 +307,12 @@ function Editor() {
         </Group>
 
         {editingScene !== null && (
-          <Alert color={'blue'} title={`Editing scene “${editingScene}”`}>
-            <Group justify={'space-between'} gap={'xs'}>
-              <Text size={'sm'}>Saving overwrites it with the patterns below.</Text>
-              <Group gap={'xs'}>
+          <Alert color={'blue'} py={6} px={'sm'}>
+            <Group justify={'space-between'} gap={'xs'} wrap={'nowrap'}>
+              <Text size={'sm'} fw={500} truncate>
+                Editing scene “{editingScene}”
+              </Text>
+              <Group gap={'xs'} wrap={'nowrap'}>
                 <Button
                   size={'xs'}
                   variant={'default'}
