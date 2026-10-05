@@ -8,6 +8,7 @@ interface PatternListProps {
   busy: boolean;
   onMove: (from: number, to: number) => void;
   onEdit: (pattern: PatternParameters) => void;
+  onDuplicate: (pattern: PatternParameters) => void;
   onToggleEnabled: (name: string, enabled: boolean) => void;
   onRemove: (name: string) => void;
 }
@@ -17,6 +18,7 @@ export function PatternList({
   busy,
   onMove,
   onEdit,
+  onDuplicate,
   onToggleEnabled,
   onRemove
 }: PatternListProps) {
@@ -115,6 +117,14 @@ export function PatternList({
             />
             <Button size={'xs'} variant={'light'} onClick={() => onEdit(p)}>
               Edit
+            </Button>
+            <Button
+              size={'xs'}
+              variant={'light'}
+              disabled={busy}
+              onClick={() => onDuplicate(p)}
+            >
+              Duplicate
             </Button>
             <Button
               size={'xs'}

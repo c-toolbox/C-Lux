@@ -27,14 +27,14 @@ import {
 } from '../lib/api';
 import { authRequired, signOut } from '../lib/auth';
 import { describeError } from '../lib/errors';
-import { type FormValues, toProps } from '../PatternForm/PatternForm';
+import { type FormValues, fromParameters, toProps } from '../PatternForm/PatternForm';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
 
 import { AddPatternModal } from './AddPatternModal';
 import { EditPatternModal } from './EditPatternModal';
 import { ManageScenesModal } from './ManageScenesModal';
 import { PatternList } from './PatternList';
-import { downloadJson, randomName, readJsonFile } from './utils';
+import { copyName, downloadJson, randomName, readJsonFile } from './utils';
 
 function Editor() {
   const [patterns, setPatterns] = useState<PatternParameters[]>([]);
@@ -89,6 +89,19 @@ function Editor() {
     await run(async () => {
       await api.updatePattern(name, toProps(values));
       setEditing(null);
+    });
+  }
+
+  // The copy lands right below the original, in the same enabled state.
+  function handleDuplicate(pattern: PatternParameters) {
+    const names = patterns.map((p) => p.name);
+    const name = copyName(pattern.name, names);
+    void run(async () => {
+      await api.addPattern(pattern.type, toProps({ ...fromParameters(pattern), name }));
+      const order = [...names];
+      order.splice(names.indexOf(pattern.name) + 1, 0, name);
+      await api.reorderPatterns(order);
+      if (!pattern.enabled) await api.setPatternEnabled(name, false);
     });
   }
 
@@ -343,6 +356,7 @@ function Editor() {
                   busy={busy}
                   onMove={move}
                   onEdit={setEditing}
+                  onDuplicate={handleDuplicate}
                   onToggleEnabled={handleToggleEnabled}
                   onRemove={handleRemove}
                 />

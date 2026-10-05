@@ -5,6 +5,18 @@ export function randomName(): string {
   return `${pick(names.adjectives)}-${pick(names.nouns)}`;
 }
 
+// The server caps names at this length.
+const NAME_MAX_LENGTH = 60;
+
+// A free name for a copy of `name`: "name copy", then "name copy 2", "name copy 3", …
+export function copyName(name: string, taken: string[]): string {
+  for (let n = 1; ; n++) {
+    const suffix = n === 1 ? ' copy' : ` copy ${n}`;
+    const candidate = name.slice(0, NAME_MAX_LENGTH - suffix.length).trimEnd() + suffix;
+    if (!taken.includes(candidate)) return candidate;
+  }
+}
+
 // Turn a scene name into a safe file name for the exported JSON.
 function fileNameFor(name: string): string {
   const base = name.replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '');
