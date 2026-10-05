@@ -27,20 +27,14 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
-import { AudioCapture } from '../Capture/AudioCapture';
-import { VideoCapture } from '../Capture/VideoCapture';
 import {
   api,
-  AUDIO_TYPE,
-  type AudioParameters,
-  type PatternParameters,
   type Scene,
   type SolidColorStatus,
   type SolidColorUpdate,
-  type TimelinePlayback,
-  VIDEO_TYPE,
-  type VideoParameters
+  type TimelinePlayback
 } from '../lib/api';
+import { syncCaptures } from '../lib/captures';
 import { hexToRgb, rgbToHex } from '../lib/color';
 import { describeError } from '../lib/errors';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
@@ -53,9 +47,6 @@ const toggleTransition = {
 export function HomePage() {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [applied, setApplied] = useState<string[]>([]);
-  // Whatever is running right now, so the capture widgets can be offered for the audio
-  // and video patterns the selected scenes brought in.
-  const [patterns, setPatterns] = useState<PatternParameters[]>([]);
   const [timelines, setTimelines] = useState<TimelinePlayback[]>([]);
   // The fixed solid color scene, which lives outside the pattern list and is listed
   // alongside the saved scenes. `solidHex` follows the picker while it is being dragged.
@@ -70,15 +61,6 @@ export function HomePage() {
 
   const appliedNames = new Set(applied);
 
-  // Every enabled Audio and Video pattern captures a feed of its own. What they capture is
-  // set up in the editor.
-  const audios = patterns.filter(
-    (p): p is PatternParameters & AudioParameters => p.type === AUDIO_TYPE && p.enabled
-  );
-  const videos = patterns.filter(
-    (p): p is PatternParameters & VideoParameters => p.type === VIDEO_TYPE && p.enabled
-  );
-
   const isApplied = (scene: Scene) => appliedNames.has(scene.name);
 
   // True when the scene is the only thing lighting the ring, so selecting it again is a no-op.
@@ -90,12 +72,13 @@ export function HomePage() {
     setSolidHex(rgbToHex(status.target));
   }
 
+  // Captures started in the editor stop once a scene change takes their pattern away.
   async function syncPatterns() {
     const [patternList, timelineList] = await Promise.all([
       api.listPatterns(),
       api.timelines()
     ]);
-    setPatterns(patternList);
+    syncCaptures(patternList);
     setTimelines(timelineList);
   }
 
@@ -132,7 +115,7 @@ export function HomePage() {
       ]);
       setScenes(sceneList);
       setApplied(appliedList);
-      setPatterns(patternList);
+      syncCaptures(patternList);
       setTimelines(timelineList);
       trackSolid(solidColor);
       setBlackout(blackout);
@@ -220,7 +203,7 @@ export function HomePage() {
     try {
       await api.clearPatterns();
       setApplied([]);
-      setPatterns([]);
+      syncCaptures([]);
       setTimelines([]);
       trackSolid(await api.setSolidColor({ enabled: true }));
     } catch (e) {
@@ -259,8 +242,8 @@ export function HomePage() {
         wrap={'nowrap'}
         style={{ flex: 1, minHeight: 0 }}
       >
-        {/* Clipped rather than allowed to grow, so the capture widgets can never spill
-          over the controls beside them; the scroller inside reaches whatever does not fit. */}
+        {/* Clipped rather than allowed to grow, so the list can never spill over the
+          controls beside it; the scroller inside reaches whatever does not fit. */}
         <Stack style={{ flex: '1 1 0', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
           {loading ? (
             <Group justify={'center'} py={'xl'}>
@@ -392,16 +375,6 @@ export function HomePage() {
                     </Group>
                   ))
                 )}
-
-                {/* The audio and video patterns are fed from the browser, so wherever they
-                  can be switched on their capture widgets have to be reachable too.
-                  Inside the scroller: they are tall enough to bury the controls below. */}
-                {audios.map((p) => (
-                  <AudioCapture key={p.name} pattern={p} />
-                ))}
-                {videos.map((p) => (
-                  <VideoCapture key={p.name} pattern={p} />
-                ))}
               </Stack>
             </ScrollArea>
           )}

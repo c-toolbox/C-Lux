@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { TbPlayerStop, TbRefresh, TbVideo } from 'react-icons/tb';
 import {
   Box,
@@ -14,6 +14,7 @@ import {
 } from '@mantine/core';
 
 import { NDI_PREVIEW_INTERVAL_MS } from '../../shared/ndi';
+import { setVideoStrip, type VideoCaptureSettings } from '../../shared/video';
 import {
   api,
   type NdiPreview,
@@ -21,42 +22,29 @@ import {
   type NdiSource,
   type NdiStatus,
   patternFields,
-  type PatternParameters,
-  type PatternProps,
-  VIDEO_TYPE,
-  videoCaptureOf,
-  type VideoParameters
+  VIDEO_TYPE
 } from '../lib/api';
+import {
+  setVideoSettings,
+  startVideo,
+  stopCapture,
+  useCapture,
+  videoSourceOf
+} from '../lib/captures';
 import { describeError } from '../lib/errors';
 import {
   rimScale,
-  startVideoCapture,
-  VIDEO_INPUT_CAMERA,
   VIDEO_INPUT_NDI,
   VIDEO_SAMPLING_FISHEYE,
-  type VideoCaptureHandle,
   type VideoGeometry
 } from '../lib/video';
 
-// The pattern's own schema, so the panel offers the same choices and ranges the editor
-// and the server validation use.
+// The pattern's own schema, so the panel offers the same ranges the editor and the
+// server validation use.
 const FIELDS = patternFields(VIDEO_TYPE)!;
-
-function optionsOf(key: string) {
-  const spec = FIELDS[key];
-  return spec?.kind === 'select'
-    ? spec.options.map((o) => ({ value: String(o.value), label: o.label }))
-    : [];
-}
-
-const INPUTS = optionsOf('input');
-const SAMPLINGS = optionsOf('sampling');
 
 // How often the panel asks the server how its NDI receiver is doing.
 const NDI_STATUS_INTERVAL_MS = 1000;
-
-// How long the sliders have to rest before the geometry is saved to the pattern.
-const SAVE_DELAY_MS = 150;
 
 // Matches the working resolution the sampler uses, so the overlay can be drawn in the
 // same coordinates the geometry describes and then scaled by CSS.
@@ -99,6 +87,16 @@ const RIM_SLIDERS = (
 
 const STRIP_SLIDERS = (['stripY', 'stripHeight'] as const).map(sliderOf);
 
+const GEOMETRY_KEYS = [...RIM_SLIDERS, ...STRIP_SLIDERS].map((s) => s.key);
+
+function sameSettings(a: VideoCaptureSettings, b: VideoCaptureSettings) {
+  return (
+    a.ndiSource === b.ndiSource &&
+    a.sampling === b.sampling &&
+    GEOMETRY_KEYS.every((key) => a.geometry[key] === b.geometry[key])
+  );
+}
+
 // Slider values are fractions, so a step of 0.001 needs three places to be readable.
 function decimals(step: number) {
   return Math.max(0, Math.ceil(-Math.log10(step)));
@@ -111,36 +109,39 @@ function quantise(value: number, min: number, max: number, step: number) {
 }
 
 interface VideoCaptureProps {
-  // The Video pattern the capture feeds; it says what to capture and how to sample it.
-  pattern: VideoParameters;
-  // Whether the panel may change the pattern, which needs the edit password.
-  editable?: boolean;
-  // Shown inside the pattern's own row, which already frames and names it.
-  embedded?: boolean;
-  // Called with the pattern after the panel changed it. Should be stable.
-  onChange?: (pattern: PatternParameters) => void;
+  // The key of the capture: the pattern's saved name, or `DRAFT_CAPTURE` while adding it.
+  pattern: string;
+  // What the pattern has saved, which is what the server's NDI receiver follows; null
+  // while the pattern is still being added.
+  saved: VideoCaptureSettings | null;
+  // The dialog's current values, which a browser capture follows straight away.
+  settings: VideoCaptureSettings;
+  // The dialog's own inputs for the capture, shown at the top of the panel.
+  controls: ReactNode;
+  onChange: (key: string, value: number | string) => void;
 }
 
 // Feeds the Video pattern: patterns run on the server, which has no video decoder, so
 // this tab samples the feed down to a strip of colors and streams that over the API.
 // NDI is the exception — a browser cannot join an NDI stream, so the server receives and
 // samples the source the pattern names itself and this panel only watches a preview.
-// Where the panel is `editable` it writes changes back to the pattern, so the sampling
-// can be aimed by eye against the preview.
+// The sliders aim the sampling by eye against the preview.
 export function VideoCapture({
-  pattern,
-  editable = false,
-  embedded = false,
+  pattern: name,
+  saved,
+  settings,
+  controls,
   onChange
 }: VideoCaptureProps) {
-  const settings = useMemo(() => videoCaptureOf(pattern), [pattern]);
-  const { input, ndiSource, sampling } = settings;
-  const { name } = pattern;
+  const { input, ndiSource, sampling, geometry } = settings;
+  const capture = useCapture(name);
+  const running = capture?.kind === 'video' ? capture : null;
+  const source = videoSourceOf(input);
+  // The server only runs a receiver for a pattern it has.
+  const ndi = input === VIDEO_INPUT_NDI;
+  const receiver = ndi && saved !== null;
 
-  const [capturing, setCapturing] = useState(false);
   const [starting, setStarting] = useState(false);
-  // Slider positions not yet saved to the pattern; null while it holds the live values.
-  const [draft, setDraft] = useState<VideoGeometry | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<NdiStatus | null>(null);
   const [sources, setSources] = useState<NdiSource[]>([]);
@@ -153,58 +154,28 @@ export function VideoCapture({
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const stripRef = useRef<HTMLCanvasElement>(null);
   const previewRef = useRef<HTMLCanvasElement>(null);
-  const handle = useRef<VideoCaptureHandle | null>(null);
 
-  const ndi = input === VIDEO_INPUT_NDI;
-  const geometry = draft ?? settings.geometry;
-
-  // The sampler reads these every frame, so it needs the live values rather than the
-  // ones captured when the run started.
-  const geometryRef = useRef(geometry);
-  geometryRef.current = geometry;
-
-  const samplingRef = useRef(sampling);
-  samplingRef.current = sampling;
-
-  const stop = useCallback(() => {
-    handle.current?.stop();
-    handle.current = null;
-    setCapturing(false);
-  }, []);
-
-  // Only the browser capture is torn down with the panel: the server's NDI receiver
-  // follows the pattern, not this tab. A capture of the old input no longer matches what
-  // the pattern asks for either.
-  useEffect(() => stop, [input, stop]);
-
-  const save = useCallback(
-    async (props: Partial<PatternProps>) => {
-      setError(null);
-      try {
-        onChange?.(await api.updatePattern(name, props));
-      } catch (e) {
-        setError(describeError(e));
-      }
-    },
-    [name, onChange]
-  );
-
-  // Debounced, because dragging a slider produces a value per frame and the pattern
-  // only needs the one it settles on. The draft is kept until the save lands, unless it
-  // has moved on again in the meantime.
   useEffect(() => {
-    if (draft === null) return;
-    const timer = setTimeout(() => {
-      void save(draft).then(() =>
-        setDraft((current) => (current === draft ? null : current))
-      );
-    }, SAVE_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [draft, save]);
+    setVideoSettings(name, sampling, geometry);
+  }, [name, sampling, geometry]);
+
+  // A capture of another kind or source no longer records what the pattern asks for.
+  useEffect(() => {
+    if (capture && (capture.kind !== 'video' || capture.source !== source)) {
+      stopCapture(name);
+    }
+  }, [capture, source, name]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.srcObject = running?.stream ?? null;
+    if (running) void video.play().catch(() => undefined);
+  }, [running]);
 
   // How the receiver is doing with the source the pattern names.
   useEffect(() => {
-    if (!ndi) return;
+    if (!receiver) return;
     let cancelled = false;
     const poll = () =>
       api
@@ -219,7 +190,7 @@ export function VideoCapture({
       cancelled = true;
       clearInterval(timer);
     };
-  }, [ndi, name]);
+  }, [receiver, name]);
 
   const scan = useCallback(async () => {
     setScanning(true);
@@ -236,11 +207,11 @@ export function VideoCapture({
   // Discovery takes a moment to warm up, so the list is fetched when NDI is picked rather
   // than waiting for the user to open the dropdown and find it empty.
   useEffect(() => {
-    if (ndi && editable) void scan();
-  }, [ndi, editable, scan]);
+    if (ndi) void scan();
+  }, [ndi, scan]);
 
-  const receiving = ndi && status?.running === true;
-  const showPreview = ndi ? receiving : capturing;
+  const receiving = receiver && status?.running === true;
+  const showPreview = ndi ? receiving : running !== null;
 
   // Paint the strip that was last sent, one pixel per color, stretched by CSS.
   const onStrip = useCallback((width: number, rgb: Uint8Array) => {
@@ -258,6 +229,14 @@ export function VideoCapture({
     }
     ctx.putImageData(image, 0, 0);
   }, []);
+
+  useEffect(() => {
+    if (!running) return;
+    running.strips.add(onStrip);
+    return () => {
+      running.strips.delete(onStrip);
+    };
+  }, [running, onStrip]);
 
   const drawPreview = useCallback((frame: NdiPreview) => {
     const canvas = previewRef.current;
@@ -297,6 +276,8 @@ export function VideoCapture({
         if (frame !== null) {
           drawPreview(frame);
           onStrip(frame.strip.length / 3, frame.strip);
+          // Lets the dialog's pattern preview show what the receiver reads.
+          setVideoStrip(name, frame.strip.length / 3, frame.strip, 'ndi');
         }
       } catch {
         // A dropped poll is not worth reporting; the next one is 100ms away.
@@ -349,23 +330,12 @@ export function VideoCapture({
   }, [geometry, sampling, showPreview, aspect]);
 
   async function start() {
-    const video = videoRef.current;
-    if (!video) return;
+    if (source === null) return;
 
     setStarting(true);
     setError(null);
     try {
-      handle.current = await startVideoCapture({
-        pattern: name,
-        source: input === VIDEO_INPUT_CAMERA ? 'camera' : 'screen',
-        sampling: () => samplingRef.current,
-        video,
-        geometry: () => geometryRef.current,
-        onStrip,
-        // The browser's own "stop sharing" control ends the track without going through us.
-        onEnded: stop
-      });
-      setCapturing(true);
+      await startVideo(name, source, sampling, geometry);
     } catch (e) {
       setError(describeError(e));
     } finally {
@@ -373,8 +343,7 @@ export function VideoCapture({
     }
   }
 
-  const setSlider = (key: keyof VideoGeometry, value: number) =>
-    setDraft((current) => ({ ...(current ?? settings.geometry), [key]: value }));
+  const setSlider = (key: keyof VideoGeometry, value: number) => onChange(key, value);
 
   const fisheye = sampling === VIDEO_SAMPLING_FISHEYE;
   const sliders = fisheye ? RIM_SLIDERS : STRIP_SLIDERS;
@@ -388,55 +357,48 @@ export function VideoCapture({
     ...sources.map((s) => ({ value: s.name, label: s.name }))
   ];
 
+  // The receiver follows the saved pattern, so its state is about the saved source.
   const ndiState = !ndi
     ? null
-    : ndiSource === ''
-      ? 'No NDI source chosen for this pattern'
-      : receiving
-        ? (status?.connections ?? 0) > 0
-          ? `Receiving “${ndiSource}”`
-          : `Waiting for “${ndiSource}” to connect`
-        : (status?.reason ?? status?.error ?? `Opening “${ndiSource}”…`);
+    : saved === null
+      ? 'The server starts receiving once the pattern is added.'
+      : saved.ndiSource === ''
+        ? 'No NDI source saved for this pattern'
+        : receiving
+          ? (status?.connections ?? 0) > 0
+            ? `Receiving “${saved.ndiSource}”`
+            : `Waiting for “${saved.ndiSource}” to connect`
+          : (status?.reason ?? status?.error ?? `Opening “${saved.ndiSource}”…`);
+  const unsaved = receiver && !sameSettings(saved, settings);
 
   // Same clamping the sampler applies, so the band drawn here is the one being read.
   const bandHeight = Math.min(1, Math.max(0.005, geometry.stripHeight));
   const bandTop = Math.min(1 - bandHeight, Math.max(0, geometry.stripY - bandHeight / 2));
 
   return (
-    <Paper withBorder={!embedded} p={embedded ? 0 : 'sm'} radius={'md'}>
+    <Paper withBorder p={'sm'} radius={'md'}>
       <Stack gap={'xs'}>
-        <Group grow align={'flex-end'}>
-          <NativeSelect
-            label={embedded ? 'Video input' : `Video input for “${name}”`}
-            value={String(input)}
-            data={INPUTS}
-            disabled={!editable || capturing || starting}
-            onChange={(e) => void save({ input: Number(e.currentTarget.value) })}
-          />
-          <NativeSelect
-            label={'Sampling'}
-            description={
-              fisheye ? 'Samples a ring inside a circular image' : 'One row of pixels'
-            }
-            value={String(sampling)}
-            data={SAMPLINGS}
-            disabled={!editable}
-            onChange={(e) => void save({ sampling: Number(e.currentTarget.value) })}
-          />
-          {!ndi && (
-            <Button
-              variant={capturing ? 'filled' : 'default'}
-              color={capturing ? 'green' : undefined}
-              loading={starting}
-              leftSection={capturing ? <TbPlayerStop /> : <TbVideo />}
-              onClick={() => (capturing ? stop() : void start())}
-            >
-              {capturing ? 'Stop capture' : 'Start capture'}
-            </Button>
-          )}
-        </Group>
+        {controls}
 
-        {ndi && editable && (
+        {!ndi && (
+          <>
+            <Text size={'sm'} c={'dimmed'}>
+              Keeps running after this dialog closes.
+            </Text>
+            <Button
+              fullWidth
+              variant={running ? 'filled' : 'default'}
+              color={running ? 'green' : undefined}
+              loading={starting}
+              leftSection={running ? <TbPlayerStop /> : <TbVideo />}
+              onClick={() => (running ? stopCapture(name) : void start())}
+            >
+              {running ? 'Stop capture' : 'Start capture'}
+            </Button>
+          </>
+        )}
+
+        {ndi && (
           <Group align={'flex-end'} gap={'xs'} wrap={'nowrap'}>
             <NativeSelect
               label={'NDI source'}
@@ -449,7 +411,7 @@ export function VideoCapture({
                   : sourceOptions
               }
               disabled={sourceOptions.length === 0}
-              onChange={(e) => void save({ ndiSource: e.currentTarget.value })}
+              onChange={(e) => onChange('ndiSource', e.currentTarget.value)}
             />
             <Button
               variant={'default'}
@@ -465,6 +427,12 @@ export function VideoCapture({
         {ndiState && (
           <Text size={'sm'} c={receiving ? undefined : 'dimmed'}>
             {ndiState}
+          </Text>
+        )}
+
+        {unsaved && (
+          <Text size={'sm'} c={'orange'}>
+            The server keeps receiving with the saved settings until you save.
           </Text>
         )}
 
@@ -536,53 +504,51 @@ export function VideoCapture({
             )}
           </Box>
 
-          {editable && (
-            <SimpleGrid
-              cols={{ base: 1, sm: fisheye ? 2 : 1 }}
-              spacing={'xs'}
-              verticalSpacing={4}
-              style={{ flex: `1 1 ${SLIDER_MIN_WIDTH}px`, minWidth: 0 }}
-            >
-              {sliders.map(({ key, label, min, max, step }) => {
-                const set = (value: number) =>
-                  setSlider(key, quantise(value, min, max, step));
+          <SimpleGrid
+            cols={{ base: 1, sm: fisheye ? 2 : 1 }}
+            spacing={'xs'}
+            verticalSpacing={4}
+            style={{ flex: `1 1 ${SLIDER_MIN_WIDTH}px`, minWidth: 0 }}
+          >
+            {sliders.map(({ key, label, min, max, step }) => {
+              const set = (value: number) =>
+                setSlider(key, quantise(value, min, max, step));
 
-                return (
-                  <Box key={key}>
-                    <Group justify={'space-between'} gap={4} wrap={'nowrap'}>
-                      <Text size={'xs'} c={'dimmed'}>
-                        {label}
-                      </Text>
-                      <NumberInput
-                        size={'xs'}
-                        w={86}
-                        min={min}
-                        max={max}
-                        step={step}
-                        clampBehavior={'strict'}
-                        decimalScale={decimals(step)}
-                        fixedDecimalScale
-                        value={geometry[key]}
-                        onChange={(value) => {
-                          const next = typeof value === 'number' ? value : Number(value);
-                          if (Number.isFinite(next)) set(next);
-                        }}
-                      />
-                    </Group>
-                    <Slider
-                      size={'sm'}
-                      label={(v) => v.toFixed(decimals(step))}
+              return (
+                <Box key={key}>
+                  <Group justify={'space-between'} gap={4} wrap={'nowrap'}>
+                    <Text size={'xs'} c={'dimmed'}>
+                      {label}
+                    </Text>
+                    <NumberInput
+                      size={'xs'}
+                      w={86}
                       min={min}
                       max={max}
                       step={step}
+                      clampBehavior={'strict'}
+                      decimalScale={decimals(step)}
+                      fixedDecimalScale
                       value={geometry[key]}
-                      onChange={set}
+                      onChange={(value) => {
+                        const next = typeof value === 'number' ? value : Number(value);
+                        if (Number.isFinite(next)) set(next);
+                      }}
                     />
-                  </Box>
-                );
-              })}
-            </SimpleGrid>
-          )}
+                  </Group>
+                  <Slider
+                    size={'sm'}
+                    label={(v) => v.toFixed(decimals(step))}
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={geometry[key]}
+                    onChange={set}
+                  />
+                </Box>
+              );
+            })}
+          </SimpleGrid>
         </Group>
 
         {showPreview && (

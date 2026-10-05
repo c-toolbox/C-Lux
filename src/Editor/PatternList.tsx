@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import {
   TbChevronDown,
   TbChevronUp,
@@ -21,8 +21,6 @@ interface PatternListProps {
   onRemove: (name: string) => void;
   // Patterns a scene timeline switches on and off, which have no switch of their own.
   timed?: ReadonlySet<string>;
-  // Extra content shown inside a pattern's row, below its controls.
-  renderDetails?: (pattern: PatternParameters) => ReactNode;
 }
 
 export function PatternList({
@@ -33,8 +31,7 @@ export function PatternList({
   onDuplicate,
   onToggleEnabled,
   onRemove,
-  timed,
-  renderDetails
+  timed
 }: PatternListProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -166,7 +163,6 @@ export function PatternList({
               </Button>
             </Group>
           </Group>
-          {renderDetails?.(p)}
         </Stack>
       ))}
     </Stack>

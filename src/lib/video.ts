@@ -33,9 +33,12 @@ export interface VideoCaptureHandle {
 }
 
 interface VideoCaptureOptions {
-  // The Video pattern the strips feed.
-  pattern: string;
+  // The Video pattern the strips feed, read per frame so a rename is followed; null holds
+  // them back while the pattern doesn't exist yet.
+  pattern: () => string | null;
   source: VideoSource;
+  // Sampled instead of asking the browser for a new one; the capture owns it from here.
+  stream?: MediaStream;
   // Read every frame, so the sampling can be switched without tearing the stream down.
   sampling: () => number;
   // Owned by the caller so the stream can be shown while it is being sampled; the
@@ -65,6 +68,7 @@ async function openStream(source: VideoSource): Promise<MediaStream> {
 export async function startVideoCapture({
   pattern,
   source,
+  stream: given,
   sampling,
   video,
   geometry,
@@ -75,7 +79,7 @@ export async function startVideoCapture({
     throw new Error('This browser does not allow video capture on this page');
   }
 
-  const stream = await openStream(source);
+  const stream = given ?? (await openStream(source));
   const [track] = stream.getVideoTracks();
   if (!track) {
     stream.getTracks().forEach((t) => t.stop());
@@ -151,15 +155,16 @@ export async function startVideoCapture({
   };
 
   const post = (width: number) => {
+    const feed = pattern();
     // Drop a frame rather than queue behind a slow request; the next one is 33ms away.
-    if (posting) return;
+    if (posting || feed === null) return;
     posting = true;
 
     const body = new Uint8Array(2 + width * 3);
     new DataView(body.buffer).setUint16(0, width, true);
     body.set(strip.subarray(0, width * 3), 2);
 
-    void fetch(`/api/patterns/${encodeURIComponent(pattern)}/video`, {
+    void fetch(`/api/patterns/${encodeURIComponent(feed)}/video`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/octet-stream', ...authHeaders() },
       body

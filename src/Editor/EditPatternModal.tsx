@@ -3,6 +3,7 @@ import { TbCursorText } from 'react-icons/tb';
 import { Button, Group, Modal, Stack, Text } from '@mantine/core';
 
 import { type PatternParameters } from '../lib/api';
+import { captureFormProps } from '../PatternForm/capture';
 import {
   type FormValues,
   fromParameters,
@@ -38,8 +39,12 @@ export function EditPatternModal({
     },
     [editing]
   );
+  // Named after the saved pattern, which is the feed its capture publishes to.
   const previewProps = useMemo(
-    () => (editing && current && current.of === editing ? toProps(current.values) : null),
+    () =>
+      editing && current && current.of === editing
+        ? { ...toProps(current.values), name: editing.name }
+        : null,
     [current, editing]
   );
   const otherNames = useMemo(
@@ -82,6 +87,7 @@ export function EditPatternModal({
             preview={
               previewProps && <PatternPreview type={editing.type} props={previewProps} />
             }
+            {...captureFormProps(editing.type, editing.name, editing)}
           />
         )}
       </Modal>

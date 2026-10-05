@@ -26,19 +26,22 @@ import {
   Title
 } from '@mantine/core';
 
-import { AudioCapture } from '../Capture/AudioCapture';
-import { VideoCapture } from '../Capture/VideoCapture';
 import {
   api,
-  AUDIO_TYPE,
   type PatternParameters,
   type Scene,
   SCENE_EXPORT_VERSION,
   type Timeline,
-  type TimelinePlayback,
-  VIDEO_TYPE
+  type TimelinePlayback
 } from '../lib/api';
 import { authRequired, signOut } from '../lib/auth';
+import {
+  DRAFT_CAPTURE,
+  duplicateCapture,
+  renameCapture,
+  stopCapture,
+  syncCaptures
+} from '../lib/captures';
 import { describeError } from '../lib/errors';
 import { type FormValues, fromParameters, toProps } from '../PatternForm/PatternForm';
 import { PatternVisualizer } from '../PatternVisualizer/PatternVisualizer';
@@ -84,6 +87,7 @@ function Editor() {
         api.timelines()
       ]);
       setPatterns(patternList);
+      syncCaptures(patternList);
       setTimelines({ list: timelineList, at: performance.now() });
       setError(null);
     } catch (e) {
@@ -119,7 +123,9 @@ function Editor() {
     try {
       trackTimelines(await api.setTimeline(editingScene, timeline));
       // A pattern given a track is switched on, so the list has to catch up.
-      setPatterns(await api.listPatterns());
+      const patternList = await api.listPatterns();
+      setPatterns(patternList);
+      syncCaptures(patternList);
     } catch (e) {
       setError(describeError(e));
       await refresh();
@@ -144,24 +150,6 @@ function Editor() {
     }
   }
 
-  // A capture panel changed its pattern; nothing else moved, so no full refresh.
-  const replacePattern = useCallback((updated: PatternParameters) => {
-    setPatterns((list) => list.map((p) => (p.name === updated.name ? updated : p)));
-  }, []);
-
-  // The capture controls live in the row of the pattern they feed; every enabled Audio
-  // and Video pattern captures a feed of its own.
-  function captureDetails(p: PatternParameters) {
-    if (!p.enabled) return null;
-    if (p.type === AUDIO_TYPE) {
-      return <AudioCapture pattern={p} editable embedded onChange={replacePattern} />;
-    }
-    if (p.type === VIDEO_TYPE) {
-      return <VideoCapture pattern={p} editable embedded onChange={replacePattern} />;
-    }
-    return null;
-  }
-
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
     setError(null);
@@ -178,14 +166,17 @@ function Editor() {
 
   async function handleAdd(values: FormValues) {
     await run(async () => {
-      await api.addPattern(values.type, toProps(values));
+      const { name } = await api.addPattern(values.type, toProps(values));
+      // The refresh after this stops it if the pattern turned out not to take a capture.
+      renameCapture(DRAFT_CAPTURE, name);
       setAddOpen(false);
     });
   }
 
   async function handleEdit(name: string, values: FormValues, overwrite: boolean) {
     await run(async () => {
-      await api.updatePattern(name, toProps(values), overwrite);
+      const updated = await api.updatePattern(name, toProps(values), overwrite);
+      renameCapture(name, updated.name);
       setEditing(null);
     });
   }
@@ -200,6 +191,8 @@ function Editor() {
       order.splice(names.indexOf(pattern.name) + 1, 0, name);
       await api.reorderPatterns(order);
       if (!pattern.enabled) await api.setPatternEnabled(name, false);
+      await duplicateCapture(pattern.name, name);
+      await duplicateCapture(pattern.name, name);
     });
   }
 
@@ -472,8 +465,8 @@ function Editor() {
         wrap={'nowrap'}
         style={{ flex: 1, minHeight: 0 }}
       >
-        {/* Clipped rather than allowed to grow, so the capture widgets can never spill
-          over the visualiser beside them; the scroller inside reaches whatever does not fit. */}
+        {/* Clipped rather than allowed to grow, so the list can never spill over the
+          visualiser beside it; the scroller inside reaches whatever does not fit. */}
         <Stack style={{ flex: '1 1 0', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
           <ScrollArea type={'auto'} offsetScrollbars style={{ flex: 1, minHeight: 0 }}>
             <Stack gap={'md'}>
@@ -495,7 +488,6 @@ function Editor() {
                   onToggleEnabled={handleToggleEnabled}
                   onRemove={handleRemove}
                   timed={timed}
-                  renderDetails={captureDetails}
                 />
               )}
             </Stack>
@@ -542,7 +534,10 @@ function Editor() {
 
       <AddPatternModal
         opened={addOpen}
-        onClose={() => setAddOpen(false)}
+        onClose={() => {
+          setAddOpen(false);
+          stopCapture(DRAFT_CAPTURE);
+        }}
         namePlaceholder={namePlaceholder}
         existingNames={existingNames}
         busy={busy}
@@ -552,7 +547,11 @@ function Editor() {
       <EditPatternModal
         editing={editing}
         existingNames={existingNames}
-        onClose={() => setEditing(null)}
+        onClose={() => {
+          setEditing(null);
+          // Captures were following the discarded values; aim them as saved again.
+          syncCaptures(patterns);
+        }}
         busy={busy}
         onSubmit={(values, overwrite) =>
           editing && void handleEdit(editing.name, values, overwrite)

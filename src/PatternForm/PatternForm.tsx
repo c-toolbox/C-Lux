@@ -31,6 +31,7 @@ import {
 import { hexToRgb, rgbToHex } from '../lib/color';
 import { PatternPreview } from '../PatternVisualizer/PatternPreview';
 
+import type { CaptureFormProps } from './capture';
 import { ColorMapInput, type StopValue } from './ColorMapInput';
 
 export interface FormValues {
@@ -117,10 +118,14 @@ const asStops = (value: FieldValue): StopValue[] =>
 type Entry = [string, FieldSpec];
 
 // Group consecutive fields that share a row number so they render side by side.
-function rows(schema: PatternSchema, values: Record<string, FieldValue>): Entry[][] {
+function rows(
+  schema: PatternSchema,
+  values: Record<string, FieldValue>,
+  hidden: readonly string[]
+): Entry[][] {
   const grouped: Entry[][] = [];
   for (const entry of Object.entries(schema)) {
-    if (!isFieldVisible(entry[1], values)) continue;
+    if (hidden.includes(entry[0]) || !isFieldVisible(entry[1], values)) continue;
     const previous = grouped[grouped.length - 1];
     if (entry[1].row !== undefined && previous?.[0][1].row === entry[1].row) {
       previous.push(entry);
@@ -264,6 +269,15 @@ type PatternSubFormProps = {
     header?: ReactNode;
     // Floated top-right, with the inputs flowing around and below it.
     preview?: ReactNode;
+    // Fields left to `panel` rather than given an input of their own.
+    hiddenFields?: readonly string[];
+    // Shown below the inputs, and able to change the values like they can. `field`
+    // renders the input for a schema field, so a hidden one can be placed in the panel.
+    panel?: (
+      values: FormValues,
+      setField: (key: string, value: number | string) => void,
+      field: (key: string) => ReactNode
+    ) => ReactNode;
   };
 
 // Renders the inputs for a pattern's parameters straight from its `Fields` schema.
@@ -290,8 +304,26 @@ export function PatternSubForm(props: PatternSubFormProps) {
 
   const setField = (key: string, value: FieldValue) =>
     setValues((v) => ({ ...v, values: { ...v.values, [key]: value } }));
+  const field = (key: string) => {
+    const spec = schemaFor(values.type)[key];
+    return (
+      spec && (
+        <Field
+          key={key}
+          spec={spec}
+          value={values.values[key]}
+          onChange={(value) => setField(key, value)}
+        />
+      )
+    );
+  };
+  const panel = props.panel?.(values, setField, field);
 
-  const fieldRows = rows(schemaFor(values.type), values.values).map((row) => {
+  const fieldRows = rows(
+    schemaFor(values.type),
+    values.values,
+    props.hiddenFields ?? []
+  ).map((row) => {
     const fields = row.map(([key, spec]) => (
       <Field
         key={key}
@@ -335,6 +367,8 @@ export function PatternSubForm(props: PatternSubFormProps) {
 
         {fieldRows}
 
+        {panel && <div>{panel}</div>}
+
         <div>
           <Button
             fullWidth
@@ -368,6 +402,9 @@ interface PatternFormProps {
   existingNames: string[];
   busy: boolean;
   onSubmit: (values: FormValues) => void;
+  // The capture panel for a type, and the feed it publishes to for the preview to read.
+  capture?: (type: PatternType) => CaptureFormProps;
+  captureFeed?: string;
 }
 
 // Add form: a type selector over the pattern registry plus that type's generated inputs.
@@ -375,13 +412,18 @@ export function PatternForm({
   namePlaceholder,
   existingNames,
   busy,
-  onSubmit
+  onSubmit,
+  capture,
+  captureFeed
 }: PatternFormProps) {
   const [type, setType] = useState<PatternType>(PATTERN_TYPES[0]);
   const [current, setCurrent] = useState<FormValues | null>(null);
   const previewProps = useMemo(
-    () => (current && current.type === type ? toProps(current) : null),
-    [current, type]
+    () =>
+      current && current.type === type
+        ? { ...toProps(current), name: captureFeed ?? current.name }
+        : null,
+    [current, type, captureFeed]
   );
 
   return (
@@ -394,6 +436,7 @@ export function PatternForm({
       busy={busy}
       onSubmit={onSubmit}
       onValuesChange={setCurrent}
+      {...capture?.(type)}
       preview={previewProps && <PatternPreview type={type} props={previewProps} />}
       header={
         <NativeSelect

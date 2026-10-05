@@ -113,7 +113,7 @@ export class VideoPattern extends Pattern {
       label: 'Sampling',
       default: VIDEO_SAMPLING_FISHEYE,
       row: 0,
-      hint: 'Aim it by eye in the capture panel next to the pattern list.',
+      hint: 'Aim it by eye against the preview below.',
       options: [
         { value: VIDEO_SAMPLING_STRIP, label: 'Strip' },
         { value: VIDEO_SAMPLING_FISHEYE, label: 'Fisheye rim' }

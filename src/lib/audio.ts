@@ -15,14 +15,19 @@ export type AudioSource = 'system' | 'input';
 
 export interface AudioCaptureHandle {
   stop: () => void;
+  stream: MediaStream;
 }
 
 interface AudioCaptureOptions {
-  // The Audio pattern the frames feed.
-  pattern: string;
+  // The Audio pattern the frames feed, read per frame so a rename is followed; null holds
+  // them back while the pattern doesn't exist yet.
+  pattern: () => string | null;
   source: AudioSource;
-  // Called every analysis frame with the current loudness in [0, 1], for a meter.
-  onLevel: (level: number) => void;
+  // Recorded instead of asking the browser for a new one; the capture owns it from here.
+  stream?: MediaStream;
+  // Called every analysis frame with the bands and the current loudness in [0, 1]. The
+  // bands array is reused.
+  onFrame: (bands: number[], level: number) => void;
   // Called when the browser ends the capture on its own (e.g. "Stop sharing").
   onEnded: () => void;
 }
@@ -47,14 +52,15 @@ async function openStream(source: AudioSource): Promise<MediaStream> {
 export async function startAudioCapture({
   pattern,
   source,
-  onLevel,
+  stream: given,
+  onFrame,
   onEnded
 }: AudioCaptureOptions): Promise<AudioCaptureHandle> {
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new Error('This browser does not allow audio capture on this page');
   }
 
-  const stream = await openStream(source);
+  const stream = given ?? (await openStream(source));
   const [track] = stream.getAudioTracks();
   if (!track) {
     stream.getTracks().forEach((t) => t.stop());
@@ -83,12 +89,13 @@ export async function startAudioCapture({
     fillBands(spectrum, context.sampleRate, bands);
 
     const level = loudness(waveform);
-    onLevel(level);
+    onFrame(bands, level);
 
+    const feed = pattern();
     // Drop a frame rather than queue behind a slow request; the next one is 33ms away.
-    if (posting) return;
+    if (posting || feed === null) return;
     posting = true;
-    void fetch(`/api/patterns/${encodeURIComponent(pattern)}/audio`, {
+    void fetch(`/api/patterns/${encodeURIComponent(feed)}/audio`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ bands, level })
@@ -114,7 +121,7 @@ export async function startAudioCapture({
     onEnded();
   });
 
-  return { stop };
+  return { stop, stream };
 }
 
 // Fold the linear FFT bins into logarithmically spaced bands, which is far closer to how
