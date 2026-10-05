@@ -83,13 +83,9 @@ export class BouncePattern extends Pattern {
     // Turn around after a full turn in each direction. Both ends are the same light on
     // the ring, so the bump reverses at the seam rather than stopping short of it.
     while (pos < 0 || pos > n) {
-      if (pos < 0) {
-        pos = -pos;
-        this.direction = 1;
-      } else {
-        pos = 2 * n - pos;
-        this.direction = -1;
-      }
+      // Flip rather than assign so a negative speed still reverses correctly.
+      pos = pos < 0 ? -pos : 2 * n - pos;
+      this.direction = -this.direction;
     }
     this.position = pos;
     this.render();
