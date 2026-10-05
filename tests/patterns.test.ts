@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { validateNewPatternProps } from '../server/validation';
+import { AUDIO_BANDS, setAudioFrame } from '../shared/audio';
 import { AUDIO_TYPE } from '../shared/patterns/audio';
-import { BlendMode, type Color } from '../shared/patterns/pattern';
+import { BlendMode, type Color, isFieldVisible } from '../shared/patterns/pattern';
 import {
   type FieldSpec,
   PATTERN_TYPES,
@@ -175,5 +176,40 @@ describe.each(PATTERN_TYPES)('%s pattern', (type) => {
     const pattern = build(defaultParameters(type));
     pattern.update({ opacity: 0.25 });
     expect(pattern.opacity).toBe(0.25);
+  });
+
+  // The editor hides a field when it can't matter, so it must really have no effect.
+  it('ignores every field while the editor hides it', () => {
+    if (type === AUDIO_TYPE) {
+      setAudioFrame(
+        Array.from({ length: AUDIO_BANDS }, (_, k) => (k % 3) / 2),
+        0.7
+      );
+    }
+    const frames = (params: Params) => {
+      vi.spyOn(Math, 'random').mockImplementation(mulberry32(3));
+      const pattern = build(params);
+      const out: number[][] = [];
+      for (let i = 0; i < 10; i++) {
+        pattern.tick(1 / 30);
+        out.push(pattern.data());
+      }
+      vi.restoreAllMocks();
+      return out;
+    };
+
+    for (const combo of selectCombinations(type)) {
+      const base = { ...defaultParameters(type), ...combo };
+      for (const [key, spec] of Object.entries(fields)) {
+        if (isFieldVisible(spec, base)) continue;
+        const expected = frames(base);
+        for (const value of edgeValues(spec)) {
+          expect(
+            frames({ ...base, [key]: value }),
+            `${key}=${JSON.stringify(value)} with ${JSON.stringify(combo)}`
+          ).toEqual(expected);
+        }
+      }
+    }
   });
 });

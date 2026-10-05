@@ -86,9 +86,18 @@ describe.each(PATTERN_TYPES)('%s schema', (type) => {
     expect(Object.keys(SHARED_FIELDS)).not.toContain(key);
   });
 
-  it.each(Object.entries(fields))('field %s is well-formed', (_key, spec) => {
+  it.each(Object.entries(fields))('field %s is well-formed', (key, spec) => {
     expect(spec.label.trim()).not.toBe('');
     if (spec.row !== undefined) expect(Number.isInteger(spec.row)).toBe(true);
+
+    for (const [other, values] of Object.entries(spec.visibleWhen ?? {})) {
+      expect(other).not.toBe(key);
+      const select = fields[other];
+      expect(select?.kind, `${key} depends on ${other}`).toBe('select');
+      const options = select.kind === 'select' ? select.options.map((o) => o.value) : [];
+      expect(values.length).toBeGreaterThan(0);
+      for (const value of values) expect(options).toContain(value);
+    }
 
     switch (spec.kind) {
       case 'select': {

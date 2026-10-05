@@ -28,6 +28,9 @@ const AUDIO_MODE_SPECTRUM = 0;
 const AUDIO_MODE_VU = 1;
 const AUDIO_MODE_FREQUENCY = 2;
 
+// The modes that draw along the ring, rather than lighting the whole dome at once.
+const RING_MODES = [AUDIO_MODE_SPECTRUM, AUDIO_MODE_VU];
+
 const COLOR_MODE_HUE = 0;
 const COLOR_MODE_TWO_COLORS = 1;
 const COLOR_MODE_MAP = 2;
@@ -105,7 +108,8 @@ export class AudioPattern extends Pattern {
       kind: 'select',
       label: 'Colors',
       default: COLOR_MODE_HUE,
-      hint: 'How the spectrum and VU meter are colored from the top of the ring to the bottom.',
+      hint: 'How the lights are colored from the top of the ring to the bottom.',
+      visibleWhen: { mode: RING_MODES },
       options: [
         { value: COLOR_MODE_HUE, label: 'Hue sweep' },
         { value: COLOR_MODE_TWO_COLORS, label: 'Two colors' },
@@ -118,7 +122,7 @@ export class AudioPattern extends Pattern {
       default: 0,
       step: 10,
       row: 2,
-      hint: 'Hue sweep only.',
+      visibleWhen: { mode: RING_MODES, colorMode: [COLOR_MODE_HUE] },
       ...DEGREES
     },
     hueSpan: {
@@ -127,6 +131,7 @@ export class AudioPattern extends Pattern {
       default: 300,
       step: 10,
       row: 2,
+      visibleWhen: { mode: RING_MODES, colorMode: [COLOR_MODE_HUE] },
       ...SIGNED_DEGREES
     },
     frontColor: {
@@ -134,13 +139,14 @@ export class AudioPattern extends Pattern {
       label: 'Top color',
       default: { r: 77, g: 171, b: 247 },
       row: 3,
-      hint: 'Two colors only.'
+      visibleWhen: { mode: RING_MODES, colorMode: [COLOR_MODE_TWO_COLORS] }
     },
     backColor: {
       kind: 'color',
       label: 'Bottom color',
       default: { r: 255, g: 64, b: 129 },
-      row: 3
+      row: 3,
+      visibleWhen: { mode: RING_MODES, colorMode: [COLOR_MODE_TWO_COLORS] }
     },
     colorMap: {
       kind: 'colorMap',
@@ -150,7 +156,8 @@ export class AudioPattern extends Pattern {
         { t: 0.5, r: 255, g: 0, b: 128 },
         { t: 1, r: 255, g: 200, b: 0 }
       ],
-      hint: 'Color map only. Position 0 is the top of the ring, 1 the bottom.'
+      hint: 'Position 0 is the top of the ring, 1 the bottom.',
+      visibleWhen: { mode: RING_MODES, colorMode: [COLOR_MODE_MAP] }
     },
     frontHz: {
       kind: 'number',
@@ -159,6 +166,7 @@ export class AudioPattern extends Pattern {
       step: 10,
       row: 4,
       hint: 'Frequency shown at the top of the ring.',
+      visibleWhen: { mode: [AUDIO_MODE_SPECTRUM] },
       ...HERTZ
     },
     backHz: {
@@ -168,6 +176,7 @@ export class AudioPattern extends Pattern {
       step: 100,
       row: 4,
       hint: 'Frequency shown at the bottom of the ring.',
+      visibleWhen: { mode: [AUDIO_MODE_SPECTRUM] },
       ...HERTZ
     },
     hz: {
@@ -176,14 +185,15 @@ export class AudioPattern extends Pattern {
       default: 100,
       step: 10,
       row: 5,
-      hint: 'Single-frequency mode: drives the whole dome.',
+      hint: 'Drives the whole dome.',
+      visibleWhen: { mode: [AUDIO_MODE_FREQUENCY] },
       ...HERTZ
     },
     color: {
       kind: 'color',
       label: 'Frequency color',
       default: { r: 77, g: 171, b: 247 },
-      hint: 'Single-frequency mode only.'
+      visibleWhen: { mode: [AUDIO_MODE_FREQUENCY] }
     }
   } satisfies PatternSchema;
 

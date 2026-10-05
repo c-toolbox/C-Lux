@@ -18,6 +18,7 @@ import {
   type Color,
   type ColorStop,
   type FieldSpec,
+  isFieldVisible,
   MAX_COLORS,
   PATTERN_TYPES,
   patternDisplayName,
@@ -112,9 +113,10 @@ const asStops = (value: FieldValue): StopValue[] =>
 type Entry = [string, FieldSpec];
 
 // Group consecutive fields that share a row number so they render side by side.
-function rows(schema: PatternSchema): Entry[][] {
+function rows(schema: PatternSchema, values: Record<string, FieldValue>): Entry[][] {
   const grouped: Entry[][] = [];
   for (const entry of Object.entries(schema)) {
+    if (!isFieldVisible(entry[1], values)) continue;
     const previous = grouped[grouped.length - 1];
     if (entry[1].row !== undefined && previous?.[0][1].row === entry[1].row) {
       previous.push(entry);
@@ -290,7 +292,7 @@ export function PatternSubForm(props: PatternSubFormProps) {
         }}
       />
 
-      {rows(schemaFor(values.type)).map((row) => {
+      {rows(schemaFor(values.type), values.values).map((row) => {
         const fields = row.map(([key, spec]) => (
           <Field
             key={key}

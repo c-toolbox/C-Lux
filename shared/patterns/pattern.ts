@@ -75,6 +75,8 @@ interface FieldBase {
   // Fields sharing a row number are rendered side by side; omitting it spans the width.
   row?: number;
   hint?: string;
+  // Only shown while each named select field holds one of the listed values.
+  visibleWhen?: Readonly<Record<string, readonly number[]>>;
 }
 
 // A single configurable parameter of a pattern, carrying enough metadata to both
@@ -98,6 +100,16 @@ export const MAX_COLORS = 16;
 // Every configurable parameter of a pattern, keyed by the name it has in `parameters()`
 // (so `color` / `color2` rather than the flat r/g/b constructor props).
 export type PatternSchema = Record<string, FieldSpec>;
+
+// Whether a field has any effect given the other parameter values.
+export function isFieldVisible(
+  spec: FieldSpec,
+  values: Record<string, unknown>
+): boolean {
+  return Object.entries(spec.visibleWhen ?? {}).every(([key, allowed]) =>
+    allowed.includes(values[key] as number)
+  );
+}
 
 export const UNIT: NumberRange = { min: 0, max: 1 };
 export const NON_NEGATIVE: NumberRange = { min: 0 };

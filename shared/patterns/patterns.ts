@@ -21,6 +21,7 @@ import {
   type Color,
   type ColorStop,
   type FieldSpec,
+  isFieldVisible,
   MAX_COLORS,
   Pattern,
   type PatternSchema,
@@ -113,7 +114,7 @@ export function patternFields(type: string): PatternSchema | undefined {
 }
 
 export type { Color, ColorStop, FieldSpec, PatternSchema };
-export { MAX_COLORS, sampleColorMap };
+export { isFieldVisible, MAX_COLORS, sampleColorMap };
 
 export type PatternProps =
   | StaticProps

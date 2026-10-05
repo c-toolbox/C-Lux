@@ -7,7 +7,8 @@ import {
   audioBandIndex,
   setAudioFrame
 } from '../shared/audio';
-import { type Color, hsvToRgb } from '../shared/patterns/pattern';
+import { AudioPattern } from '../shared/patterns/audio';
+import { type Color, hsvToRgb, isFieldVisible } from '../shared/patterns/pattern';
 import { setVideoStrip } from '../shared/video';
 
 import { alphas, make, mod, N_LIGHTS as N, rgbAt } from './helpers';
@@ -295,6 +296,28 @@ describe('Audio', () => {
       expect(rgbAt(p, 0).b).toBeCloseTo(127.5);
       p.advance(0.5);
       expect(rgbAt(p, 0)).toEqual(blue);
+    });
+  });
+
+  describe('editor fields', () => {
+    const fields = AudioPattern.Fields;
+    const visible = (values: Record<string, number>) =>
+      Object.entries(fields)
+        .filter(([, spec]) => isFieldVisible(spec, values))
+        .map(([key]) => key);
+    const common = ['mode', 'gain', 'floor', 'decay'];
+
+    it.each([
+      [0, 0, ['colorMode', 'hue', 'hueSpan', 'frontHz', 'backHz']],
+      [0, 1, ['colorMode', 'frontColor', 'backColor', 'frontHz', 'backHz']],
+      [0, 2, ['colorMode', 'colorMap', 'frontHz', 'backHz']],
+      [1, 0, ['colorMode', 'hue', 'hueSpan']],
+      [1, 1, ['colorMode', 'frontColor', 'backColor']],
+      [1, 2, ['colorMode', 'colorMap']],
+      [2, 0, ['hz', 'color']],
+      [2, 2, ['hz', 'color']]
+    ])('shows in mode %d with color mode %d only %o', (mode, colorMode, own) => {
+      expect(visible({ mode, colorMode })).toEqual([...common, ...own]);
     });
   });
 });

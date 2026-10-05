@@ -21,6 +21,7 @@ export type {
   Scene
 } from '../../shared/patterns/patterns';
 export {
+  isFieldVisible,
   MAX_COLORS,
   PATTERN_TYPES,
   sampleColorMap,
