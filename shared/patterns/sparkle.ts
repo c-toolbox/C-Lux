@@ -9,8 +9,10 @@ import {
 
 export type SparkleProps = PatternBaseProps & {
   // Share of the ring igniting per second (1 = as many sparkles as there are lights), the
-  // fade rate, and the hue window each sparkle draws its color from, in degrees.
+  // fade-in time in seconds (0 = instant), the fade rate, and the hue window each sparkle
+  // draws its color from, in degrees.
   density: number;
+  attack: number;
   decay: number;
   hue: number;
   hueRange: number;
@@ -29,6 +31,15 @@ export class SparklePattern extends Pattern {
       default: 0.14,
       step: 0.01,
       row: 0,
+      ...NON_NEGATIVE
+    },
+    attack: {
+      kind: 'number',
+      label: 'Fade in (s)',
+      default: 0,
+      step: 0.05,
+      row: 0,
+      hint: 'Time a sparkle takes to reach full brightness; 0 lights it instantly.',
       ...NON_NEGATIVE
     },
     decay: {
@@ -60,6 +71,8 @@ export class SparklePattern extends Pattern {
   } satisfies PatternSchema;
 
   density!: number;
+  // Initialized so patterns saved before the field existed still load.
+  attack: number = SparklePattern.Fields.attack.default;
   decay!: number;
   hue!: number;
   hueRange!: number;
@@ -68,6 +81,8 @@ export class SparklePattern extends Pattern {
   // Per-light brightness in [0, 1] and the hue that light ignited with.
   private intensities: number[] = Array.from({ length: this.state.length }, () => 0);
   private hues: number[] = Array.from({ length: this.state.length }, () => 0);
+  // Whether each light is still fading in rather than decaying.
+  private rising: boolean[] = Array.from({ length: this.state.length }, () => false);
 
   constructor(props: SparkleProps) {
     super(props);
@@ -78,6 +93,7 @@ export class SparklePattern extends Pattern {
     name: string;
     type: typeof SparklePattern.Type;
     density: number;
+    attack: number;
     decay: number;
     hue: number;
     hueRange: number;
@@ -87,6 +103,7 @@ export class SparklePattern extends Pattern {
       name: this.name,
       type: SparklePattern.Type,
       density: this.density,
+      attack: this.attack,
       decay: this.decay,
       hue: this.hue,
       hueRange: this.hueRange,
@@ -94,8 +111,9 @@ export class SparklePattern extends Pattern {
     };
   }
 
-  set({ density, decay, hue, hueRange, saturation }: Partial<SparkleProps>) {
+  set({ density, attack, decay, hue, hueRange, saturation }: Partial<SparkleProps>) {
     this.density = density ?? this.density;
+    this.attack = attack ?? this.attack;
     this.decay = decay ?? this.decay;
     this.hue = hue ?? this.hue;
     this.hueRange = hueRange ?? this.hueRange;
@@ -107,10 +125,16 @@ export class SparklePattern extends Pattern {
   tick(dt: number) {
     const n = this.state.length;
 
-    // Fade every active sparkle toward zero.
+    // Ramp rising sparkles up to full, then fade them toward zero.
     const factor = Math.exp(-this.decay * dt);
+    const step = this.attack > 0 ? dt / this.attack : Infinity;
     for (let i = 0; i < n; i++) {
-      this.intensities[i] *= factor;
+      if (this.rising[i]) {
+        this.intensities[i] = Math.min(1, this.intensities[i] + step);
+        if (this.intensities[i] >= 1) this.rising[i] = false;
+      } else {
+        this.intensities[i] *= factor;
+      }
     }
 
     // Ignite new sparkles; `density` is the expected share of the ring spawned per second.
@@ -118,7 +142,9 @@ export class SparklePattern extends Pattern {
     while (expected > 0) {
       if (expected < 1 && Math.random() >= expected) break;
       const i = Math.floor(Math.random() * n);
-      this.intensities[i] = 1;
+      // Rise from the current brightness so a re-ignited light doesn't dip.
+      if (this.attack > 0) this.rising[i] = true;
+      else this.intensities[i] = 1;
       this.hues[i] = this.hue + Math.random() * this.hueRange;
       expected -= 1;
     }
