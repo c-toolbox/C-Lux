@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { migratePatterns, PATTERN_DATA_VERSION } from '../shared/migrate';
 import { type Scene } from '../shared/patterns/patterns';
 
 // Scenes are named pattern combinations that can be applied on demand, and the only
@@ -11,7 +12,7 @@ const scenesPath = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'scene
 
 // Bumped whenever the on-disk shape changes, so `migrate` below can bring an older file
 // up to date instead of the server having to reject it.
-export const SCENES_FILE_VERSION = 1;
+export const SCENES_FILE_VERSION = PATTERN_DATA_VERSION;
 
 // The on-disk shape of the scenes file.
 interface ScenesFile {
@@ -23,7 +24,7 @@ interface ScenesFile {
 // version field are a bare array of scenes, or an object with no version, both treated
 // as version 1.
 export function migrate(parsed: unknown): Array<Scene> {
-  if (Array.isArray(parsed)) return parsed as Array<Scene>;
+  if (Array.isArray(parsed)) return migrateScenes(parsed as Array<Scene>, 1);
 
   const file = parsed as Partial<ScenesFile> | null;
   if (typeof file !== 'object' || file === null || !Array.isArray(file.scenes)) {
@@ -38,7 +39,14 @@ export function migrate(parsed: unknown): Array<Scene> {
       `scenes file version ${version} is newer than the supported version ${SCENES_FILE_VERSION}`
     );
   }
-  return file.scenes;
+  return migrateScenes(file.scenes, version);
+}
+
+function migrateScenes(scenes: Array<Scene>, version: number): Array<Scene> {
+  return scenes.map((scene) => ({
+    ...scene,
+    patterns: migratePatterns(scene.patterns, version) as Scene['patterns']
+  }));
 }
 
 // Load the saved scenes from disk, upgrading an older file format on the way.

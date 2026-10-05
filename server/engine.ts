@@ -1,4 +1,5 @@
 import type { DebugStatus, DebugUpdate } from '../shared/debug';
+import { migratePatterns } from '../shared/migrate';
 import { alphaOf, BlendMode, type Color, Pattern } from '../shared/patterns/pattern';
 import {
   patternByType,
@@ -6,7 +7,8 @@ import {
   type PatternParameters,
   type PatternProps,
   type Scene,
-  SCENE_EXPORT_VERSION} from '../shared/patterns/patterns';
+  SCENE_EXPORT_VERSION
+} from '../shared/patterns/patterns';
 import {
   SOLID_COLOR_NAME,
   type SolidColorStatus,
@@ -377,7 +379,7 @@ export class Engine {
 
     const seen = new Set<string>();
     const imported: PatternParameters[] = [];
-    for (const entry of patterns) {
+    for (const entry of migratePatterns(patterns, version)) {
       if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
         throw new HttpError(400, 'scene.patterns must contain only objects');
       }

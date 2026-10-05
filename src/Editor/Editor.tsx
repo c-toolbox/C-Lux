@@ -188,7 +188,7 @@ function Editor() {
     const names = scenes.map((s) => s.name);
     const name = copyName(scene.name, names);
     void run(async () => {
-      await api.importScene({ ...scene, name });
+      await api.importScene({ version: SCENE_EXPORT_VERSION, ...scene, name });
       const order = [...names];
       order.splice(names.indexOf(scene.name) + 1, 0, name);
       setScenes(await api.reorderScenes(order));

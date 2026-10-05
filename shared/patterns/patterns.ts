@@ -1,3 +1,5 @@
+import { PATTERN_DATA_VERSION } from '../migrate.ts';
+
 import { AudioPattern, type AudioProps } from './audio.ts';
 import { AuroraPattern, type AuroraProps } from './aurora.ts';
 import { BouncePattern, type BounceProps } from './bounce.ts';
@@ -151,4 +153,4 @@ export interface Scene {
 }
 
 // Version stamped on an exported scene file. Files without one are treated as version 1.
-export const SCENE_EXPORT_VERSION = 1;
+export const SCENE_EXPORT_VERSION = PATTERN_DATA_VERSION;

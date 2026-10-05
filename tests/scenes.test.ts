@@ -8,7 +8,13 @@ import { Engine } from '../server/engine';
 import { HttpError } from '../server/errors';
 import { loadScenes, migrate, saveScenes, SCENES_FILE_VERSION } from '../server/storage';
 import { validateName, validateNewPatternProps } from '../server/validation';
-import { PATTERN_TYPES, patternByType, type Scene } from '../shared/patterns/patterns';
+import { migratePatterns, PATTERN_DATA_VERSION } from '../shared/migrate';
+import {
+  PATTERN_TYPES,
+  patternByType,
+  type Scene,
+  SCENE_EXPORT_VERSION
+} from '../shared/patterns/patterns';
 import { SOLID_COLOR_NAME } from '../shared/patterns/static';
 
 import { animate, build, defaultParameters, type Params, propsOf } from './helpers';
@@ -123,6 +129,60 @@ describe('scenes file migration', () => {
   it.each([null, 42, 'scenes', {}, { scenes: {} }])('rejects %o', (value) => {
     expect(() => migrate(value)).toThrow(/recognized format/);
   });
+
+  const sparkle = { name: 's', type: 'Sparkle', hue: 300, hueRange: 120 };
+
+  it('converts version 1 patterns', () => {
+    const [migrated] = migrate({
+      version: 1,
+      scenes: [{ name: 'one', patterns: [sparkle] }]
+    });
+    expect(migrated.patterns[0]).toMatchObject({ hue: 0, hueRange: 120 });
+  });
+
+  it('converts patterns in a bare array', () => {
+    const [migrated] = migrate([{ name: 'one', patterns: [sparkle] }]);
+    expect(migrated.patterns[0]).toMatchObject({ hue: 0 });
+  });
+
+  it('leaves current patterns alone', () => {
+    const file = {
+      version: SCENES_FILE_VERSION,
+      scenes: [{ name: 'one', patterns: [sparkle] }]
+    };
+    expect(migrate(file)[0].patterns[0]).toEqual(sparkle);
+  });
+});
+
+describe('pattern migration', () => {
+  it('is at the version both scene files carry', () => {
+    expect(SCENES_FILE_VERSION).toBe(PATTERN_DATA_VERSION);
+    expect(SCENE_EXPORT_VERSION).toBe(PATTERN_DATA_VERSION);
+  });
+
+  it.each([
+    [0, 0, 0],
+    [200, 0, 200],
+    [0, 360, 180],
+    [100, 140, 170],
+    [300, 120, 0]
+  ])(
+    'centers a version 1 Sparkle hue %d with range %d on %d',
+    (hue, hueRange, centered) => {
+      const [p] = migratePatterns([{ type: 'Sparkle', hue, hueRange }], 1);
+      expect(p).toEqual({ type: 'Sparkle', hue: centered, hueRange });
+    }
+  );
+
+  it('leaves other pattern types alone', () => {
+    const plasma = { type: 'Plasma', hue: 100, hueRange: 140 };
+    expect(migratePatterns([plasma], 1)).toEqual([plasma]);
+  });
+
+  it('passes malformed entries through for validation', () => {
+    const entries = [null, 42, [], { type: 'Sparkle', hue: 'red', hueRange: 10 }];
+    expect(migratePatterns(entries, 1)).toEqual(entries);
+  });
 });
 
 describe('engine with the saved scenes', () => {
@@ -166,7 +226,7 @@ describe('engine with the saved scenes', () => {
   it.each(scenes.map((s) => [s.name, s] as const))(
     're-imports scene %s as exported',
     async (name, scene) => {
-      await engine.importScene({ version: 1, ...scene });
+      await engine.importScene({ version: SCENE_EXPORT_VERSION, ...scene });
       const imported = engine.listScenes().at(-1)!;
       expect(imported.name).toBe(`${name} 2`);
       expect(imported.patterns.map((p) => p.name)).toEqual(
@@ -182,6 +242,14 @@ describe('engine with the saved scenes', () => {
       engine.addPattern(type, { ...propsOf(props), name });
     }
     expect(run(engine, 120)).toBeNull();
+  });
+
+  it('converts an import from an older version', async () => {
+    const pattern = { ...defaultParameters('Sparkle', 'old'), hue: 100, hueRange: 140 };
+    for (const version of [undefined, 1]) {
+      await engine.importScene({ version, name: 'old', patterns: [pattern] });
+      expect(engine.listScenes().at(-1)!.patterns[0]).toMatchObject({ hue: 170 });
+    }
   });
 
   it('rejects an import with an unknown pattern type', async () => {

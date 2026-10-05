@@ -76,7 +76,7 @@ describe('Static', () => {
   it('fades to a new color over the given duration', () => {
     const p = make('StaticPattern', { color: BLACK }) as StaticPattern;
     p.fadeTo({ r: 200, g: 100, b: 50 }, 2);
-    expect(p.parameters().color).toEqual({ r: 200, g: 100, b: 50 });
+    expect(p.parameters().color).toEqual({ r: 200, g: 100, b: 50, a: 1 });
 
     p.tick(1);
     allColored(p, { r: 100, g: 50, b: 25 });
