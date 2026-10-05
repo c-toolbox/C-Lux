@@ -127,9 +127,8 @@ export const api = {
   // The debug page's overrides on the output. Editor-only, and never persisted.
   debug: () => request<DebugStatus>('/debug'),
   setDebug: (update: DebugUpdate) => request<DebugStatus>('/debug', 'PUT', update),
-  // The server's own NDI receiver, which opens whatever the enabled Video pattern names,
-  // and the senders it can see on the network.
-  ndi: () => request<NdiStatus>('/ndi'),
+  // The NDI receiver the server runs for a Video pattern, and the senders it can see.
+  ndi: (pattern: string) => request<NdiStatus>(`/patterns/${seg(pattern)}/ndi`),
   ndiSources: () => request<NdiSource[]>('/ndi/sources'),
   removePattern: (name: string) =>
     request<{ name: string }>(`/patterns/${seg(name)}`, 'DELETE'),
@@ -188,11 +187,17 @@ export interface NdiPreview {
   strip: Uint8Array;
 }
 
-// One frame of what the server's NDI receiver is reading, plus the strip it sampled from
-// it. Binary rather than JSON, for the same reason the capture ingest is. Resolves to
-// null until the receiver has rendered a preview.
-export async function ndiPreview(signal?: AbortSignal): Promise<NdiPreview | null> {
-  const res = await fetch('/api/ndi/preview', { headers: authHeaders(), signal });
+// One frame of what the NDI receiver for a Video pattern is reading, plus the strip it
+// sampled from it. Binary rather than JSON, for the same reason the capture ingest is.
+// Resolves to null until the receiver has rendered a preview.
+export async function ndiPreview(
+  pattern: string,
+  signal?: AbortSignal
+): Promise<NdiPreview | null> {
+  const res = await fetch(`/api/patterns/${seg(pattern)}/ndi/preview`, {
+    headers: authHeaders(),
+    signal
+  });
   if (res.status === 204 || !res.ok) return null;
 
   const body = new Uint8Array(await res.arrayBuffer());

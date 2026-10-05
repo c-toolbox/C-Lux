@@ -284,24 +284,27 @@ describe('video capture', () => {
 
   it('asks for nothing without an enabled Video pattern', () => {
     addStatic('static', { r: 0, g: 0, b: 0 });
-    expect(engine.videoCapture()).toBeNull();
+    expect(engine.videoCaptures().size).toBe(0);
     addVideo('video');
     engine.setPatternEnabled('video', false);
-    expect(engine.videoCapture()).toBeNull();
+    expect(engine.videoCaptures().size).toBe(0);
   });
 
-  it('follows the first enabled Video pattern', () => {
+  it('captures for every enabled Video pattern', () => {
     addVideo('first', { input: VIDEO_INPUT_NDI, ndiSource: 'A', radius: 0.5 });
     addVideo('second', { input: VIDEO_INPUT_CAMERA, sampling: VIDEO_SAMPLING_STRIP });
-    expect(engine.videoCapture()).toMatchObject({
+    addVideo('off');
+    engine.setPatternEnabled('off', false);
+
+    const captures = engine.videoCaptures();
+    expect([...captures.keys()]).toEqual(['first', 'second']);
+    expect(captures.get('first')).toMatchObject({
       input: VIDEO_INPUT_NDI,
       ndiSource: 'A',
       sampling: VIDEO_SAMPLING_FISHEYE,
       geometry: { radius: 0.5 }
     });
-
-    engine.setPatternEnabled('first', false);
-    expect(engine.videoCapture()).toMatchObject({
+    expect(captures.get('second')).toMatchObject({
       input: VIDEO_INPUT_CAMERA,
       sampling: VIDEO_SAMPLING_STRIP
     });
@@ -311,10 +314,19 @@ describe('video capture', () => {
     config.server.sceneTransition = 1;
     addVideo('video', { input: VIDEO_INPUT_NDI, ndiSource: 'A' });
     engine.updatePattern('video', { ndiSource: 'B', centerX: 0.25 });
-    expect(engine.videoCapture()).toMatchObject({
+    expect(engine.videoCaptures().get('video')).toMatchObject({
       ndiSource: 'B',
       geometry: { centerX: 0.25 }
     });
+  });
+
+  it('only accepts feeds for running patterns of the right type', () => {
+    addVideo('video');
+    addStatic('static', { r: 0, g: 0, b: 0 });
+    expect(engine.acceptsFeed('video', 'Video')).toBe(true);
+    expect(engine.acceptsFeed('video', 'Audio')).toBe(false);
+    expect(engine.acceptsFeed('static', 'Video')).toBe(false);
+    expect(engine.acceptsFeed('nope', 'Video')).toBe(false);
   });
 
   it('rejects an NDI source name with control characters', () => {

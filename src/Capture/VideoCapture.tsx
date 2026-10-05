@@ -208,7 +208,7 @@ export function VideoCapture({
     let cancelled = false;
     const poll = () =>
       api
-        .ndi()
+        .ndi(name)
         .then((next) => {
           if (!cancelled) setStatus(next);
         })
@@ -219,7 +219,7 @@ export function VideoCapture({
       cancelled = true;
       clearInterval(timer);
     };
-  }, [ndi]);
+  }, [ndi, name]);
 
   const scan = useCallback(async () => {
     setScanning(true);
@@ -292,7 +292,7 @@ export function VideoCapture({
 
     const poll = async () => {
       try {
-        const frame = await ndiPreview(controller.signal);
+        const frame = await ndiPreview(name, controller.signal);
         if (cancelled) return;
         if (frame !== null) {
           drawPreview(frame);
@@ -310,7 +310,7 @@ export function VideoCapture({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [receiving, drawPreview, onStrip]);
+  }, [receiving, name, drawPreview, onStrip]);
 
   // Show which part of the image the rim sampler is reading.
   useEffect(() => {
@@ -356,6 +356,7 @@ export function VideoCapture({
     setError(null);
     try {
       handle.current = await startVideoCapture({
+        pattern: name,
         source: input === VIDEO_INPUT_CAMERA ? 'camera' : 'screen',
         sampling: () => samplingRef.current,
         video,

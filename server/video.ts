@@ -9,9 +9,10 @@ import { HttpError } from './errors';
 //   [2..]  r, g, b per color
 const HEADER_BYTES = 2;
 
-// Validate and accept one strip from a capture client. `express.raw` caps the body size
-// before this runs, so the only checks left are that the header agrees with the payload.
-export function publishVideoStrip(body: unknown): void {
+// Validate and accept one strip from a capture client for the named feed. `express.raw`
+// caps the body size before this runs, so the only checks left are that the header
+// agrees with the payload.
+export function publishVideoStrip(feed: string, body: unknown): void {
   if (!Buffer.isBuffer(body) || body.length < HEADER_BYTES) {
     throw new HttpError(400, 'video frame must be an application/octet-stream body');
   }
@@ -25,5 +26,5 @@ export function publishVideoStrip(body: unknown): void {
   }
 
   // Copied out of the request buffer: express recycles it once the response is sent.
-  setVideoStrip(width, Uint8Array.from(body.subarray(HEADER_BYTES)), 'browser');
+  setVideoStrip(feed, width, Uint8Array.from(body.subarray(HEADER_BYTES)), 'browser');
 }

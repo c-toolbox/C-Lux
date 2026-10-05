@@ -24,9 +24,6 @@ export {
   type VideoGeometry
 } from '../../shared/video';
 
-// Where the strip this tab samples is sent so the server-side pattern can read it.
-const ENDPOINT = '/api/video';
-
 // 'camera' opens a capture device; 'screen' shares a window, tab or display, which is
 // how a player or a VJ tool gets its output in here without a native integration.
 export type VideoSource = 'camera' | 'screen';
@@ -36,6 +33,8 @@ export interface VideoCaptureHandle {
 }
 
 interface VideoCaptureOptions {
+  // The Video pattern the strips feed.
+  pattern: string;
   source: VideoSource;
   // Read every frame, so the sampling can be switched without tearing the stream down.
   sampling: () => number;
@@ -64,6 +63,7 @@ async function openStream(source: VideoSource): Promise<MediaStream> {
 // Capture video in this tab, reduce every frame to a strip, and stream it to the server
 // until the returned handle is stopped.
 export async function startVideoCapture({
+  pattern,
   source,
   sampling,
   video,
@@ -159,7 +159,7 @@ export async function startVideoCapture({
     new DataView(body.buffer).setUint16(0, width, true);
     body.set(strip.subarray(0, width * 3), 2);
 
-    void fetch(ENDPOINT, {
+    void fetch(`/api/patterns/${encodeURIComponent(pattern)}/video`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/octet-stream', ...authHeaders() },
       body

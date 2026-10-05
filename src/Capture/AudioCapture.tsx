@@ -63,6 +63,7 @@ export function AudioCapture({
     setError(null);
     try {
       handle.current = await startAudioCapture({
+        pattern: pattern.name,
         source,
         onLevel: setLevel,
         onEnded: stop

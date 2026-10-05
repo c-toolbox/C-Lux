@@ -31,12 +31,10 @@ import { VideoCapture } from '../Capture/VideoCapture';
 import {
   api,
   AUDIO_TYPE,
-  type AudioParameters,
   type PatternParameters,
   type Scene,
   SCENE_EXPORT_VERSION,
-  VIDEO_TYPE,
-  type VideoParameters
+  VIDEO_TYPE
 } from '../lib/api';
 import { authRequired, signOut } from '../lib/auth';
 import { describeError } from '../lib/errors';
@@ -82,30 +80,17 @@ function Editor() {
     setPatterns((list) => list.map((p) => (p.name === updated.name ? updated : p)));
   }, []);
 
-  // Only one audio and one video feed are captured at a time, for the first enabled
-  // pattern of each kind.
-  const audio = patterns.find(
-    (p): p is PatternParameters & AudioParameters => p.type === AUDIO_TYPE && p.enabled
-  );
-  const video = patterns.find(
-    (p): p is PatternParameters & VideoParameters => p.type === VIDEO_TYPE && p.enabled
-  );
-
-  // The capture controls live in the row of the pattern they feed.
+  // The capture controls live in the row of the pattern they feed; every enabled Audio
+  // and Video pattern captures a feed of its own.
   function captureDetails(p: PatternParameters) {
-    if (p === audio) {
-      return <AudioCapture pattern={audio} editable embedded onChange={replacePattern} />;
+    if (!p.enabled) return null;
+    if (p.type === AUDIO_TYPE) {
+      return <AudioCapture pattern={p} editable embedded onChange={replacePattern} />;
     }
-    if (p === video) {
-      return <VideoCapture pattern={video} editable embedded onChange={replacePattern} />;
+    if (p.type === VIDEO_TYPE) {
+      return <VideoCapture pattern={p} editable embedded onChange={replacePattern} />;
     }
-    const feeder = p.type === AUDIO_TYPE ? audio : p.type === VIDEO_TYPE ? video : null;
-    if (!p.enabled || !feeder) return null;
-    return (
-      <Text size={'sm'} c={'dimmed'}>
-        Shows the feed captured for “{feeder.name}”.
-      </Text>
-    );
+    return null;
   }
 
   async function run(action: () => Promise<unknown>) {

@@ -33,6 +33,7 @@ describe('Audio', () => {
 
   function feed(level: number, bands: (band: number) => number = () => 0) {
     setAudioFrame(
+      'test-Audio',
       Array.from({ length: AUDIO_BANDS }, (_, k) => bands(k)),
       level
     );
@@ -336,7 +337,7 @@ describe('Video', () => {
       const { r, g, b } = color(p);
       rgb.set([r, g, b], p * 3);
     }
-    setVideoStrip(width, rgb, 'browser');
+    setVideoStrip('test-Video', width, rgb, 'browser');
   }
 
   // A sharp, unsmoothed, unprocessed mapping, so each light shows exactly one pixel. The
@@ -461,5 +462,44 @@ describe('Video', () => {
     const tau = smoothing * 0.5;
     const expected = 255 * (tau > 0 ? 1 - Math.exp(-1 / 30 / tau) : 1);
     for (const light of p.state) expect(light.r).toBeCloseTo(expected);
+  });
+});
+
+describe('separate feeds', () => {
+  const solid = (width: number, value: number) => new Uint8Array(width * 3).fill(value);
+
+  it('gives every Audio pattern its own feed', () => {
+    const loud = make('Audio', { name: 'loud', mode: 1, floor: 0 });
+    const quiet = make('Audio', { name: 'quiet', mode: 1, floor: 0 });
+    setAudioFrame('loud', new Array<number>(AUDIO_BANDS).fill(0), 1);
+    loud.tick(1 / 30);
+    quiet.tick(1 / 30);
+    expect(alphas(loud)[0]).toBeGreaterThan(0);
+    expect(alphas(quiet).every((a) => a === 0)).toBe(true);
+  });
+
+  it('gives every Video pattern its own feed', () => {
+    const raw = { fit: 1, smoothing: 0, saturation: 1, gamma: 1 };
+    const dark = make('Video', { ...raw, name: 'dark' });
+    const bright = make('Video', { ...raw, name: 'bright' });
+    setVideoStrip('dark', N, solid(N, 10), 'browser');
+    setVideoStrip('bright', N, solid(N, 200), 'ndi');
+    dark.tick(1);
+    bright.tick(1);
+    expect(rgbAt(dark, 0)).toEqual({ r: 10, g: 10, b: 10 });
+    expect(rgbAt(bright, 0)).toEqual({ r: 200, g: 200, b: 200 });
+  });
+
+  it('lets one source own a video feed without blocking the others', () => {
+    const raw = { fit: 1, smoothing: 0, saturation: 1, gamma: 1 };
+    const owned = make('Video', { ...raw, name: 'owned' });
+    const other = make('Video', { ...raw, name: 'other' });
+    setVideoStrip('owned', N, solid(N, 50), 'ndi');
+    setVideoStrip('owned', N, solid(N, 99), 'browser');
+    setVideoStrip('other', N, solid(N, 99), 'browser');
+    owned.tick(1);
+    other.tick(1);
+    expect(rgbAt(owned, 0)).toEqual({ r: 50, g: 50, b: 50 });
+    expect(rgbAt(other, 0)).toEqual({ r: 99, g: 99, b: 99 });
   });
 });

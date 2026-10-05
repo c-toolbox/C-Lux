@@ -184,6 +184,7 @@ describe.each(PATTERN_TYPES)('%s pattern', (type) => {
       // Re-published per run, so the feed can't go stale partway through the test.
       if (type === AUDIO_TYPE) {
         setAudioFrame(
+          params.name,
           Array.from({ length: AUDIO_BANDS }, (_, k) => (k % 3) / 2),
           0.7
         );

@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
 import { NDI_PREVIEW_HEADER_BYTES } from '../shared/ndi';
+import { AUDIO_TYPE } from '../shared/patterns/audio';
+import { VIDEO_TYPE } from '../shared/patterns/video';
 import { VIDEO_INPUT_NDI } from '../shared/video';
 
 import { publishAudioFrame } from './audio';
@@ -19,7 +21,14 @@ import {
 } from './config';
 import { Engine } from './engine';
 import { HttpError } from './errors';
-import { ndiPreview, ndiSources, ndiStatus, stopNdi, syncNdi } from './ndi';
+import {
+  ndiPreview,
+  type NdiRequest,
+  ndiSources,
+  ndiStatus,
+  stopNdi,
+  syncNdi
+} from './ndi';
 import { startOutputs } from './output';
 import { parseBody } from './validation';
 import { publishVideoStrip } from './video';
@@ -153,35 +162,45 @@ function setDebug(req: express.Request, res: express.Response) {
   res.json(engine.setDebug(parseBody(debugBody, req.body)));
 }
 
-// Ingest one analysis frame from a browser capturing the sound card. Answers 204 so a
-// client posting tens of times a second doesn't have to read a body it ignores.
+// The pattern a capture endpoint addresses, which must exist and be of `type`.
+function feedOf(req: express.Request, type: string): string {
+  const name = String(req.params.name);
+  if (!engine.acceptsFeed(name, type)) {
+    throw new HttpError(404, `No ${type} pattern named: ${name}`);
+  }
+  return name;
+}
+
+// Ingest one analysis frame for an Audio pattern from a browser capturing sound. Answers
+// 204 so a client posting tens of times a second doesn't have to read a body it ignores.
 function postAudio(req: express.Request, res: express.Response) {
-  publishAudioFrame(req.body);
+  publishAudioFrame(feedOf(req, AUDIO_TYPE), req.body);
   res.status(204).end();
 }
 
-// Ingest one strip from a browser sampling a video feed. Answers 204 for the same
-// reason the audio endpoint does.
+// Ingest one strip for a Video pattern from a browser sampling a video feed. Answers 204
+// for the same reason the audio endpoint does.
 function postVideo(req: express.Request, res: express.Response) {
-  publishVideoStrip(req.body);
+  publishVideoStrip(feedOf(req, VIDEO_TYPE), req.body);
   res.status(204).end();
 }
 
-// NDI is a LAN protocol a browser cannot speak, so the server receives the stream itself,
-// from the source the enabled Video pattern names. The capture panel only lists the
-// senders and watches what the receiver reads.
-function getNdi(_req: express.Request, res: express.Response) {
-  res.json(ndiStatus());
+// NDI is a LAN protocol a browser cannot speak, so the server receives the stream each
+// enabled Video pattern names itself. The capture panel only lists the senders and
+// watches what the pattern's receiver reads.
+function getNdi(req: express.Request, res: express.Response) {
+  res.json(ndiStatus(String(req.params.name)));
 }
 
 async function listNdiSources(_req: express.Request, res: express.Response) {
   res.json(await ndiSources());
 }
 
-// What the receiver is reading, so the calibration sliders can be aimed by eye, plus the
-// strip it sampled from the same frame. Binary for the same reason the ingest is.
-function getNdiPreview(_req: express.Request, res: express.Response) {
-  const frame = ndiPreview();
+// What a pattern's receiver is reading, so the calibration sliders can be aimed by eye,
+// plus the strip it sampled from the same frame. Binary for the same reason the ingest
+// is.
+function getNdiPreview(req: express.Request, res: express.Response) {
+  const frame = ndiPreview(String(req.params.name));
   if (frame === null) {
     res.status(204).end();
     return;
@@ -324,18 +343,19 @@ async function main() {
   routes.get('/debug', requireAuth, getDebug);
   routes.put('/debug', requireAuth, setDebug);
   // Open like the other house controls: the landing page runs the capture widgets too,
-  // and a frame can only feed a pattern someone already enabled.
-  routes.post('/audio', postAudio);
+  // and a frame can only feed a pattern that is already running. Each Audio and Video
+  // pattern has a feed of its own, addressed by the pattern's name.
+  routes.post('/patterns/:name/audio', postAudio);
   routes.post(
-    '/video',
+    '/patterns/:name/video',
     express.raw({ type: 'application/octet-stream', limit: VIDEO_BODY_LIMIT }),
     postVideo
   );
   // Open like the capture endpoints above: the landing page shows the receiver's state
   // and preview too. Listing the senders is only needed to pick one for a pattern.
-  routes.get('/ndi', getNdi);
+  routes.get('/patterns/:name/ndi', getNdi);
+  routes.get('/patterns/:name/ndi/preview', getNdiPreview);
   routes.get('/ndi/sources', requireAuth, listNdiSources);
-  routes.get('/ndi/preview', getNdiPreview);
   routes.get('/stream', streamFrames);
   routes.get('/scenes', listScenes);
   routes.get('/scenes/applied', appliedScenes);
@@ -392,12 +412,13 @@ async function main() {
     last = now;
     engine.tick(dt);
 
-    const video = engine.videoCapture();
-    syncNdi(
-      video?.input === VIDEO_INPUT_NDI
-        ? { source: video.ndiSource, sampling: video.sampling, geometry: video.geometry }
-        : null
-    );
+    const requests = new Map<string, NdiRequest>();
+    for (const [feed, video] of engine.videoCaptures()) {
+      if (video.input !== VIDEO_INPUT_NDI) continue;
+      const { ndiSource: source, sampling, geometry } = video;
+      requests.set(feed, { source, sampling, geometry });
+    }
+    syncNdi(requests);
   }, 1000 / config.server.tickRate);
 
   // Share the blended frame over Art-Net when enabled in config.json.

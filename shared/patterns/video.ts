@@ -86,8 +86,9 @@ export function videoCaptureOf(params: VideoParameters): VideoCaptureSettings {
 const clampByte = (value: number) =>
   value < 0 ? 0 : value > 255 ? 255 : Math.round(value);
 
-// Maps the strip a capture client streams to `POST /api/video` (or the server's NDI
-// receiver samples) onto the ring. The capture settings stored here say where the feed
+// Maps the strip a capture client streams to `POST /api/patterns/:name/video` (or the
+// server's NDI receiver samples) onto the ring. Each pattern has its own feed, keyed by
+// its name. The capture settings stored here say where the feed
 // comes from and which part of the frame becomes the strip; the browser's capture panel
 // and the NDI receiver read them, the rendering below only places the resulting row of
 // colors.
@@ -363,7 +364,7 @@ export class VideoPattern extends Pattern {
   }
 
   tick(dt: number) {
-    const strip = videoStrip();
+    const strip = videoStrip(this.name);
     if (strip !== null) this.resample(strip);
 
     const step = dt / FADE_SECONDS;

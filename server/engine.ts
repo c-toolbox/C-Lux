@@ -139,13 +139,24 @@ export class Engine {
     return this.patterns.map((p) => p.serialize() as PatternParameters);
   }
 
-  // What the first enabled Video pattern asks to capture, or null when none is enabled.
-  // Only one feed is captured at a time, so any further Video pattern shows that one too.
-  // Read from the committed parameters, so an edit re-aims the capture at once instead of
-  // easing over the transition.
-  videoCapture(): VideoCaptureSettings | null {
-    const video = this.patterns.find((p) => p.enabled && p instanceof VideoPattern);
-    return video ? videoCaptureOf(video.serialize() as VideoParameters) : null;
+  // What every enabled Video pattern asks to capture, keyed by its name, which is also
+  // the name of its feed. Read from the committed parameters, so an edit re-aims the
+  // capture at once instead of easing over the transition.
+  videoCaptures(): Map<string, VideoCaptureSettings> {
+    const captures = new Map<string, VideoCaptureSettings>();
+    for (const p of this.patterns) {
+      if (!p.enabled || !(p instanceof VideoPattern)) continue;
+      captures.set(p.name, videoCaptureOf(p.serialize() as VideoParameters));
+    }
+    return captures;
+  }
+
+  // Whether a capture client may feed the named pattern: it must be running and of the
+  // given type, so the open ingest endpoints can't fill the stores with made-up feeds.
+  acceptsFeed(name: string, type: string): boolean {
+    return this.patterns.some(
+      (p) => p.name === name && (p.parameters() as PatternParameters).type === type
+    );
   }
 
   // Props arrive as an untyped record from the HTTP boundary; `validateName` and

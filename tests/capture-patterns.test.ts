@@ -21,13 +21,13 @@ const random = mulberry32(42);
 
 function publishAudio(loudness: number) {
   const bands = Array.from({ length: AUDIO_BANDS }, () => random() * loudness);
-  setAudioFrame(bands, loudness);
+  setAudioFrame(`test-${AUDIO_TYPE}`, bands, loudness);
 }
 
 function publishVideo(width: number) {
   const rgb = new Uint8Array(width * 3);
   for (let i = 0; i < rgb.length; i++) rgb[i] = Math.floor(random() * 256);
-  setVideoStrip(width, rgb, 'browser');
+  setVideoStrip(`test-${VIDEO_TYPE}`, width, rgb, 'browser');
 }
 
 describe.each([0, 0.5, 1])(

@@ -3,9 +3,6 @@ import { AUDIO_BANDS, AUDIO_MAX_HZ, AUDIO_MIN_HZ } from '../../shared/audio';
 import { authHeaders } from './auth';
 import { startTicker } from './ticker';
 
-// Where the audio the browser captures is sent so the server-side pattern can read it.
-const ENDPOINT = '/api/audio';
-
 const FFT_SIZE = 2048;
 
 // Typical music sits well below full scale, so the RMS is scaled to make a VU meter
@@ -21,6 +18,8 @@ export interface AudioCaptureHandle {
 }
 
 interface AudioCaptureOptions {
+  // The Audio pattern the frames feed.
+  pattern: string;
   source: AudioSource;
   // Called every analysis frame with the current loudness in [0, 1], for a meter.
   onLevel: (level: number) => void;
@@ -46,6 +45,7 @@ async function openStream(source: AudioSource): Promise<MediaStream> {
 // Capture audio in this tab, analyse it, and stream the result to the server until the
 // returned handle is stopped.
 export async function startAudioCapture({
+  pattern,
   source,
   onLevel,
   onEnded
@@ -88,7 +88,7 @@ export async function startAudioCapture({
     // Drop a frame rather than queue behind a slow request; the next one is 33ms away.
     if (posting) return;
     posting = true;
-    void fetch(ENDPOINT, {
+    void fetch(`/api/patterns/${encodeURIComponent(pattern)}/audio`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ bands, level })

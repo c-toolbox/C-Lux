@@ -68,7 +68,8 @@ export type AudioParameters = ReturnType<AudioPattern['parameters']>;
 
 const clampUnit = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
 
-// Visualizes the audio a capture client streams to `POST /api/audio`. The spectrum puts
+// Visualizes the audio a capture client streams to `POST /api/patterns/:name/audio`, each
+// pattern its own feed keyed by its name. The spectrum puts
 // bass at the top of the ring and treble at the bottom, the VU meter fills down both
 // sides with overall loudness, and the single-frequency mode pulses the whole dome with
 // one chosen frequency.
@@ -328,7 +329,7 @@ export class AudioPattern extends Pattern {
   }
 
   tick(dt: number) {
-    const frame = audioFrame();
+    const frame = audioFrame(this.name);
     const falloff = Math.exp(-this.decay * dt);
 
     for (let i = 0; i < AUDIO_BANDS; i++) {

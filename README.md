@@ -77,12 +77,11 @@ All endpoints are served by the Express backend under the `/api` prefix and prox
 | PUT    | `/api/solid-color`               | `{ color?, enabled? }` | Fade it to a color, or switch it on/off    |
 | GET    | `/api/debug` 🔒                  | —                      | The debug page's overrides on the output   |
 | PUT    | `/api/debug` 🔒                  | `{ suspended?, light?, color? }` | Suspend the show, or drive one light |
-| POST   | `/api/audio`                     | audio analysis frame   | Feed one frame to audio-reactive patterns  |
-| POST   | `/api/video`                     | strip of colors (binary) | Feed one sampled strip to video patterns |
-| GET    | `/api/ndi`                       | —                      | State of the server's own NDI receiver     |
-| GET    | `/api/ndi/sources`               | —                      | NDI senders visible on the network         |
-| PUT    | `/api/ndi`                       | `{ source?, mode?, geometry? }` | Open or close a source, and aim the sampling |
-| GET    | `/api/ndi/preview`               | —                      | Preview of the received frame (binary)     |
+| POST   | `/api/patterns/:name/audio`      | audio analysis frame   | Feed one frame to an audio-reactive pattern |
+| POST   | `/api/patterns/:name/video`      | strip of colors (binary) | Feed one sampled strip to a video pattern |
+| GET    | `/api/patterns/:name/ndi`        | —                      | State of a video pattern's NDI receiver    |
+| GET    | `/api/patterns/:name/ndi/preview` | —                     | Preview of the received frame (binary)     |
+| GET    | `/api/ndi/sources` 🔒            | —                      | NDI senders visible on the network         |
 | GET    | `/api/stream`                    | —                      | Server-Sent Events stream of frames        |
 | GET    | `/api/scenes`                    | —                      | List the saved scenes                      |
 | GET    | `/api/scenes/applied`            | —                      | Names of the scenes currently switched on  |

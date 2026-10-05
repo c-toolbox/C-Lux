@@ -119,7 +119,18 @@ async function required(): Promise<Ndi> {
 
 let finder: Awaited<ReturnType<Ndi['find']>> | null = null;
 
-async function discover(): Promise<Source[]> {
+// Several receivers may open at once; they share one look at the network rather than
+// racing to create a finder each.
+let discovering: Promise<Source[]> | null = null;
+
+function discover(): Promise<Source[]> {
+  discovering ??= lookAround().finally(() => {
+    discovering = null;
+  });
+  return discovering;
+}
+
+async function lookAround(): Promise<Source[]> {
   const ndi = await required();
 
   try {
@@ -141,48 +152,16 @@ export async function ndiSources(): Promise<NdiSource[]> {
 }
 
 //
-// Receiving. One receiver at a time, pumped by a loop that publishes each frame into the
-// shared video store the way the browser's POST /api/video does. Which source it opens
-// and how it samples are whatever the enabled Video pattern asks for; see `syncNdi`.
+// Receiving. One receiver per Video pattern that asks for an NDI stream, each pumped by a
+// loop that publishes every frame into that pattern's feed in the shared video store,
+// the way the browser's POST /api/patterns/:name/video does. See `syncNdi`.
 //
 
-let receiver: Receiver | null = null;
-let sampling = VIDEO_SAMPLING_FISHEYE;
-let geometry: VideoGeometry = DEFAULT_VIDEO_GEOMETRY;
-let error: string | null = null;
-
-// The source the Video pattern asks for, the open in flight, and when a failed open
-// may be retried.
-let wanted: string | null = null;
-let opening = false;
-let reopenAt = 0;
-
-// Bumped on every stop and start, so a pump that is mid-await knows it has been replaced
-// and stops without publishing a frame the new receiver should own.
-let generation = 0;
-
-// Re-publishes the last strip between frames while the source is connected. See
-// HOLD_REFRESH_MS. Cleared by stop().
-let holdTimer: ReturnType<typeof setInterval> | null = null;
-
 // The frame squashed into a square RGBA working buffer, the same image the browser's
-// canvas produces, so both paths sample identically for the same geometry.
+// canvas produces, so both paths sample identically for the same geometry. Shared by
+// every receiver: a frame is sampled synchronously, start to finish.
 const square = new Uint8Array(RIM_SAMPLE_SIZE * RIM_SAMPLE_SIZE * 4);
 const row = new Uint8Array(VIDEO_MAX_WIDTH * 4);
-const strip = new Uint8Array(VIDEO_MAX_WIDTH * 3);
-
-let lut: Int32Array = new Int32Array(0);
-let lutKey = '';
-
-// Width of the strip published from the last frame, so the preview can carry it back.
-let stripWidth = 0;
-
-// When the last real video frame was sampled, so the hold timer knows how long to keep
-// re-publishing it before treating the source as gone. See HOLD_MAX_MS.
-let lastVideoAt = 0;
-
-let previewWantedUntil = 0;
-let preview: { width: number; height: number; rgb: Uint8Array } | null = null;
 
 // Average a rectangle of an RGBA image down to `dstW` x `dstH`, in linear light, writing
 // RGBA into `dst`. Everything the receiver samples — the square rim buffer, the strip's
@@ -234,54 +213,6 @@ function boxDownscale(
   }
 }
 
-function sampleFisheye(pixels: Uint8Array, stride: number, w: number, h: number): number {
-  boxDownscale(pixels, stride, w, 0, h, square, RIM_SAMPLE_SIZE, RIM_SAMPLE_SIZE);
-
-  const aspect = w / h;
-  const g = geometry;
-  const key = `${g.centerX}|${g.centerY}|${g.radius}|${g.ringWidth}|${g.rotation}|${aspect}`;
-  if (key !== lutKey) {
-    lut = buildRimLut(lights, g, aspect);
-    lutKey = key;
-  }
-
-  sampleRim(square, lut, lights, strip);
-  return lights;
-}
-
-function sampleStrip(pixels: Uint8Array, stride: number, w: number, h: number): number {
-  const width = Math.min(VIDEO_MAX_WIDTH, w);
-  const { top, rows } = stripBand(geometry, h);
-
-  boxDownscale(pixels, stride, w, top, rows, row, width, 1);
-  for (let i = 0; i < width; i++) {
-    strip[i * 3] = row[i * 4];
-    strip[i * 3 + 1] = row[i * 4 + 1];
-    strip[i * 3 + 2] = row[i * 4 + 2];
-  }
-  return width;
-}
-
-function renderPreview(pixels: Uint8Array, stride: number, w: number, h: number): void {
-  const width = Math.min(NDI_PREVIEW_WIDTH, w);
-  const height = Math.min(
-    NDI_PREVIEW_MAX_HEIGHT,
-    Math.max(1, Math.round(width / (w / h)))
-  );
-
-  if (preview === null || preview.width !== width || preview.height !== height) {
-    preview = { width, height, rgb: new Uint8Array(width * height * 3) };
-  }
-
-  const rgba = new Uint8Array(width * height * 4);
-  boxDownscale(pixels, stride, w, 0, h, rgba, width, height);
-  for (let i = 0; i < width * height; i++) {
-    preview.rgb[i * 3] = rgba[i * 4];
-    preview.rgb[i * 3 + 1] = rgba[i * 4 + 1];
-    preview.rgb[i * 3 + 2] = rgba[i * 4 + 2];
-  }
-}
-
 // Set NDI_DEBUG=1 to log a once-a-second summary of what the receiver is actually
 // delivering (event mix, video frame interval, frame shape, connections, hold ticks).
 // Cheap to leave in: everything below is a no-op unless the variable is set.
@@ -315,169 +246,279 @@ function dbgEvent(type: string): void {
   dbg.events.set(type, (dbg.events.get(type) ?? 0) + 1);
 }
 
-function publish(frame: ReceivedVideoFrame): void {
-  const { xres, yres, lineStrideBytes, data } = frame;
-  if (DEBUG) {
-    const now = Date.now();
-    if (dbg.lastVideo !== 0) dbg.gapMax = Math.max(dbg.gapMax, now - dbg.lastVideo);
-    dbg.lastVideo = now;
-    dbg.lastShape = `${xres}x${yres} stride ${lineStrideBytes} bytes ${data.length}/${lineStrideBytes * yres}`;
-    if (xres < 1 || yres < 1 || data.length < lineStrideBytes * yres) dbg.shortFrames++;
-  }
-  if (xres < 1 || yres < 1 || data.length < lineStrideBytes * yres) return;
-
-  const width =
-    sampling === VIDEO_SAMPLING_STRIP
-      ? sampleStrip(data, lineStrideBytes, xres, yres)
-      : sampleFisheye(data, lineStrideBytes, xres, yres);
-
-  // The working buffer is reused every frame, so the store gets its own copy.
-  setVideoStrip(width, strip.slice(0, width * 3), 'ndi');
-  stripWidth = width;
-  lastVideoAt = Date.now();
-
-  if (Date.now() < previewWantedUntil) renderPreview(data, lineStrideBytes, xres, yres);
-}
-
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Pull frames until this receiver is replaced or stopped. `data` resolves with a timeout
-// event rather than rejecting, so a source that goes quiet just stops feeding `publish`;
-// the hold timer in `start` keeps the strip alive until the source actually disconnects.
-// Destroying happens here, once no call is in flight.
-async function pump(active: Receiver, id: number): Promise<void> {
-  while (generation === id) {
+// The receiver feeding one Video pattern, and everything it keeps between frames.
+class FeedReceiver {
+  private readonly feed: string;
+
+  // The source the pattern asks for, and how it wants the frames sampled.
+  wanted: string | null = null;
+  private sampling = VIDEO_SAMPLING_FISHEYE;
+  private geometry: VideoGeometry = DEFAULT_VIDEO_GEOMETRY;
+
+  receiver: Receiver | null = null;
+  error: string | null = null;
+
+  // An open in flight, and when a failed open may be retried.
+  private opening = false;
+  private reopenAt = 0;
+
+  // Bumped on every stop, so a pump that is mid-await knows it has been replaced and
+  // stops without publishing a frame the new receiver should own.
+  private generation = 0;
+
+  // Re-publishes the last strip between frames while the source is connected. See
+  // HOLD_REFRESH_MS. Cleared by stop().
+  private holdTimer: ReturnType<typeof setInterval> | null = null;
+
+  private readonly strip = new Uint8Array(VIDEO_MAX_WIDTH * 3);
+  private lut: Int32Array = new Int32Array(0);
+  private lutKey = '';
+
+  // Width of the strip published from the last frame, so the preview can carry it back.
+  private stripWidth = 0;
+
+  // When the last real video frame was sampled, so the hold timer knows how long to keep
+  // re-publishing it before treating the source as gone. See HOLD_MAX_MS.
+  private lastVideoAt = 0;
+
+  private previewWantedUntil = 0;
+  private preview: { width: number; height: number; rgb: Uint8Array } | null = null;
+
+  constructor(feed: string) {
+    this.feed = feed;
+  }
+
+  // Bring the receiver in line with what the pattern asks for. Re-aiming is free, a new
+  // source is opened in the background, and a source that could not be opened is
+  // retried every `REOPEN_MS`.
+  sync(request: NdiRequest | null): void {
+    if (request !== null)
+      ({ sampling: this.sampling, geometry: this.geometry } = request);
+
+    const next = request?.source || null;
+    if (next !== this.wanted) {
+      this.wanted = next;
+      this.error = null;
+      this.reopenAt = 0;
+      if (this.receiver !== null) this.stop();
+    }
+
+    const name = this.wanted;
+    if (name === null || this.receiver !== null || this.opening) return;
+    if (Date.now() < this.reopenAt) return;
+
+    this.opening = true;
+    this.start(name)
+      .catch((err: unknown) => {
+        const message = describe(err);
+        if (message !== this.error) console.warn(`NDI (${this.feed}): ${message}`);
+        if (this.wanted === name) this.error = message;
+        this.reopenAt = Date.now() + REOPEN_MS;
+      })
+      .finally(() => {
+        this.opening = false;
+      });
+  }
+
+  close(): void {
+    this.wanted = null;
+    this.stop();
+  }
+
+  status(): NdiStatus {
+    return {
+      supported: unavailable === null,
+      reason: unavailable,
+      running: this.receiver !== null,
+      source: this.wanted,
+      connections: this.receiver?.connections() ?? 0,
+      error: this.error
+    };
+  }
+
+  // The latest preview frame, or null until one has been rendered. Asking for one is
+  // what makes the receiver render them at all. The buffers are live and are
+  // overwritten by the next frame, so the caller has to serialize them before yielding.
+  takePreview(): NdiPreview | null {
+    this.previewWantedUntil = Date.now() + PREVIEW_IDLE_MS;
+    if (this.preview === null) return null;
+    return { ...this.preview, strip: this.strip.subarray(0, this.stripWidth * 3) };
+  }
+
+  private sampleFisheye(pixels: Uint8Array, stride: number, w: number, h: number) {
+    boxDownscale(pixels, stride, w, 0, h, square, RIM_SAMPLE_SIZE, RIM_SAMPLE_SIZE);
+
+    const aspect = w / h;
+    const g = this.geometry;
+    const key = `${g.centerX}|${g.centerY}|${g.radius}|${g.ringWidth}|${g.rotation}|${aspect}`;
+    if (key !== this.lutKey) {
+      this.lut = buildRimLut(lights, g, aspect);
+      this.lutKey = key;
+    }
+
+    sampleRim(square, this.lut, lights, this.strip);
+    return lights;
+  }
+
+  private sampleStrip(pixels: Uint8Array, stride: number, w: number, h: number) {
+    const width = Math.min(VIDEO_MAX_WIDTH, w);
+    const { top, rows } = stripBand(this.geometry, h);
+
+    boxDownscale(pixels, stride, w, top, rows, row, width, 1);
+    for (let i = 0; i < width; i++) {
+      this.strip[i * 3] = row[i * 4];
+      this.strip[i * 3 + 1] = row[i * 4 + 1];
+      this.strip[i * 3 + 2] = row[i * 4 + 2];
+    }
+    return width;
+  }
+
+  private renderPreview(pixels: Uint8Array, stride: number, w: number, h: number) {
+    const width = Math.min(NDI_PREVIEW_WIDTH, w);
+    const height = Math.min(
+      NDI_PREVIEW_MAX_HEIGHT,
+      Math.max(1, Math.round(width / (w / h)))
+    );
+
+    let { preview } = this;
+    if (preview === null || preview.width !== width || preview.height !== height) {
+      preview = { width, height, rgb: new Uint8Array(width * height * 3) };
+      this.preview = preview;
+    }
+
+    const rgba = new Uint8Array(width * height * 4);
+    boxDownscale(pixels, stride, w, 0, h, rgba, width, height);
+    for (let i = 0; i < width * height; i++) {
+      preview.rgb[i * 3] = rgba[i * 4];
+      preview.rgb[i * 3 + 1] = rgba[i * 4 + 1];
+      preview.rgb[i * 3 + 2] = rgba[i * 4 + 2];
+    }
+  }
+
+  private publish(frame: ReceivedVideoFrame): void {
+    const { xres, yres, lineStrideBytes, data } = frame;
+    if (DEBUG) {
+      const now = Date.now();
+      if (dbg.lastVideo !== 0) dbg.gapMax = Math.max(dbg.gapMax, now - dbg.lastVideo);
+      dbg.lastVideo = now;
+      dbg.lastShape = `${xres}x${yres} stride ${lineStrideBytes} bytes ${data.length}/${lineStrideBytes * yres}`;
+      if (xres < 1 || yres < 1 || data.length < lineStrideBytes * yres) dbg.shortFrames++;
+    }
+    if (xres < 1 || yres < 1 || data.length < lineStrideBytes * yres) return;
+
+    const width =
+      this.sampling === VIDEO_SAMPLING_STRIP
+        ? this.sampleStrip(data, lineStrideBytes, xres, yres)
+        : this.sampleFisheye(data, lineStrideBytes, xres, yres);
+
+    // The working buffer is reused every frame, so the store gets its own copy.
+    setVideoStrip(this.feed, width, this.strip.slice(0, width * 3), 'ndi');
+    this.stripWidth = width;
+    this.lastVideoAt = Date.now();
+
+    if (Date.now() < this.previewWantedUntil) {
+      this.renderPreview(data, lineStrideBytes, xres, yres);
+    }
+  }
+
+  // Pull frames until this receiver is replaced or stopped. `data` resolves with a
+  // timeout event rather than rejecting, so a source that goes quiet just stops feeding
+  // `publish`; the hold timer keeps the strip alive until the source actually
+  // disconnects. Destroying happens here, once no call is in flight.
+  private async pump(active: Receiver, id: number): Promise<void> {
+    while (this.generation === id) {
+      try {
+        const event = await active.data(FRAME_TIMEOUT_MS);
+        if (this.generation !== id) break;
+        dbgEvent(event.type);
+        if (event.type === 'video') this.publish(event);
+        if (DEBUG) dbgTick(active);
+      } catch (err) {
+        if (this.generation !== id) break;
+        this.error = describe(err);
+        console.warn(`NDI (${this.feed}) receive error, retrying: ${this.error}`);
+        await delay(RETRY_MS);
+      }
+    }
+    active.destroy();
+  }
+
+  private stop(): void {
+    this.generation++;
+    if (this.holdTimer !== null) {
+      clearInterval(this.holdTimer);
+      this.holdTimer = null;
+    }
+    this.receiver = null;
+    this.preview = null;
+    this.stripWidth = 0;
+    this.lastVideoAt = 0;
+  }
+
+  private async start(name: string): Promise<void> {
+    const ndi = await required();
+
+    // Only a sender discovery has actually seen may be opened, so a pattern cannot aim
+    // the server's receiver at an arbitrary host on the network.
+    const source = (await discover()).find((candidate) => candidate.name === name);
+    if (source === undefined) {
+      throw new HttpError(404, `No NDI source named "${name}" was found on the network`);
+    }
+
+    let opened: Receiver;
     try {
-      const event = await active.data(FRAME_TIMEOUT_MS);
-      if (generation !== id) break;
-      dbgEvent(event.type);
-      if (event.type === 'video') publish(event);
-      if (DEBUG) dbgTick(active);
+      opened = await ndi.receive({
+        source,
+        // Ask the SDK for RGBA: it converts far more cheaply than unpacking UYVY here.
+        colorFormat: ndi.ColorFormat.RGBX_RGBA,
+        // Every frame collapses to a row of a few hundred colors, so the proxy stream
+        // still carries more detail than the ring can show at a fraction of the
+        // bandwidth.
+        bandwidth: ndi.Bandwidth.Lowest,
+        allowVideoFields: false,
+        name: 'C-Lux'
+      });
     } catch (err) {
-      if (generation !== id) break;
-      error = describe(err);
-      console.warn(`NDI receive error, retrying: ${error}`);
-      await delay(RETRY_MS);
+      throw new HttpError(502, `Could not open "${source.name}": ${describe(err)}`);
     }
-  }
-  active.destroy();
-}
 
-function stop(): void {
-  generation++;
-  if (holdTimer !== null) {
-    clearInterval(holdTimer);
-    holdTimer = null;
-  }
-  receiver = null;
-  preview = null;
-  stripWidth = 0;
-  lastVideoAt = 0;
-}
-
-async function start(name: string): Promise<void> {
-  const ndi = await required();
-
-  // Only a sender discovery has actually seen may be opened, so a request cannot aim the
-  // server's receiver at an arbitrary host on the network.
-  const source = (await discover()).find((candidate) => candidate.name === name);
-  if (source === undefined) {
-    throw new HttpError(404, `No NDI source named "${name}" was found on the network`);
-  }
-
-  stop();
-
-  let opened: Receiver;
-  try {
-    opened = await ndi.receive({
-      source,
-      // Ask the SDK for RGBA: it converts far more cheaply than unpacking UYVY here would.
-      colorFormat: ndi.ColorFormat.RGBX_RGBA,
-      // Every frame collapses to a row of a few hundred colors, so the proxy stream still
-      // carries more detail than the ring can show at a fraction of the bandwidth.
-      bandwidth: ndi.Bandwidth.Lowest,
-      allowVideoFields: false,
-      name: 'C-Lux'
-    });
-  } catch (err) {
-    throw new HttpError(502, `Could not open "${source.name}": ${describe(err)}`);
-  }
-
-  // The pattern may have moved on to another source, or none, while this one opened.
-  if (wanted !== name) {
-    opened.destroy();
-    return;
-  }
-
-  receiver = opened;
-  error = null;
-  lutKey = '';
-
-  // Between real frames, re-publish the last strip so a low- or uneven-rate sender isn't
-  // mistaken for a stopped capture and faded to black. Bounded by the source still being
-  // connected and its video not having been wedged for HOLD_MAX_MS, so a real disconnect
-  // still fades the ring out.
-  holdTimer = setInterval(() => {
-    if (
-      stripWidth > 0 &&
-      opened.connections() > 0 &&
-      Date.now() - lastVideoAt < HOLD_MAX_MS
-    ) {
-      setVideoStrip(stripWidth, strip.slice(0, stripWidth * 3), 'ndi');
-      if (DEBUG) dbg.holds++;
+    // The pattern may have moved on to another source, or none, while this one opened.
+    if (this.wanted !== name) {
+      opened.destroy();
+      return;
     }
-  }, HOLD_REFRESH_MS);
 
-  void pump(opened, generation);
+    this.receiver = opened;
+    this.error = null;
+    this.lutKey = '';
+
+    // Between real frames, re-publish the last strip so a low- or uneven-rate sender
+    // isn't mistaken for a stopped capture and faded to black. Bounded by the source
+    // still being connected and its video not having been wedged for HOLD_MAX_MS, so a
+    // real disconnect still fades the ring out.
+    this.holdTimer = setInterval(() => {
+      if (
+        this.stripWidth > 0 &&
+        opened.connections() > 0 &&
+        Date.now() - this.lastVideoAt < HOLD_MAX_MS
+      ) {
+        const { stripWidth } = this;
+        setVideoStrip(this.feed, stripWidth, this.strip.slice(0, stripWidth * 3), 'ndi');
+        if (DEBUG) dbg.holds++;
+      }
+    }, HOLD_REFRESH_MS);
+
+    void this.pump(opened, this.generation);
+  }
 }
 
-export function ndiStatus(): NdiStatus {
-  return {
-    supported: unavailable === null,
-    reason: unavailable,
-    running: receiver !== null,
-    source: wanted,
-    connections: receiver?.connections() ?? 0,
-    error
-  };
-}
-
-// What the enabled Video pattern asks the receiver for, or null when no pattern wants an
-// NDI stream.
+// What a Video pattern asks its receiver for.
 export interface NdiRequest {
   source: string;
   sampling: number;
   geometry: VideoGeometry;
-}
-
-// Bring the receiver in line with what the patterns ask for. Called every tick, so it
-// only acts on a change: re-aiming is free, a new source is opened in the background,
-// and a source that could not be opened is retried every `REOPEN_MS`.
-export function syncNdi(request: NdiRequest | null): void {
-  if (request !== null) ({ sampling, geometry } = request);
-
-  const next = request?.source || null;
-  if (next !== wanted) {
-    wanted = next;
-    error = null;
-    reopenAt = 0;
-    if (receiver !== null) stop();
-  }
-
-  if (wanted === null || receiver !== null || opening || Date.now() < reopenAt) return;
-
-  const name = wanted;
-  opening = true;
-  start(name)
-    .catch((err: unknown) => {
-      const message = describe(err);
-      if (message !== error) console.warn(`NDI: ${message}`);
-      if (wanted === name) error = message;
-      reopenAt = Date.now() + REOPEN_MS;
-    })
-    .finally(() => {
-      opening = false;
-    });
 }
 
 export interface NdiPreview {
@@ -489,19 +530,48 @@ export interface NdiPreview {
   strip: Uint8Array;
 }
 
-// The latest preview frame, or null until one has been rendered. Asking for one is what
-// makes the receiver render them at all. The buffers are live and are overwritten by the
-// next frame, so the caller has to serialize them before yielding.
-export function ndiPreview(): NdiPreview | null {
-  previewWantedUntil = Date.now() + PREVIEW_IDLE_MS;
-  if (preview === null) return null;
-  return { ...preview, strip: strip.subarray(0, stripWidth * 3) };
+// One receiver per Video pattern, keyed by the pattern's name like its feed.
+const receivers = new Map<string, FeedReceiver>();
+
+// Bring the receivers in line with what the patterns ask for: one per pattern in
+// `requests`, any other closed. Called every tick, so it only acts on a change.
+export function syncNdi(requests: ReadonlyMap<string, NdiRequest>): void {
+  for (const [feed, receiver] of receivers) {
+    if (requests.has(feed)) continue;
+    receiver.close();
+    receivers.delete(feed);
+  }
+  for (const [feed, request] of requests) {
+    let receiver = receivers.get(feed);
+    if (receiver === undefined) {
+      receiver = new FeedReceiver(feed);
+      receivers.set(feed, receiver);
+    }
+    receiver.sync(request);
+  }
 }
 
-// Release the receiver and the finder so the process can exit cleanly.
+// The state of the receiver feeding a pattern; idle when the pattern wants no stream.
+export function ndiStatus(feed: string): NdiStatus {
+  return (
+    receivers.get(feed)?.status() ?? {
+      supported: unavailable === null,
+      reason: unavailable,
+      running: false,
+      source: null,
+      connections: 0,
+      error: null
+    }
+  );
+}
+
+export function ndiPreview(feed: string): NdiPreview | null {
+  return receivers.get(feed)?.takePreview() ?? null;
+}
+
+// Release the receivers and the finder so the process can exit cleanly.
 export function stopNdi(): void {
-  wanted = null;
-  stop();
+  syncNdi(new Map());
   finder?.destroy();
   finder = null;
 }

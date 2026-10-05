@@ -57,12 +57,12 @@ export function HomePage() {
 
   const appliedNames = new Set(applied);
 
-  // Only one audio and one video feed are captured at a time, for the first enabled
-  // pattern of each kind. What they capture is set up in the editor.
-  const audio = patterns.find(
+  // Every enabled Audio and Video pattern captures a feed of its own. What they capture is
+  // set up in the editor.
+  const audios = patterns.filter(
     (p): p is PatternParameters & AudioParameters => p.type === AUDIO_TYPE && p.enabled
   );
-  const video = patterns.find(
+  const videos = patterns.filter(
     (p): p is PatternParameters & VideoParameters => p.type === VIDEO_TYPE && p.enabled
   );
 
@@ -332,8 +332,12 @@ export function HomePage() {
                 {/* The audio and video patterns are fed from the browser, so wherever they
                   can be switched on their capture widgets have to be reachable too.
                   Inside the scroller: they are tall enough to bury the controls below. */}
-                {audio && <AudioCapture pattern={audio} />}
-                {video && <VideoCapture pattern={video} />}
+                {audios.map((p) => (
+                  <AudioCapture key={p.name} pattern={p} />
+                ))}
+                {videos.map((p) => (
+                  <VideoCapture key={p.name} pattern={p} />
+                ))}
               </Stack>
             </ScrollArea>
           )}

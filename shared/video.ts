@@ -31,42 +31,71 @@ export interface VideoStrip {
 // and the two sources visibly fight over the lights.
 export type VideoSource = 'browser' | 'ndi';
 
-let latest: VideoStrip | null = null;
-let latestAt = 0;
-let latestSource: VideoSource | null = null;
-// Tracks the stale/fresh edge for `videoStrip()`'s diagnostic logging below.
-let wasStale = false;
+interface Feed {
+  strip: VideoStrip;
+  at: number;
+  source: VideoSource;
+  // Tracks the stale/fresh edge for `videoStrip()`'s diagnostic logging below.
+  wasStale: boolean;
+}
+
+// The most recent strip of every feed, keyed by the name of the Video pattern it feeds,
+// so several patterns can each follow their own capture.
+const feeds = new Map<string, Feed>();
+
+// Feeds silent for this long are dropped, so the store can't outgrow the live captures.
+const FORGET_MS = 60_000;
 
 // Record an already-validated strip from a capture client (the server ingest endpoint is
 // responsible for checking the raw request body first). Ignored while a different source
 // still owns the feed, i.e. it has published within `STALE_MS` — a stray publisher can
 // only take over once the current one has gone quiet.
-export function setVideoStrip(width: number, rgb: Uint8Array, source: VideoSource): void {
+export function setVideoStrip(
+  feed: string,
+  width: number,
+  rgb: Uint8Array,
+  source: VideoSource
+): void {
   const now = Date.now();
-  if (latestSource !== null && latestSource !== source && now - latestAt <= STALE_MS) {
+  for (const [key, entry] of feeds) {
+    if (now - entry.at > FORGET_MS) feeds.delete(key);
+  }
+
+  const current = feeds.get(feed);
+  if (
+    current !== undefined &&
+    current.source !== source &&
+    now - current.at <= STALE_MS
+  ) {
     return;
   }
 
-  latest = { width, rgb };
-  latestAt = now;
-  latestSource = source;
+  feeds.set(feed, {
+    strip: { width, rgb },
+    at: now,
+    source,
+    wasStale: current?.wasStale ?? false
+  });
 }
 
-// The most recent strip, or null when nothing has arrived recently.
-export function videoStrip(): VideoStrip | null {
-  const gap = latest === null ? Infinity : Date.now() - latestAt;
+// The most recent strip of a feed, or null when nothing has arrived recently.
+export function videoStrip(feed: string): VideoStrip | null {
+  const entry = feeds.get(feed);
+  if (entry === undefined) return null;
+
+  const gap = Date.now() - entry.at;
   if (gap > STALE_MS) {
     // Edge-triggered: proves whether the pattern is really going stale (vs. the bug
     // being downstream of this store) without spamming a line per tick.
-    if (!wasStale && latest !== null) {
-      console.warn(`videoStrip() went stale after ${gap}ms (source: ${latestSource})`);
+    if (!entry.wasStale) {
+      console.warn(`videoStrip(${feed}) went stale after ${gap}ms (${entry.source})`);
     }
-    wasStale = true;
+    entry.wasStale = true;
     return null;
   }
-  if (wasStale) console.warn(`videoStrip() recovered (source: ${latestSource})`);
-  wasStale = false;
-  return latest;
+  if (entry.wasStale) console.warn(`videoStrip(${feed}) recovered (${entry.source})`);
+  entry.wasStale = false;
+  return entry.strip;
 }
 
 //

@@ -35,18 +35,24 @@ function silence(): AudioFrame {
   return { bands: new Array<number>(AUDIO_BANDS).fill(0), level: 0 };
 }
 
-let latest = silence();
-let latestAt = 0;
+// The most recent frame of every feed, keyed by the name of the Audio pattern it feeds,
+// so several patterns can each follow their own capture.
+const feeds = new Map<string, { frame: AudioFrame; at: number }>();
 
 // Record an already-validated frame from a capture client (the server ingest endpoint
 // is responsible for validating and clamping the raw request body first).
-export function setAudioFrame(bands: number[], level: number): void {
-  latest = { bands, level };
-  latestAt = Date.now();
+export function setAudioFrame(feed: string, bands: number[], level: number): void {
+  const now = Date.now();
+  // Feeds that went quiet are dropped, so the store can't outgrow the live captures.
+  for (const [key, entry] of feeds) {
+    if (now - entry.at > STALE_MS) feeds.delete(key);
+  }
+  feeds.set(feed, { frame: { bands, level }, at: now });
 }
 
-// The most recent frame, or silence when nothing has arrived recently.
-export function audioFrame(): AudioFrame {
-  if (Date.now() - latestAt > STALE_MS) return silence();
-  return latest;
+// The most recent frame of a feed, or silence when nothing has arrived recently.
+export function audioFrame(feed: string): AudioFrame {
+  const entry = feeds.get(feed);
+  if (entry === undefined || Date.now() - entry.at > STALE_MS) return silence();
+  return entry.frame;
 }

@@ -15,12 +15,12 @@ const audioBodySchema = z.object({
   level: z.number().finite('level must be a finite number')
 });
 
-// Validate and accept one analysis frame from a capture client.
-export function publishAudioFrame(body: unknown): void {
+// Validate and accept one analysis frame from a capture client for the named feed.
+export function publishAudioFrame(feed: string, body: unknown): void {
   const result = audioBodySchema.safeParse(body ?? {});
   if (!result.success) {
     throw new HttpError(400, result.error.issues[0].message);
   }
   const { bands, level } = result.data;
-  setAudioFrame(bands.map(clampUnit), clampUnit(level));
+  setAudioFrame(feed, bands.map(clampUnit), clampUnit(level));
 }
