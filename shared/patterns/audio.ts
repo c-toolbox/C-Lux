@@ -7,6 +7,8 @@ import {
 } from '../audio.ts';
 
 import {
+  alphaOf,
+  type Color,
   hsvToRgb,
   NON_NEGATIVE,
   type NumberRange,
@@ -21,6 +23,7 @@ export const AUDIO_TYPE = 'Audio';
 
 const AUDIO_MODE_SPECTRUM = 0;
 const AUDIO_MODE_VU = 1;
+const AUDIO_MODE_FREQUENCY = 2;
 
 const DEGREES: NumberRange = { min: 0, max: 360 };
 const SIGNED_DEGREES: NumberRange = { min: -360, max: 360 };
@@ -28,22 +31,25 @@ const SIGNED_DEGREES: NumberRange = { min: -360, max: 360 };
 // Anything outside the captured range reads as silence, so the endpoints are pinned to it.
 const HERTZ: NumberRange = { min: AUDIO_MIN_HZ, max: AUDIO_MAX_HZ };
 
-export type AudioProps = PatternBaseProps & {
-  mode: number;
-  gain: number;
-  floor: number;
-  decay: number;
-  hue: number;
-  hueSpan: number;
-  frontHz?: number;
-  backHz?: number;
-};
+export type AudioProps = PatternBaseProps &
+  Partial<Color> & {
+    mode: number;
+    gain: number;
+    floor: number;
+    decay: number;
+    hue: number;
+    hueSpan: number;
+    frontHz?: number;
+    backHz?: number;
+    hz?: number;
+  };
 
 const clampUnit = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
 
-// Visualizes the audio a capture client streams to `POST /api/audio`. Both modes run
-// outward from the top of the ring: the spectrum puts bass at the top and treble at the
-// bottom, the VU meter fills down both sides with overall loudness.
+// Visualizes the audio a capture client streams to `POST /api/audio`. The spectrum puts
+// bass at the top of the ring and treble at the bottom, the VU meter fills down both
+// sides with overall loudness, and the single-frequency mode pulses the whole dome with
+// one chosen frequency.
 export class AudioPattern extends Pattern {
   static readonly Type = AUDIO_TYPE;
   static readonly DisplayName = 'Audio';
@@ -55,7 +61,8 @@ export class AudioPattern extends Pattern {
       row: 0,
       options: [
         { value: AUDIO_MODE_SPECTRUM, label: 'Spectrum' },
-        { value: AUDIO_MODE_VU, label: 'VU meter' }
+        { value: AUDIO_MODE_VU, label: 'VU meter' },
+        { value: AUDIO_MODE_FREQUENCY, label: 'Single frequency' }
       ]
     },
     gain: {
@@ -116,6 +123,21 @@ export class AudioPattern extends Pattern {
       row: 3,
       hint: 'Frequency shown at the bottom of the ring.',
       ...HERTZ
+    },
+    hz: {
+      kind: 'number',
+      label: 'Frequency',
+      default: 100,
+      step: 10,
+      row: 4,
+      hint: 'Single-frequency mode: drives the whole dome.',
+      ...HERTZ
+    },
+    color: {
+      kind: 'color',
+      label: 'Frequency color',
+      default: { r: 77, g: 171, b: 247 },
+      hint: 'Single-frequency mode only.'
     }
   } satisfies PatternSchema;
 
@@ -128,6 +150,11 @@ export class AudioPattern extends Pattern {
   // Defaulted rather than required so scenes saved before these existed still load.
   frontHz: number = AudioPattern.Fields.frontHz.default;
   backHz: number = AudioPattern.Fields.backHz.default;
+  hz: number = AudioPattern.Fields.hz.default;
+  r: number = AudioPattern.Fields.color.default.r;
+  g: number = AudioPattern.Fields.color.default.g;
+  b: number = AudioPattern.Fields.color.default.b;
+  a = 1;
 
   // Peak-following band magnitudes in [0, 1]: they jump straight to a new peak and then
   // fall off at `decay`, so the lights track transients without flickering.
@@ -150,6 +177,8 @@ export class AudioPattern extends Pattern {
     hueSpan: number;
     frontHz: number;
     backHz: number;
+    hz: number;
+    color: Color;
   } {
     return {
       name: this.name,
@@ -161,11 +190,27 @@ export class AudioPattern extends Pattern {
       hue: this.hue,
       hueSpan: this.hueSpan,
       frontHz: this.frontHz,
-      backHz: this.backHz
+      backHz: this.backHz,
+      hz: this.hz,
+      color: { r: this.r, g: this.g, b: this.b, a: this.a }
     };
   }
 
-  set({ mode, gain, floor, decay, hue, hueSpan, frontHz, backHz }: Partial<AudioProps>) {
+  set({
+    mode,
+    gain,
+    floor,
+    decay,
+    hue,
+    hueSpan,
+    frontHz,
+    backHz,
+    hz,
+    r,
+    g,
+    b,
+    a
+  }: Partial<AudioProps>) {
     this.mode = mode ?? this.mode;
     this.gain = gain ?? this.gain;
     this.floor = floor ?? this.floor;
@@ -174,6 +219,11 @@ export class AudioPattern extends Pattern {
     this.hueSpan = hueSpan ?? this.hueSpan;
     this.frontHz = frontHz ?? this.frontHz;
     this.backHz = backHz ?? this.backHz;
+    this.hz = hz ?? this.hz;
+    this.r = r ?? this.r;
+    this.g = g ?? this.g;
+    this.b = b ?? this.b;
+    this.a = a ?? this.a;
 
     this.render();
   }
@@ -199,6 +249,17 @@ export class AudioPattern extends Pattern {
   private render() {
     const n = this.state.length;
 
+    if (this.mode === AUDIO_MODE_FREQUENCY) {
+      const color = {
+        r: this.r,
+        g: this.g,
+        b: this.b,
+        a: alphaOf(this) * this.levelAt(this.hz)
+      };
+      for (let i = 0; i < n; i++) this.state[i] = { ...color };
+      return;
+    }
+
     // Light 0 sits at the top of the ring, so both halves are drawn from there downward,
     // mirrored around the vertical axis.
     const reach = Math.floor(n / 2) + 1;
@@ -219,10 +280,13 @@ export class AudioPattern extends Pattern {
 
   // Band magnitude at a normalized position across the ring, where 0 is the front and 1
   // the back. The position is swept logarithmically between the two configured
-  // frequencies and interpolated between neighbouring bands so 142 lights don't show 32
-  // hard steps.
+  // frequencies.
   private bandAt(t: number): number {
-    const hz = this.frontHz * Math.pow(this.backHz / this.frontHz, t);
+    return this.levelAt(this.frontHz * Math.pow(this.backHz / this.frontHz, t));
+  }
+
+  // Interpolated between neighbouring bands so 142 lights don't show 32 hard steps.
+  private levelAt(hz: number): number {
     const x = Math.max(0, Math.min(AUDIO_BANDS - 1, audioBandIndex(hz)));
     const index = Math.floor(x);
     const low = this.levels[index] ?? 0;
