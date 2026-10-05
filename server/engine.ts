@@ -177,7 +177,12 @@ export class Engine {
     return this.listPatterns();
   }
 
-  updatePattern(name: string, props: Record<string, unknown>): PatternParameters {
+  // With `overwrite`, renaming onto a taken name replaces the pattern holding it.
+  updatePattern(
+    name: string,
+    props: Record<string, unknown>,
+    overwrite = false
+  ): PatternParameters {
     const instance = this.patterns.find((p) => p.name === name);
     if (!instance) throw new HttpError(404, `No pattern named: ${name}`);
 
@@ -186,12 +191,24 @@ export class Engine {
 
     const newName =
       requested === undefined ? name : validateName(requested, 'pattern name');
+    let replaced = -1;
     if (newName !== name) {
       if (newName === SOLID_COLOR_NAME) {
         throw new HttpError(400, `${SOLID_COLOR_NAME} is a reserved pattern name`);
       }
-      if (this.patterns.some((p) => p.name === newName)) {
+      replaced = this.patterns.findIndex((p) => p.name === newName);
+      if (replaced !== -1 && !overwrite) {
         throw new HttpError(400, `A pattern named ${newName} already exists`);
+      }
+    }
+
+    if (replaced !== -1) {
+      this.beginTransition();
+      this.patterns.splice(replaced, 1);
+      for (const scene of this.scenes) {
+        if (scene.patterns.some((p) => p.name === newName)) {
+          this.applied.delete(scene.name);
+        }
       }
     }
 
@@ -520,16 +537,23 @@ export class Engine {
     return this.scenes;
   }
 
-  async renameScene(name: string, newName: unknown): Promise<Scene[]> {
+  // With `overwrite`, renaming onto a taken name replaces the scene holding it.
+  async renameScene(name: string, newName: unknown, overwrite = false): Promise<Scene[]> {
     const trimmed = validateName(newName, 'new name for scene');
 
-    const index = this.scenes.findIndex((s) => s.name === name);
-    if (index === -1) throw new HttpError(404, `No scene named: ${name}`);
-
-    if (trimmed !== name && this.scenes.some((s) => s.name === trimmed)) {
-      throw new HttpError(400, `A scene named ${trimmed} already exists`);
+    if (!this.scenes.some((s) => s.name === name)) {
+      throw new HttpError(404, `No scene named: ${name}`);
     }
 
+    if (trimmed !== name && this.scenes.some((s) => s.name === trimmed)) {
+      if (!overwrite) {
+        throw new HttpError(400, `A scene named ${trimmed} already exists`);
+      }
+      this.scenes = this.scenes.filter((s) => s.name !== trimmed);
+      this.applied.delete(trimmed);
+    }
+
+    const index = this.scenes.findIndex((s) => s.name === name);
     this.scenes[index] = { ...this.scenes[index], name: trimmed };
     if (this.applied.delete(name)) this.applied.add(trimmed);
 

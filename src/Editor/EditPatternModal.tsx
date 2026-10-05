@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Group, Modal } from '@mantine/core';
+import { Button, Group, Modal, Stack, Text } from '@mantine/core';
 
 import { type PatternParameters } from '../lib/api';
 import {
@@ -15,7 +15,7 @@ interface EditPatternModalProps {
   existingNames: string[];
   onClose: () => void;
   busy: boolean;
-  onSubmit: (values: FormValues) => void;
+  onSubmit: (values: FormValues, overwrite: boolean) => void;
 }
 
 export function EditPatternModal({
@@ -45,33 +45,84 @@ export function EditPatternModal({
     () => existingNames.filter((n) => n !== editing?.name),
     [existingNames, editing]
   );
+  // A submitted rename waiting on the user's confirmation.
+  const [renaming, setRenaming] = useState<FormValues | null>(null);
+  const newName = renaming?.name.trim() ?? '';
+  const renameTaken = otherNames.includes(newName);
+
+  function submit(values: FormValues) {
+    if (editing && values.name.trim() !== editing.name) setRenaming(values);
+    else onSubmit(values, false);
+  }
+
+  function confirmRename() {
+    const values = renaming;
+    setRenaming(null);
+    if (values) onSubmit(values, renameTaken);
+  }
 
   return (
-    <Modal
-      opened={editing !== null}
-      onClose={onClose}
-      title={editing ? `Edit ${editing.name}` : ''}
-      size={'xl'}
-      centered
-    >
-      {editing && (
-        <Group align={'flex-start'} gap={'lg'} wrap={'wrap'}>
-          <div style={{ flex: '1 1 300px', minWidth: 0 }}>
-            <PatternSubForm
-              mode={'edit'}
-              initial={fromParameters(editing)}
-              existingNames={otherNames}
-              busy={busy}
-              onSubmit={onSubmit}
-              onValuesChange={onValuesChange}
-            />
-          </div>
+    <>
+      <Modal
+        opened={editing !== null}
+        onClose={onClose}
+        title={editing ? `Edit ${editing.name}` : ''}
+        size={'xl'}
+        centered
+      >
+        {editing && (
+          <Group align={'flex-start'} gap={'lg'} wrap={'wrap'}>
+            <div style={{ flex: '1 1 300px', minWidth: 0 }}>
+              <PatternSubForm
+                mode={'edit'}
+                initial={fromParameters(editing)}
+                existingNames={otherNames}
+                busy={busy}
+                onSubmit={submit}
+                onValuesChange={onValuesChange}
+              />
+            </div>
 
-          <div style={{ flex: '1 1 260px', maxWidth: 360, margin: '0 auto' }}>
-            {previewProps && <PatternPreview type={editing.type} props={previewProps} />}
-          </div>
-        </Group>
-      )}
-    </Modal>
+            <div style={{ flex: '1 1 260px', maxWidth: 360, margin: '0 auto' }}>
+              {previewProps && (
+                <PatternPreview type={editing.type} props={previewProps} />
+              )}
+            </div>
+          </Group>
+        )}
+      </Modal>
+
+      <Modal
+        opened={renaming !== null}
+        onClose={() => setRenaming(null)}
+        title={'Rename pattern'}
+        centered
+        zIndex={300}
+      >
+        <Stack gap={'md'}>
+          <Text>
+            Rename the pattern &ldquo;{editing?.name}&rdquo; to &ldquo;{newName}&rdquo;?
+          </Text>
+          {renameTaken && (
+            <Text c={'red'}>
+              A pattern named &ldquo;{newName}&rdquo; already exists and will be
+              overwritten. This cannot be undone.
+            </Text>
+          )}
+          <Group justify={'flex-end'} gap={'xs'}>
+            <Button variant={'default'} onClick={() => setRenaming(null)}>
+              Cancel
+            </Button>
+            <Button
+              color={renameTaken ? 'red' : undefined}
+              disabled={busy}
+              onClick={confirmRename}
+            >
+              {renameTaken ? 'Overwrite' : 'Rename'}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+    </>
   );
 }

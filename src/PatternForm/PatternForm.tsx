@@ -206,7 +206,8 @@ function Field({ spec, value, onChange }: FieldProps) {
 type PatternSubFormProps = {
   initial: FormValues;
   busy: boolean;
-  // Names the pattern may not take; in edit mode this excludes the pattern's own name.
+  // Names the pattern may not take; in edit mode this excludes the pattern's own name,
+  // and a taken name is only a warning since the rename can overwrite it.
   existingNames: string[];
   onSubmit: (values: FormValues) => void;
 } & ({ mode: 'add'; namePlaceholder: string } | { mode: 'edit' }) & {
@@ -227,9 +228,13 @@ export function PatternSubForm(props: PatternSubFormProps) {
   const nameError =
     values.name.trim() === ''
       ? 'Name is required'
-      : nameTaken
+      : nameTaken && props.mode === 'add'
         ? 'A pattern with this name already exists'
         : null;
+  const nameWarning =
+    nameTaken && props.mode === 'edit'
+      ? 'A pattern with this name already exists and will be overwritten'
+      : null;
 
   const setField = (key: string, value: FieldValue) =>
     setValues((v) => ({ ...v, values: { ...v.values, [key]: value } }));
@@ -241,6 +246,12 @@ export function PatternSubForm(props: PatternSubFormProps) {
         placeholder={props.mode === 'add' ? props.namePlaceholder : undefined}
         value={values.name}
         error={nameError}
+        description={nameWarning}
+        styles={
+          nameWarning
+            ? { description: { color: 'var(--mantine-color-orange-6)' } }
+            : undefined
+        }
         onChange={(e) => {
           // Read the value now: React nulls out `currentTarget` before the lazy
           // updater below runs.

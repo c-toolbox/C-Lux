@@ -11,7 +11,8 @@ interface ManageScenesModalProps {
   editing: string | null;
   onApply: (scene: Scene) => void;
   onEdit: (scene: Scene) => void;
-  onRename: (name: string, newName: string) => void;
+  onRename: (name: string, newName: string, overwrite: boolean) => void;
+  onDuplicate: (scene: Scene) => void;
   onMove: (from: number, to: number) => void;
   onDelete: (name: string) => void;
   onExport: (scene: Scene) => void;
@@ -26,6 +27,7 @@ export function ManageScenesModal({
   onApply,
   onEdit,
   onRename,
+  onDuplicate,
   onMove,
   onDelete,
   onExport
@@ -33,6 +35,8 @@ export function ManageScenesModal({
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState<{ from: string; to: string } | null>(null);
+  const renameTaken = renaming !== null && scenes.some((s) => s.name === renaming.to);
 
   function clearDrag() {
     setDragIndex(null);
@@ -48,6 +52,12 @@ export function ManageScenesModal({
     const name = confirming;
     setConfirming(null);
     if (name !== null) onDelete(name);
+  }
+
+  function confirmRename() {
+    const target = renaming;
+    setRenaming(null);
+    if (target !== null) onRename(target.from, target.to, renameTaken);
   }
 
   return (
@@ -87,7 +97,8 @@ export function ManageScenesModal({
                   onMove={onMove}
                   onApply={onApply}
                   onEdit={onEdit}
-                  onRename={onRename}
+                  onRename={(from, to) => setRenaming({ from, to })}
+                  onDuplicate={onDuplicate}
                   onDelete={setConfirming}
                   onExport={onExport}
                 />
@@ -116,6 +127,39 @@ export function ManageScenesModal({
           </Group>
         </Stack>
       </Modal>
+
+      <Modal
+        opened={renaming !== null}
+        onClose={() => setRenaming(null)}
+        title={'Rename scene'}
+        centered
+        zIndex={300}
+      >
+        <Stack gap={'md'}>
+          <Text>
+            Rename the scene &ldquo;{renaming?.from}&rdquo; to &ldquo;{renaming?.to}
+            &rdquo;?
+          </Text>
+          {renameTaken && (
+            <Text c={'red'}>
+              A scene named &ldquo;{renaming?.to}&rdquo; already exists and will be
+              overwritten. This cannot be undone.
+            </Text>
+          )}
+          <Group justify={'flex-end'} gap={'xs'}>
+            <Button variant={'default'} onClick={() => setRenaming(null)}>
+              Cancel
+            </Button>
+            <Button
+              color={renameTaken ? 'red' : undefined}
+              disabled={busy}
+              onClick={confirmRename}
+            >
+              {renameTaken ? 'Overwrite' : 'Rename'}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </>
   );
 }
@@ -136,12 +180,13 @@ interface SceneRowProps {
   onApply: (scene: Scene) => void;
   onEdit: (scene: Scene) => void;
   onRename: (name: string, newName: string) => void;
+  onDuplicate: (scene: Scene) => void;
   onDelete: (name: string) => void;
   onExport: (scene: Scene) => void;
 }
 
 // A single editable row in the manage-scenes modal: reorder, apply, edit, rename,
-// export, or delete a scene.
+// duplicate, export, or delete a scene.
 function SceneRow({
   scene,
   index,
@@ -158,6 +203,7 @@ function SceneRow({
   onApply,
   onEdit,
   onRename,
+  onDuplicate,
   onDelete,
   onExport
 }: SceneRowProps) {
@@ -247,6 +293,15 @@ function SceneRow({
           onClick={() => onRename(scene.name, trimmed)}
         >
           Rename
+        </Button>
+        <Button
+          size={'xs'}
+          variant={'light'}
+          color={'gray'}
+          disabled={busy}
+          onClick={() => onDuplicate(scene)}
+        >
+          Duplicate
         </Button>
         <Button
           size={'xs'}

@@ -98,8 +98,9 @@ export const api = {
   listPatterns: () => request<PatternParameters[]>('/patterns'),
   addPattern: (type: PatternType, props: PatternProps) =>
     request<{ name: string }>('/patterns', 'POST', { type, props }),
-  updatePattern: (name: string, props: Partial<PatternProps>) =>
-    request<PatternParameters>(`/patterns/${seg(name)}`, 'PATCH', { props }),
+  // `overwrite` lets a rename replace the pattern already holding the new name.
+  updatePattern: (name: string, props: Partial<PatternProps>, overwrite = false) =>
+    request<PatternParameters>(`/patterns/${seg(name)}`, 'PATCH', { props, overwrite }),
   setPatternEnabled: (name: string, enabled: boolean) =>
     request<PatternParameters>(`/patterns/${seg(name)}/enabled`, 'PUT', { enabled }),
   blackout: () => request<{ blackout: boolean }>('/blackout'),
@@ -143,8 +144,9 @@ export const api = {
     request<string[]>(`/scenes/${seg(name)}/replace`, 'POST'),
   reorderScenes: (order: string[]) =>
     request<Scene[]>('/scenes/reorder', 'POST', { order }),
-  renameScene: (name: string, newName: string) =>
-    request<Scene[]>(`/scenes/${seg(name)}`, 'PATCH', { newName }),
+  // `overwrite` lets the rename replace the scene already holding the new name.
+  renameScene: (name: string, newName: string, overwrite = false) =>
+    request<Scene[]>(`/scenes/${seg(name)}`, 'PATCH', { newName, overwrite }),
   deleteScene: (name: string) =>
     request<{ name: string }>(`/scenes/${seg(name)}`, 'DELETE'),
   // config.json, minus the edit password. Editor-only.

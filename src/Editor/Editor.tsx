@@ -85,9 +85,9 @@ function Editor() {
     });
   }
 
-  async function handleEdit(name: string, values: FormValues) {
+  async function handleEdit(name: string, values: FormValues, overwrite: boolean) {
     await run(async () => {
-      await api.updatePattern(name, toProps(values));
+      await api.updatePattern(name, toProps(values), overwrite);
       setEditing(null);
     });
   }
@@ -154,11 +154,12 @@ function Editor() {
     });
   }
 
-  function handleRenameScene(name: string, newName: string) {
+  function handleRenameScene(name: string, newName: string, overwrite: boolean) {
     void run(async () => {
-      await api.renameScene(name, newName);
+      await api.renameScene(name, newName, overwrite);
       await refreshScenes();
       if (editingScene === name) setEditingScene(newName);
+      else if (editingScene === newName) setEditingScene(null);
     });
   }
 
@@ -169,6 +170,18 @@ function Editor() {
     } catch (e) {
       setError(describeError(e));
     }
+  }
+
+  // The copy lands right below the original.
+  function handleDuplicateScene(scene: Scene) {
+    const names = scenes.map((s) => s.name);
+    const name = copyName(scene.name, names);
+    void run(async () => {
+      await api.importScene({ ...scene, name });
+      const order = [...names];
+      order.splice(names.indexOf(scene.name) + 1, 0, name);
+      setScenes(await api.reorderScenes(order));
+    });
   }
 
   function handleImportScene(file: File) {
@@ -407,7 +420,9 @@ function Editor() {
         existingNames={existingNames}
         onClose={() => setEditing(null)}
         busy={busy}
-        onSubmit={(values) => editing && void handleEdit(editing.name, values)}
+        onSubmit={(values, overwrite) =>
+          editing && void handleEdit(editing.name, values, overwrite)
+        }
       />
 
       <ManageScenesModal
@@ -419,6 +434,7 @@ function Editor() {
         onApply={handleApplyScene}
         onEdit={handleEditScene}
         onRename={handleRenameScene}
+        onDuplicate={handleDuplicateScene}
         onMove={moveScene}
         onDelete={handleDeleteScene}
         onExport={handleExportScene}

@@ -39,7 +39,8 @@ const addPatternBody = z.object({
   props: z.record(z.string(), z.unknown()).optional()
 });
 const updatePatternBody = z.object({
-  props: z.record(z.string(), z.unknown()).optional()
+  props: z.record(z.string(), z.unknown()).optional(),
+  overwrite: z.boolean('must be true or false').optional()
 });
 const orderBody = z.object({ order: z.array(z.string()) });
 const enabledBody = z.object({ enabled: z.boolean('must be true or false') });
@@ -51,7 +52,8 @@ const halfLightBody = z.object({
 });
 const sceneNameBody = z.object({ name: z.string('must be a string') });
 const renameSceneBody = z.object({
-  newName: z.string('must be a string')
+  newName: z.string('must be a string'),
+  overwrite: z.boolean('must be true or false').optional()
 });
 const channel = z.int('must be a whole number').min(0).max(255);
 const colorBody = z.object({
@@ -109,8 +111,8 @@ function addPattern(req: express.Request, res: express.Response) {
 }
 
 function updatePattern(req: express.Request, res: express.Response) {
-  const { props } = parseBody(updatePatternBody, req.body);
-  res.json(engine.updatePattern(String(req.params.name), props ?? {}));
+  const { props, overwrite } = parseBody(updatePatternBody, req.body);
+  res.json(engine.updatePattern(String(req.params.name), props ?? {}, overwrite));
 }
 
 function removePattern(req: express.Request, res: express.Response) {
@@ -280,8 +282,8 @@ function replaceWithScene(req: express.Request, res: express.Response) {
 }
 
 async function renameScene(req: express.Request, res: express.Response) {
-  const { newName } = parseBody(renameSceneBody, req.body);
-  res.json(await engine.renameScene(String(req.params.name), newName));
+  const { newName, overwrite } = parseBody(renameSceneBody, req.body);
+  res.json(await engine.renameScene(String(req.params.name), newName, overwrite));
 }
 
 async function deleteScene(req: express.Request, res: express.Response) {
