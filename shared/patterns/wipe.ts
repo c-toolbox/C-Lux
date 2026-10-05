@@ -1,4 +1,5 @@
 import {
+  alphaOf,
   type Color,
   NON_NEGATIVE,
   Pattern,
@@ -74,6 +75,7 @@ export class WipePattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   color2!: Color;
   speed!: number;
   hold!: number;
@@ -107,7 +109,7 @@ export class WipePattern extends Pattern {
     return {
       name: this.name,
       type: WipePattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       color2: this.color2,
       speed: this.speed,
       hold: this.hold,
@@ -117,10 +119,11 @@ export class WipePattern extends Pattern {
     };
   }
 
-  set({ r, g, b, color2, speed, hold, direction, blur, origin }: Partial<WipeProps>) {
+  set({ r, g, b, a, color2, speed, hold, direction, blur, origin }: Partial<WipeProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.color2 = color2 ?? this.color2;
     this.speed = speed ?? this.speed;
     this.hold = hold ?? this.hold;
@@ -151,7 +154,7 @@ export class WipePattern extends Pattern {
 
   private render() {
     const n = this.state.length;
-    const colorA = { r: this.r, g: this.g, b: this.b };
+    const colorA = { r: this.r, g: this.g, b: this.b, a: this.a };
     const incoming = this.painting === 0 ? colorA : this.color2;
     const outgoing = this.painting === 0 ? this.color2 : colorA;
     const { progress } = this;
@@ -173,7 +176,7 @@ export class WipePattern extends Pattern {
         r: Math.round(outgoing.r + (incoming.r - outgoing.r) * mix),
         g: Math.round(outgoing.g + (incoming.g - outgoing.g) * mix),
         b: Math.round(outgoing.b + (incoming.b - outgoing.b) * mix),
-        a: 1
+        a: alphaOf(outgoing) + (alphaOf(incoming) - alphaOf(outgoing)) * mix
       };
     }
   }

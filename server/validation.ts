@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-import { MAX_COLORS, type NumberRange, SHARED_FIELDS } from '../shared/patterns/pattern';
+import {
+  MAX_COLORS,
+  type NumberRange,
+  SHARED_FIELDS,
+  UNIT
+} from '../shared/patterns/pattern';
 import { patternByType } from '../shared/patterns/patterns';
 
 import { HttpError } from './errors';
@@ -71,10 +76,18 @@ function validatePatternProps(props: unknown, path = 'props'): Record<string, un
 }
 
 // Constraint for a single pattern prop: an optional numeric range, or `'color'` for a
-// nested `{ r, g, b }` object.
+// nested `{ r, g, b, a? }` object.
 const BYTE: NumberRange = { min: 0, max: 255 };
 
 const COLOR_CHANNELS = ['r', 'g', 'b'] as const;
+
+// Check a color's channels; the alpha is optional, older colors carry none.
+function requireColor(color: Record<string, unknown>, path: string): void {
+  for (const channel of COLOR_CHANNELS) {
+    requireNumberInRange(color[channel], BYTE, `${path}.${channel}`);
+  }
+  if (color.a !== undefined) requireNumberInRange(color.a, UNIT, `${path}.a`);
+}
 
 // Validate the props of a pattern that is about to be constructed. Unlike
 // `validatePatternProps`, which only checks the keys that are present (enough for a
@@ -111,13 +124,14 @@ function validateAgainstSpec(
   const missing = (value: unknown) => !requireAll && value === undefined;
 
   for (const [key, spec] of Object.entries(fields)) {
-    // The primary color reaches the constructor flattened into r/g/b; any further color
-    // (`color2`) stays a nested object, matching `Pattern.propsFromParameters`.
+    // The primary color reaches the constructor flattened into r/g/b/a; any further
+    // color (`color2`) stays a nested object, matching `Pattern.propsFromParameters`.
     if (spec.kind === 'color' && key === 'color') {
       for (const channel of COLOR_CHANNELS) {
         if (missing(validated[channel])) continue;
         requireNumberInRange(validated[channel], BYTE, `props.${channel}`);
       }
+      if (validated.a !== undefined) requireNumberInRange(validated.a, UNIT, 'props.a');
       continue;
     }
 
@@ -128,10 +142,7 @@ function validateAgainstSpec(
       if (typeof value !== 'object' || value === null || Array.isArray(value)) {
         throw new HttpError(400, `props.${key} must be an object with r, g and b`);
       }
-      const color = value as Record<string, unknown>;
-      for (const channel of COLOR_CHANNELS) {
-        requireNumberInRange(color[channel], BYTE, `props.${key}.${channel}`);
-      }
+      requireColor(value as Record<string, unknown>, `props.${key}`);
     } else if (spec.kind === 'colors') {
       if (!Array.isArray(value) || value.length === 0) {
         throw new HttpError(400, `props.${key} must be a non-empty array of colors`);
@@ -140,10 +151,7 @@ function validateAgainstSpec(
         throw new HttpError(400, `props.${key} must hold at most ${MAX_COLORS} colors`);
       }
       value.forEach((entry, i) => {
-        const color = entry as Record<string, unknown>;
-        for (const channel of COLOR_CHANNELS) {
-          requireNumberInRange(color[channel], BYTE, `props.${key}[${i}].${channel}`);
-        }
+        requireColor(entry as Record<string, unknown>, `props.${key}[${i}]`);
       });
     } else if (spec.kind === 'select') {
       requireOption(value, spec.options, `props.${key}`);

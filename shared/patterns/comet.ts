@@ -68,6 +68,7 @@ export class CometPattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   speed!: number;
   tail!: number;
   direction!: number;
@@ -98,7 +99,7 @@ export class CometPattern extends Pattern {
     return {
       name: this.name,
       type: CometPattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       speed: this.speed,
       tail: this.tail,
       direction: this.direction,
@@ -107,10 +108,11 @@ export class CometPattern extends Pattern {
     };
   }
 
-  set({ r, g, b, speed, tail, direction, start, end }: Partial<CometProps>) {
+  set({ r, g, b, a, speed, tail, direction, start, end }: Partial<CometProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.speed = speed ?? this.speed;
     this.tail = tail ?? this.tail;
     this.direction = direction ?? this.direction;
@@ -155,7 +157,7 @@ export class CometPattern extends Pattern {
       // Over a full loop the tail keeps trailing across the seam; on a shorter arc it is
       // cut off at `start` instead of reappearing at the far end.
       if (behind < 0 && span >= n) behind += n;
-      const a = offset > span || behind < 0 ? 0 : Math.exp(-behind / tail);
+      const a = offset > span || behind < 0 ? 0 : Math.exp(-behind / tail) * this.a;
       this.state[i] = { r: this.r, g: this.g, b: this.b, a };
     }
   }

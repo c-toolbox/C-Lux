@@ -31,6 +31,7 @@ export class PulsePattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   period!: number;
   min!: number;
   max!: number;
@@ -54,17 +55,18 @@ export class PulsePattern extends Pattern {
     return {
       name: this.name,
       type: PulsePattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       period: this.period,
       min: this.min,
       max: this.max
     };
   }
 
-  set({ r, g, b, period, min, max }: Partial<PulseProps>) {
+  set({ r, g, b, a, period, min, max }: Partial<PulseProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     const nextPeriod = period ?? this.period;
     this.period = nextPeriod > 0 ? nextPeriod : FALLBACK_PERIOD;
     this.min = min ?? this.min;
@@ -79,7 +81,7 @@ export class PulsePattern extends Pattern {
 
   private render() {
     const wave = 0.5 - 0.5 * Math.cos((2 * Math.PI * this.phase) / this.period);
-    const a = this.min + (this.max - this.min) * wave;
+    const a = (this.min + (this.max - this.min) * wave) * this.a;
     for (let i = 0; i < this.state.length; i++) {
       this.state[i] = { r: this.r, g: this.g, b: this.b, a };
     }

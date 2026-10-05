@@ -38,6 +38,7 @@ export class TheaterChasePattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   spacing!: number;
   speed!: number;
 
@@ -63,16 +64,17 @@ export class TheaterChasePattern extends Pattern {
     return {
       name: this.name,
       type: TheaterChasePattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       spacing: this.spacing,
       speed: this.speed
     };
   }
 
-  set({ r, g, b, spacing, speed }: Partial<TheaterChaseProps>) {
+  set({ r, g, b, a, spacing, speed }: Partial<TheaterChaseProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.spacing = spacing ?? this.spacing;
     this.speed = speed ?? this.speed;
     this.layout();
@@ -104,7 +106,7 @@ export class TheaterChasePattern extends Pattern {
       this.state[i] = { r: this.r, g: this.g, b: this.b, a: 0 };
     }
     for (const position of this.positions) {
-      this.state[(position + this.offset) % this.state.length].a = 1;
+      this.state[(position + this.offset) % this.state.length].a = this.a;
     }
   }
 }

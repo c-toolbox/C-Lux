@@ -33,7 +33,7 @@ export function DebugPage() {
   // the index it points at is tracked separately from whether the server is using it.
   const [driving, setDriving] = useState(false);
   const [light, setLight] = useState(0);
-  const [hex, setHex] = useState('#ffffff');
+  const [hex, setHex] = useState('#ffffffff');
 
   function showError(e: unknown) {
     notifications.show({ color: 'red', title: 'Error', message: describeError(e) });
@@ -154,7 +154,7 @@ export function DebugPage() {
 
             <ColorInput
               mt={'md'}
-              format={'hex'}
+              format={'hexa'}
               label={'Light color'}
               value={hex}
               onChange={setHex}

@@ -38,6 +38,7 @@ export class BouncePattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   sigma!: number;
   speed!: number;
 
@@ -60,16 +61,17 @@ export class BouncePattern extends Pattern {
     return {
       name: this.name,
       type: BouncePattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       sigma: this.sigma,
       speed: this.speed
     };
   }
 
-  set({ r, g, b, sigma, speed }: Partial<BounceProps>) {
+  set({ r, g, b, a, sigma, speed }: Partial<BounceProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.sigma = sigma ?? this.sigma;
     this.speed = speed ?? this.speed;
     this.render();
@@ -100,8 +102,8 @@ export class BouncePattern extends Pattern {
     for (let i = 0; i < n; i++) {
       const diff = Math.abs(i - this.position);
       const d = Math.min(diff, n - diff); // circular distance, so the tail wraps the seam
-      const a = twoSigmaSq > 0 ? Math.exp(-(d * d) / twoSigmaSq) : d === 0 ? 1 : 0;
-      this.state[i] = { r: this.r, g: this.g, b: this.b, a };
+      const bump = twoSigmaSq > 0 ? Math.exp(-(d * d) / twoSigmaSq) : d === 0 ? 1 : 0;
+      this.state[i] = { r: this.r, g: this.g, b: this.b, a: bump * this.a };
     }
   }
 }

@@ -118,7 +118,7 @@ function Field({ spec, value, onChange }: FieldProps) {
       <ColorInput
         label={spec.label}
         description={spec.hint}
-        format={'hex'}
+        format={'hexa'}
         value={String(value)}
         onChange={onChange}
       />
@@ -136,7 +136,7 @@ function Field({ spec, value, onChange }: FieldProps) {
             <Group gap={'xs'} key={index} wrap={'nowrap'}>
               <ColorInput
                 style={{ flex: 1 }}
-                format={'hex'}
+                format={'hexa'}
                 value={color}
                 onChange={(c) => replace(index, c)}
               />
@@ -151,7 +151,9 @@ function Field({ spec, value, onChange }: FieldProps) {
             variant={'light'}
             size={'xs'}
             disabled={colors.length >= MAX_COLORS}
-            onClick={() => onChange([...colors, colors[colors.length - 1] ?? '#ffffff'])}
+            onClick={() =>
+              onChange([...colors, colors[colors.length - 1] ?? '#ffffffff'])
+            }
           >
             Add color
           </Button>

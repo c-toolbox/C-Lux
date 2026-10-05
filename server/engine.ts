@@ -1,5 +1,5 @@
 import type { DebugStatus, DebugUpdate } from '../shared/debug';
-import { BlendMode, type Color, Pattern } from '../shared/patterns/pattern';
+import { alphaOf, BlendMode, type Color, Pattern } from '../shared/patterns/pattern';
 import {
   patternByType,
   patternFromParameters,
@@ -629,10 +629,12 @@ export class Engine {
 
     const { light, color } = this.debug;
     if (light !== null) {
+      // Over the dark ring, a translucent color simply comes out dimmer.
+      const a = alphaOf(color);
       const dst = light * 3;
-      out[dst] = color.r;
-      out[dst + 1] = color.g;
-      out[dst + 2] = color.b;
+      out[dst] = Math.round(color.r * a);
+      out[dst + 1] = Math.round(color.g * a);
+      out[dst + 2] = Math.round(color.b * a);
     }
     return out;
   }

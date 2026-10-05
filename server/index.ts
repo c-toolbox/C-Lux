@@ -54,8 +54,14 @@ const renameSceneBody = z.object({
   newName: z.string('must be a string')
 });
 const channel = z.int('must be a whole number').min(0).max(255);
+const colorBody = z.object({
+  r: channel,
+  g: channel,
+  b: channel,
+  a: z.number('must be a number').min(0).max(1).optional()
+});
 const solidColorBody = z.object({
-  color: z.object({ r: channel, g: channel, b: channel }).optional(),
+  color: colorBody.optional(),
   enabled: z.boolean('must be true or false').optional()
 });
 const debugBody = z.object({
@@ -66,7 +72,7 @@ const debugBody = z.object({
     .max(config.nLights - 1)
     .nullable()
     .optional(),
-  color: z.object({ r: channel, g: channel, b: channel }).optional()
+  color: colorBody.optional()
 });
 
 // Every part of the sampling geometry is a fraction of the frame, so the whole body is

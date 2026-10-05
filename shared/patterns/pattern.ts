@@ -4,6 +4,12 @@ export interface Color {
   r: number;
   g: number;
   b: number;
+  // Opacity in [0, 1]; colors stored before transparency existed omit it and are opaque.
+  a?: number;
+}
+
+export function alphaOf(color: Color): number {
+  return color.a ?? 1;
 }
 
 // Internal per-light color carrying an alpha channel in [0, 1] used for blending.
@@ -153,7 +159,9 @@ function valueEquals(a: unknown, b: unknown): boolean {
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.length === b.length && a.every((entry, i) => valueEquals(entry, b[i]));
   }
-  if (isColor(a) && isColor(b)) return a.r === b.r && a.g === b.g && a.b === b.b;
+  if (isColor(a) && isColor(b)) {
+    return a.r === b.r && a.g === b.g && a.b === b.b && alphaOf(a) === alphaOf(b);
+  }
   return a === b;
 }
 
@@ -187,7 +195,8 @@ function interpolateValue(
     return {
       r: from.r + (to.r - from.r) * t,
       g: from.g + (to.g - from.g) * t,
-      b: from.b + (to.b - from.b) * t
+      b: from.b + (to.b - from.b) * t,
+      a: alphaOf(from) + (alphaOf(to) - alphaOf(from)) * t
     };
   }
   if (kind === 'colors' && Array.isArray(from) && Array.isArray(to)) {
@@ -323,7 +332,7 @@ export abstract class Pattern {
   /**
    * Inverse of `parameters()`: flatten a serialized parameter object back into the flat
    * props a pattern constructor expects. `parameters()` nests color as `{ color: { r, g,
-   * b } }`, so undo that nesting and drop the `type` tag.
+   * b, a } }`, so undo that nesting and drop the `type` tag.
    */
   static propsFromParameters(params: object): object {
     const { type, color, ...rest } = params as {

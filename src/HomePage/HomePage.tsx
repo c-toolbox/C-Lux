@@ -44,7 +44,7 @@ export function HomePage() {
   // The fixed solid color scene, which lives outside the pattern list and is listed
   // alongside the saved scenes. `solidHex` follows the picker while it is being dragged.
   const [solid, setSolid] = useState<SolidColorStatus | null>(null);
-  const [solidHex, setSolidHex] = useState('#000000');
+  const [solidHex, setSolidHex] = useState('#000000ff');
   // The picker dropdown is controlled so that clicking the input can also close it again.
   const [pickerOpen, setPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -239,12 +239,12 @@ export function HomePage() {
 
                     <Group gap={'xs'}>
                       <ColorInput
-                        format={'hex'}
+                        format={'hexa'}
                         value={solidHex}
                         onChange={setSolidHex}
                         onChangeEnd={(hex) => void updateSolid({ color: hexToRgb(hex) })}
                         disabled={busy}
-                        w={130}
+                        w={150}
                         aria-label={'Solid color'}
                         onClick={() => setPickerOpen((open) => !open)}
                         popoverProps={{

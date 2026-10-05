@@ -1,4 +1,5 @@
 import {
+  alphaOf,
   type Color,
   NON_NEGATIVE,
   Pattern,
@@ -205,7 +206,7 @@ export class MeteorsPattern extends Pattern {
       const head = Math.round(m.position);
       for (let d = 0; d <= length; d++) {
         const light = this.state[mod(head - m.direction * d, n)];
-        const a = (1 - d / tail) * fade;
+        const a = (1 - d / tail) * fade * alphaOf(m.color);
         if (a <= light.a) continue;
         light.r = m.color.r;
         light.g = m.color.g;

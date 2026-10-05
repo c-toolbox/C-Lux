@@ -76,6 +76,7 @@ export class RainPattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   rate!: number;
   speed!: number;
   length!: number;
@@ -101,7 +102,7 @@ export class RainPattern extends Pattern {
     return {
       name: this.name,
       type: RainPattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       rate: this.rate,
       speed: this.speed,
       length: this.length,
@@ -109,10 +110,11 @@ export class RainPattern extends Pattern {
     };
   }
 
-  set({ r, g, b, rate, speed, length, splash }: Partial<RainProps>) {
+  set({ r, g, b, a, rate, speed, length, splash }: Partial<RainProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.rate = rate ?? this.rate;
     this.speed = speed ?? this.speed;
     this.length = length ?? this.length;
@@ -185,7 +187,7 @@ export class RainPattern extends Pattern {
     }
 
     for (let i = 0; i < n; i++) {
-      this.state[i] = { r: this.r, g: this.g, b: this.b, a: alpha[i] };
+      this.state[i] = { r: this.r, g: this.g, b: this.b, a: alpha[i] * this.a };
     }
   }
 }

@@ -1,4 +1,5 @@
 import {
+  alphaOf,
   type Color,
   Pattern,
   type PatternBaseProps,
@@ -53,6 +54,7 @@ export class AuroraPattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   color2!: Color;
   speed!: number;
   scale!: number;
@@ -77,7 +79,7 @@ export class AuroraPattern extends Pattern {
     return {
       name: this.name,
       type: AuroraPattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       color2: this.color2,
       speed: this.speed,
       scale: this.scale,
@@ -85,10 +87,11 @@ export class AuroraPattern extends Pattern {
     };
   }
 
-  set({ r, g, b, color2, speed, scale, intensity }: Partial<AuroraProps>) {
+  set({ r, g, b, a, color2, speed, scale, intensity }: Partial<AuroraProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.color2 = color2 ?? this.color2;
     this.speed = speed ?? this.speed;
     this.scale = scale ?? this.scale;
@@ -103,6 +106,7 @@ export class AuroraPattern extends Pattern {
 
   private render() {
     const n = this.state.length;
+    const a2 = alphaOf(this.color2);
     for (let i = 0; i < n; i++) {
       const x = i / n;
       const curtain = field(x, this.time, this.scale, this.speed, 0);
@@ -113,7 +117,7 @@ export class AuroraPattern extends Pattern {
         g: lerp(this.g, this.color2.g, mix),
         b: lerp(this.b, this.color2.b, mix),
         // Squaring sharpens the bright bands and darkens the gaps between them.
-        a: this.intensity * curtain * curtain
+        a: this.intensity * curtain * curtain * (this.a + (a2 - this.a) * mix)
       };
     }
   }

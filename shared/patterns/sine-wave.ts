@@ -44,6 +44,7 @@ export class SineWavePattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   wavelength!: number;
   speed!: number;
   min!: number;
@@ -69,7 +70,7 @@ export class SineWavePattern extends Pattern {
     return {
       name: this.name,
       type: SineWavePattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       wavelength: this.wavelength,
       speed: this.speed,
       min: this.min,
@@ -77,10 +78,11 @@ export class SineWavePattern extends Pattern {
     };
   }
 
-  set({ r, g, b, wavelength, speed, min, max }: Partial<SineWaveProps>) {
+  set({ r, g, b, a, wavelength, speed, min, max }: Partial<SineWaveProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.wavelength = wavelength ?? this.wavelength;
     this.speed = speed ?? this.speed;
     this.min = min ?? this.min;
@@ -102,7 +104,7 @@ export class SineWavePattern extends Pattern {
     const wl = n / cycles;
     for (let i = 0; i < n; i++) {
       const wave = 0.5 + 0.5 * Math.sin((2 * Math.PI * (i - this.phase)) / wl);
-      const a = this.min + (this.max - this.min) * wave;
+      const a = (this.min + (this.max - this.min) * wave) * this.a;
       this.state[i] = { r: this.r, g: this.g, b: this.b, a };
     }
   }

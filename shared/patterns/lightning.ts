@@ -72,6 +72,7 @@ export class LightningPattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   rate!: number;
   flashes!: number;
   coverage!: number;
@@ -105,7 +106,7 @@ export class LightningPattern extends Pattern {
     return {
       name: this.name,
       type: LightningPattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       rate: this.rate,
       flashes: this.flashes,
       coverage: this.coverage,
@@ -114,10 +115,11 @@ export class LightningPattern extends Pattern {
     };
   }
 
-  set({ r, g, b, rate, flashes, coverage, decay, softness }: Partial<LightningProps>) {
+  set({ r, g, b, a, rate, flashes, coverage, decay, softness }: Partial<LightningProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.rate = rate ?? this.rate;
     this.flashes = flashes ?? this.flashes;
     this.coverage = coverage ?? this.coverage;
@@ -170,7 +172,7 @@ export class LightningPattern extends Pattern {
       const offset = (i - this.start + n) % n;
       const distance = Math.min(offset, this.span - 1 - offset) + 0.5;
       const ramp = edge > 0 ? Math.min(1, distance / edge) : 1;
-      const a = offset < this.span ? this.intensity * ramp : 0;
+      const a = offset < this.span ? this.a * this.intensity * ramp : 0;
       this.state[i] = { r: this.r, g: this.g, b: this.b, a };
     }
   }

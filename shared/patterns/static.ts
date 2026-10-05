@@ -1,4 +1,5 @@
 import {
+  alphaOf,
   type Color,
   Pattern,
   type PatternBaseProps,
@@ -60,10 +61,11 @@ export class StaticPattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   start: number = StaticPattern.Fields.start.default;
   end: number = StaticPattern.Fields.end.default;
 
-  private fadeFrom: Color = { r: 0, g: 0, b: 0 };
+  private fadeFrom: Color = { r: 0, g: 0, b: 0, a: 1 };
   private fadeDuration = 0;
   private fadeElapsed = 0;
 
@@ -85,23 +87,25 @@ export class StaticPattern extends Pattern {
       color: {
         r: this.r,
         g: this.g,
-        b: this.b
+        b: this.b,
+        a: this.a
       },
       start: this.start,
       end: this.end
     };
   }
 
-  set({ r, g, b, start, end }: Partial<StaticProps>) {
+  set({ r, g, b, a, start, end }: Partial<StaticProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.start = start ?? this.start;
     this.end = end ?? this.end;
 
     this.fadeDuration = 0;
     this.fadeElapsed = 0;
-    this.paint(this.r, this.g, this.b);
+    this.paint(this.color());
   }
 
   /**
@@ -113,7 +117,8 @@ export class StaticPattern extends Pattern {
     return {
       r: Math.round(this.fadeFrom.r + (this.r - this.fadeFrom.r) * t),
       g: Math.round(this.fadeFrom.g + (this.g - this.fadeFrom.g) * t),
-      b: Math.round(this.fadeFrom.b + (this.b - this.fadeFrom.b) * t)
+      b: Math.round(this.fadeFrom.b + (this.b - this.fadeFrom.b) * t),
+      a: alphaOf(this.fadeFrom) + (this.a - alphaOf(this.fadeFrom)) * t
     };
   }
 
@@ -123,7 +128,7 @@ export class StaticPattern extends Pattern {
    */
   fadeTo(color: Color, duration: number) {
     if (duration <= 0) {
-      this.set(color);
+      this.set({ ...color, a: alphaOf(color) });
       return;
     }
 
@@ -131,6 +136,7 @@ export class StaticPattern extends Pattern {
     this.r = color.r;
     this.g = color.g;
     this.b = color.b;
+    this.a = alphaOf(color);
     this.fadeDuration = duration;
     this.fadeElapsed = 0;
   }
@@ -143,8 +149,7 @@ export class StaticPattern extends Pattern {
     if (!this.fading()) return;
 
     this.fadeElapsed += dt;
-    const { r, g, b } = this.color();
-    this.paint(r, g, b);
+    this.paint(this.color());
   }
 
   private progress(): number {
@@ -152,14 +157,14 @@ export class StaticPattern extends Pattern {
     return Math.min(1, this.fadeElapsed / this.fadeDuration);
   }
 
-  private paint(r: number, g: number, b: number) {
+  private paint({ r, g, b, a = 1 }: Color) {
     const n = this.state.length;
     for (let i = 0; i < n; i++) {
       const state = this.state[i];
       state.r = r;
       state.g = g;
       state.b = b;
-      state.a = this.inRange(i / n) ? 1 : 0;
+      state.a = this.inRange(i / n) ? a : 0;
     }
   }
 

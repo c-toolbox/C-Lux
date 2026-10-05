@@ -50,6 +50,7 @@ export class CandlePattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   brightness!: number;
   depth!: number;
   speed!: number;
@@ -77,17 +78,18 @@ export class CandlePattern extends Pattern {
     return {
       name: this.name,
       type: CandlePattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       brightness: this.brightness,
       depth: this.depth,
       speed: this.speed
     };
   }
 
-  set({ r, g, b, brightness, depth, speed }: Partial<CandleProps>) {
+  set({ r, g, b, a, brightness, depth, speed }: Partial<CandleProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.brightness = brightness ?? this.brightness;
     this.depth = depth ?? this.depth;
     this.speed = speed ?? this.speed;
@@ -111,7 +113,7 @@ export class CandlePattern extends Pattern {
         r: this.r,
         g: this.g,
         b: this.b,
-        a: this.brightness * (1 - this.depth + this.depth * level)
+        a: this.a * this.brightness * (1 - this.depth + this.depth * level)
       };
     }
   }

@@ -1,4 +1,5 @@
 import {
+  alphaOf,
   type Color,
   Pattern,
   type PatternBaseProps,
@@ -61,6 +62,7 @@ export class InterferencePattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   color2!: Color;
   waves!: number;
   waves2!: number;
@@ -87,7 +89,7 @@ export class InterferencePattern extends Pattern {
     return {
       name: this.name,
       type: InterferencePattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       color2: this.color2,
       waves: this.waves,
       waves2: this.waves2,
@@ -96,10 +98,11 @@ export class InterferencePattern extends Pattern {
     };
   }
 
-  set({ r, g, b, color2, waves, waves2, speed, speed2 }: Partial<InterferenceProps>) {
+  set({ r, g, b, a, color2, waves, waves2, speed, speed2 }: Partial<InterferenceProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.color2 = color2 ?? this.color2;
     this.waves = waves ?? this.waves;
     this.waves2 = waves2 ?? this.waves2;
@@ -118,12 +121,13 @@ export class InterferencePattern extends Pattern {
     // Whole wave counts keep both waves continuous across the seam at light 0.
     const k1 = Math.max(1, Math.round(this.waves));
     const k2 = Math.max(1, Math.round(this.waves2));
+    const a2 = alphaOf(this.color2);
     for (let i = 0; i < n; i++) {
       const x = i / n;
       // Only the crests are lit, so the two waves cross rather than wash into each
       // other, and their overlaps stack into brighter, blended nodes.
-      const v1 = Math.max(0, Math.sin(TAU * (k1 * x + this.speed * this.time)));
-      const v2 = Math.max(0, Math.sin(TAU * (k2 * x + this.speed2 * this.time)));
+      const v1 = this.a * Math.max(0, Math.sin(TAU * (k1 * x + this.speed * this.time)));
+      const v2 = a2 * Math.max(0, Math.sin(TAU * (k2 * x + this.speed2 * this.time)));
       this.state[i] = {
         r: Math.round(Math.min(255, this.r * v1 + this.color2.r * v2)),
         g: Math.round(Math.min(255, this.g * v1 + this.color2.g * v2)),

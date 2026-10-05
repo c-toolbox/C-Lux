@@ -47,6 +47,7 @@ export class MovingGaussianPattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   sigma!: number;
   speed!: number;
   origin!: number;
@@ -73,7 +74,8 @@ export class MovingGaussianPattern extends Pattern {
       color: {
         r: this.r,
         g: this.g,
-        b: this.b
+        b: this.b,
+        a: this.a
       },
       sigma: this.sigma,
       speed: this.speed,
@@ -81,10 +83,11 @@ export class MovingGaussianPattern extends Pattern {
     };
   }
 
-  set({ r, g, b, sigma, speed, origin }: Partial<MovingGaussianProps>) {
+  set({ r, g, b, a, sigma, speed, origin }: Partial<MovingGaussianProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.sigma = sigma ?? this.sigma;
     this.speed = speed ?? this.speed;
     this.origin = origin ?? this.origin;
@@ -103,7 +106,7 @@ export class MovingGaussianPattern extends Pattern {
         r: this.r,
         g: this.g,
         b: this.b,
-        a: intensity
+        a: intensity * this.a
       };
     }
   }

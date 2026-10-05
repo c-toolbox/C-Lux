@@ -70,6 +70,7 @@ export class RipplePattern extends Pattern {
   r!: number;
   g!: number;
   b!: number;
+  a = 1;
   speed!: number;
   width!: number;
   decay!: number;
@@ -99,7 +100,7 @@ export class RipplePattern extends Pattern {
     return {
       name: this.name,
       type: RipplePattern.Type,
-      color: { r: this.r, g: this.g, b: this.b },
+      color: { r: this.r, g: this.g, b: this.b, a: this.a },
       speed: this.speed,
       width: this.width,
       decay: this.decay,
@@ -108,10 +109,11 @@ export class RipplePattern extends Pattern {
     };
   }
 
-  set({ r, g, b, speed, width, decay, interval, origin }: Partial<RippleProps>) {
+  set({ r, g, b, a, speed, width, decay, interval, origin }: Partial<RippleProps>) {
     this.r = r ?? this.r;
     this.g = g ?? this.g;
     this.b = b ?? this.b;
+    this.a = a ?? this.a;
     this.speed = speed ?? this.speed;
     this.width = width ?? this.width;
     this.decay = decay ?? this.decay;
@@ -159,7 +161,7 @@ export class RipplePattern extends Pattern {
         const offset = (ringDistance(i, w.position, n) - w.radius) / width;
         a += w.amplitude * Math.exp(-offset * offset);
       }
-      this.state[i] = { r: this.r, g: this.g, b: this.b, a: Math.min(1, a) };
+      this.state[i] = { r: this.r, g: this.g, b: this.b, a: Math.min(1, a) * this.a };
     }
   }
 }
