@@ -1,0 +1,284 @@
+{
+  "version": 2,
+  "name": "Gradient",
+  "patterns": [
+    {
+      "name": "Gradient-defaults",
+      "type": "Gradient",
+      "colors": [
+        {
+          "r": 77,
+          "g": 171,
+          "b": 247
+        },
+        {
+          "r": 247,
+          "g": 77,
+          "b": 77
+        }
+      ],
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Gradient-colors-1",
+      "type": "Gradient",
+      "colors": [
+        {
+          "r": 0,
+          "g": 0,
+          "b": 255,
+          "a": 0.5
+        },
+        {
+          "r": 53,
+          "g": 97,
+          "b": 224,
+          "a": 0.5
+        },
+        {
+          "r": 106,
+          "g": 194,
+          "b": 193,
+          "a": 0.5
+        }
+      ],
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Gradient-colors-2",
+      "type": "Gradient",
+      "colors": [
+        {
+          "r": 0,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "r": 53,
+          "g": 97,
+          "b": 224
+        },
+        {
+          "r": 106,
+          "g": 194,
+          "b": 193
+        },
+        {
+          "r": 159,
+          "g": 35,
+          "b": 162
+        },
+        {
+          "r": 212,
+          "g": 132,
+          "b": 131
+        },
+        {
+          "r": 9,
+          "g": 229,
+          "b": 100
+        },
+        {
+          "r": 62,
+          "g": 70,
+          "b": 69
+        },
+        {
+          "r": 115,
+          "g": 167,
+          "b": 38
+        },
+        {
+          "r": 168,
+          "g": 8,
+          "b": 7
+        },
+        {
+          "r": 221,
+          "g": 105,
+          "b": 232
+        },
+        {
+          "r": 18,
+          "g": 202,
+          "b": 201
+        },
+        {
+          "r": 71,
+          "g": 43,
+          "b": 170
+        },
+        {
+          "r": 124,
+          "g": 140,
+          "b": 139
+        },
+        {
+          "r": 177,
+          "g": 237,
+          "b": 108
+        },
+        {
+          "r": 230,
+          "g": 78,
+          "b": 77
+        },
+        {
+          "r": 27,
+          "g": 175,
+          "b": 46
+        }
+      ],
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Gradient-speed-1",
+      "type": "Gradient",
+      "colors": [
+        {
+          "r": 77,
+          "g": 171,
+          "b": 247
+        },
+        {
+          "r": 247,
+          "g": 77,
+          "b": 77
+        }
+      ],
+      "speed": -0.2,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Gradient-speed-2",
+      "type": "Gradient",
+      "colors": [
+        {
+          "r": 77,
+          "g": 171,
+          "b": 247
+        },
+        {
+          "r": 247,
+          "g": 77,
+          "b": 77
+        }
+      ],
+      "speed": 0.4,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Gradient-opacity-1",
+      "type": "Gradient",
+      "colors": [
+        {
+          "r": 77,
+          "g": 171,
+          "b": 247
+        },
+        {
+          "r": 247,
+          "g": 77,
+          "b": 77
+        }
+      ],
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Gradient-opacity-2",
+      "type": "Gradient",
+      "colors": [
+        {
+          "r": 77,
+          "g": 171,
+          "b": 247
+        },
+        {
+          "r": 247,
+          "g": 77,
+          "b": 77
+        }
+      ],
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Gradient-blendMode-1",
+      "type": "Gradient",
+      "colors": [
+        {
+          "r": 77,
+          "g": 171,
+          "b": 247
+        },
+        {
+          "r": 247,
+          "g": 77,
+          "b": 77
+        }
+      ],
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Gradient-blendMode-2",
+      "type": "Gradient",
+      "colors": [
+        {
+          "r": 77,
+          "g": 171,
+          "b": 247
+        },
+        {
+          "r": 247,
+          "g": 77,
+          "b": 77
+        }
+      ],
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Gradient-disabled",
+      "type": "Gradient",
+      "colors": [
+        {
+          "r": 77,
+          "g": 171,
+          "b": 247
+        },
+        {
+          "r": 247,
+          "g": 77,
+          "b": 77
+        }
+      ],
+      "speed": 0.1,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

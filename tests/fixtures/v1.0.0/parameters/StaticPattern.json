@@ -1,0 +1,135 @@
+{
+  "name": "StaticPattern",
+  "patterns": [
+    {
+      "name": "StaticPattern-defaults",
+      "type": "StaticPattern",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "start": 0,
+      "end": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "StaticPattern-color-1",
+      "type": "StaticPattern",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128
+      },
+      "start": 0,
+      "end": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "StaticPattern-color-2",
+      "type": "StaticPattern",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "start": 0,
+      "end": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "StaticPattern-start-1",
+      "type": "StaticPattern",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "start": 1,
+      "end": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "StaticPattern-start-2",
+      "type": "StaticPattern",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "start": 0.5,
+      "end": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "StaticPattern-end-1",
+      "type": "StaticPattern",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "StaticPattern-end-2",
+      "type": "StaticPattern",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "start": 0,
+      "end": 0.5,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "StaticPattern-opacity-1",
+      "type": "StaticPattern",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "start": 0,
+      "end": 1,
+      "enabled": true,
+      "opacity": 0
+    },
+    {
+      "name": "StaticPattern-opacity-2",
+      "type": "StaticPattern",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "start": 0,
+      "end": 1,
+      "enabled": true,
+      "opacity": 0.5
+    },
+    {
+      "name": "StaticPattern-disabled",
+      "type": "StaticPattern",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "start": 0,
+      "end": 1,
+      "enabled": false,
+      "opacity": 1
+    }
+  ]
+}

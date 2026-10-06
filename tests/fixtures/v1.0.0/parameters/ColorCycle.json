@@ -1,0 +1,95 @@
+{
+  "name": "ColorCycle",
+  "patterns": [
+    {
+      "name": "ColorCycle-defaults",
+      "type": "ColorCycle",
+      "speed": 30,
+      "saturation": 1,
+      "value": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorCycle-speed-1",
+      "type": "ColorCycle",
+      "speed": -60,
+      "saturation": 1,
+      "value": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorCycle-speed-2",
+      "type": "ColorCycle",
+      "speed": 120,
+      "saturation": 1,
+      "value": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorCycle-saturation-1",
+      "type": "ColorCycle",
+      "speed": 30,
+      "saturation": 0,
+      "value": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorCycle-saturation-2",
+      "type": "ColorCycle",
+      "speed": 30,
+      "saturation": 0.5,
+      "value": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorCycle-value-1",
+      "type": "ColorCycle",
+      "speed": 30,
+      "saturation": 1,
+      "value": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorCycle-value-2",
+      "type": "ColorCycle",
+      "speed": 30,
+      "saturation": 1,
+      "value": 0.5,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorCycle-opacity-1",
+      "type": "ColorCycle",
+      "speed": 30,
+      "saturation": 1,
+      "value": 1,
+      "enabled": true,
+      "opacity": 0
+    },
+    {
+      "name": "ColorCycle-opacity-2",
+      "type": "ColorCycle",
+      "speed": 30,
+      "saturation": 1,
+      "value": 1,
+      "enabled": true,
+      "opacity": 0.5
+    },
+    {
+      "name": "ColorCycle-disabled",
+      "type": "ColorCycle",
+      "speed": 30,
+      "saturation": 1,
+      "value": 1,
+      "enabled": false,
+      "opacity": 1
+    }
+  ]
+}

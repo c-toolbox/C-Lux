@@ -1,0 +1,245 @@
+{
+  "name": "Comet",
+  "patterns": [
+    {
+      "name": "Comet-defaults",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-color-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-color-2",
+      "type": "Comet",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-speed-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": -0.2,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-speed-2",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.4,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-tail-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 0,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-tail-2",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 1,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-direction-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": -1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-start-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 1,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-start-2",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0.5,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-end-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-end-2",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0.5,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Comet-opacity-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 0
+    },
+    {
+      "name": "Comet-opacity-2",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 0.5
+    },
+    {
+      "name": "Comet-disabled",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": false,
+      "opacity": 1
+    }
+  ]
+}

@@ -1,0 +1,325 @@
+{
+  "name": "Interference",
+  "patterns": [
+    {
+      "name": "Interference-defaults",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-color-1",
+      "type": "Interference",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-color-2",
+      "type": "Interference",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-color2-1",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 255,
+        "g": 0,
+        "b": 128
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-color2-2",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-waves-1",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 1,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-waves-2",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 12,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-waves2-1",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 1,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-waves2-2",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 16,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-speed-1",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": -0.16,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-speed-2",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.32,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-speed2-1",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": 0.1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-speed2-2",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.2,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Interference-opacity-1",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 0
+    },
+    {
+      "name": "Interference-opacity-2",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": true,
+      "opacity": 0.5
+    },
+    {
+      "name": "Interference-disabled",
+      "type": "Interference",
+      "color": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "color2": {
+        "r": 250,
+        "g": 82,
+        "b": 82
+      },
+      "waves": 3,
+      "waves2": 4,
+      "speed": 0.08,
+      "speed2": -0.05,
+      "enabled": false,
+      "opacity": 1
+    }
+  ]
+}

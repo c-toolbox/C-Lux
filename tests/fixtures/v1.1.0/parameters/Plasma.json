@@ -1,0 +1,230 @@
+{
+  "version": 2,
+  "name": "Plasma",
+  "patterns": [
+    {
+      "name": "Plasma-defaults",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Plasma-color-1",
+      "type": "Plasma",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Plasma-color-2",
+      "type": "Plasma",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Plasma-hueRange-1",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 0,
+      "scale": 2,
+      "speed": 0.06,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Plasma-hueRange-2",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 360,
+      "scale": 2,
+      "speed": 0.06,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Plasma-scale-1",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 140,
+      "scale": 1,
+      "speed": 0.06,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Plasma-scale-2",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 140,
+      "scale": 8,
+      "speed": 0.06,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Plasma-speed-1",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 140,
+      "scale": 2,
+      "speed": -0.12,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Plasma-speed-2",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.24,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Plasma-opacity-1",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Plasma-opacity-2",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Plasma-blendMode-1",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Plasma-blendMode-2",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Plasma-disabled",
+      "type": "Plasma",
+      "color": {
+        "r": 140,
+        "g": 26,
+        "b": 255,
+        "a": 1
+      },
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

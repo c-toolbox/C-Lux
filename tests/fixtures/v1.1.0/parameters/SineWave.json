@@ -1,0 +1,278 @@
+{
+  "version": 2,
+  "name": "SineWave",
+  "patterns": [
+    {
+      "name": "SineWave-defaults",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-color-1",
+      "type": "SineWave",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-color-2",
+      "type": "SineWave",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-wavelength-1",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.01,
+      "speed": 0.07,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-wavelength-2",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 1,
+      "speed": 0.07,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-speed-1",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": -0.14,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-speed-2",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.28,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-min-1",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 1,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-min-2",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0.5,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-max-1",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0,
+      "max": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-max-2",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0,
+      "max": 0.5,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-opacity-1",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-opacity-2",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "SineWave-blendMode-1",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "SineWave-blendMode-2",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "SineWave-disabled",
+      "type": "SineWave",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "wavelength": 0.14,
+      "speed": 0.07,
+      "min": 0,
+      "max": 1,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

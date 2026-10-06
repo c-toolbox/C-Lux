@@ -1,0 +1,312 @@
+{
+  "version": 2,
+  "name": "Comet",
+  "patterns": [
+    {
+      "name": "Comet-defaults",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-color-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-color-2",
+      "type": "Comet",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-speed-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": -0.2,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-speed-2",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.4,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-tail-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-tail-2",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 1,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-direction-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": -1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-start-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 1,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-start-2",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0.5,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-end-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-end-2",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0.5,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-opacity-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-opacity-2",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Comet-blendMode-1",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Comet-blendMode-2",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Comet-disabled",
+      "type": "Comet",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "speed": 0.1,
+      "tail": 0.06,
+      "direction": 1,
+      "start": 0,
+      "end": 0,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

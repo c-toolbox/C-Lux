@@ -1,0 +1,494 @@
+{
+  "version": 2,
+  "name": "Meteors",
+  "patterns": [
+    {
+      "name": "Meteors-defaults",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-colors-1",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 0,
+          "g": 0,
+          "b": 255,
+          "a": 0.5
+        },
+        {
+          "r": 53,
+          "g": 97,
+          "b": 224,
+          "a": 0.5
+        },
+        {
+          "r": 106,
+          "g": 194,
+          "b": 193,
+          "a": 0.5
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-colors-2",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 0,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "r": 53,
+          "g": 97,
+          "b": 224
+        },
+        {
+          "r": 106,
+          "g": 194,
+          "b": 193
+        },
+        {
+          "r": 159,
+          "g": 35,
+          "b": 162
+        },
+        {
+          "r": 212,
+          "g": 132,
+          "b": 131
+        },
+        {
+          "r": 9,
+          "g": 229,
+          "b": 100
+        },
+        {
+          "r": 62,
+          "g": 70,
+          "b": 69
+        },
+        {
+          "r": 115,
+          "g": 167,
+          "b": 38
+        },
+        {
+          "r": 168,
+          "g": 8,
+          "b": 7
+        },
+        {
+          "r": 221,
+          "g": 105,
+          "b": 232
+        },
+        {
+          "r": 18,
+          "g": 202,
+          "b": 201
+        },
+        {
+          "r": 71,
+          "g": 43,
+          "b": 170
+        },
+        {
+          "r": 124,
+          "g": 140,
+          "b": 139
+        },
+        {
+          "r": 177,
+          "g": 237,
+          "b": 108
+        },
+        {
+          "r": 230,
+          "g": 78,
+          "b": 77
+        },
+        {
+          "r": 27,
+          "g": 175,
+          "b": 46
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-rate-1",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 0,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-rate-2",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 4,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-speed-1",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.05,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-speed-2",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 1.6,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-maxSpeed-1",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 0.05,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-maxSpeed-2",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 4,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-tail-1",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.01,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-tail-2",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 1,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-variation-1",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-variation-2",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 1,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-direction-1",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": -1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-direction-2",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-opacity-1",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-opacity-2",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Meteors-blendMode-1",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Meteors-blendMode-2",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Meteors-disabled",
+      "type": "Meteors",
+      "colors": [
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        }
+      ],
+      "rate": 1,
+      "speed": 0.4,
+      "maxSpeed": 1,
+      "tail": 0.08,
+      "variation": 0.4,
+      "direction": 1,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

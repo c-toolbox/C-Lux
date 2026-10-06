@@ -1,0 +1,386 @@
+{
+  "version": 2,
+  "name": "Lightning",
+  "patterns": [
+    {
+      "name": "Lightning-defaults",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-color-1",
+      "type": "Lightning",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-color-2",
+      "type": "Lightning",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-rate-1",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.1,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-rate-2",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 1.6,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-flashes-1",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 1,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-flashes-2",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 10,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-attack-1",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-attack-2",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.2,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-decay-1",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 0.5,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-decay-2",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 32,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-coverage-1",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.05,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-coverage-2",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 1,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-softness-1",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-softness-2",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-opacity-1",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-opacity-2",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Lightning-blendMode-1",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Lightning-blendMode-2",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Lightning-disabled",
+      "type": "Lightning",
+      "color": {
+        "r": 200,
+        "g": 220,
+        "b": 255,
+        "a": 1
+      },
+      "rate": 0.4,
+      "flashes": 3,
+      "coverage": 0.4,
+      "attack": 0.05,
+      "decay": 8,
+      "softness": 0.35,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

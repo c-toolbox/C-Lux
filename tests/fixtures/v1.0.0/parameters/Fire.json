@@ -1,0 +1,69 @@
+{
+  "name": "Fire",
+  "patterns": [
+    {
+      "name": "Fire-defaults",
+      "type": "Fire",
+      "cooling": 55,
+      "sparking": 0.6,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Fire-cooling-1",
+      "type": "Fire",
+      "cooling": 0,
+      "sparking": 0.6,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Fire-cooling-2",
+      "type": "Fire",
+      "cooling": 220,
+      "sparking": 0.6,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Fire-sparking-1",
+      "type": "Fire",
+      "cooling": 55,
+      "sparking": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Fire-sparking-2",
+      "type": "Fire",
+      "cooling": 55,
+      "sparking": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Fire-opacity-1",
+      "type": "Fire",
+      "cooling": 55,
+      "sparking": 0.6,
+      "enabled": true,
+      "opacity": 0
+    },
+    {
+      "name": "Fire-opacity-2",
+      "type": "Fire",
+      "cooling": 55,
+      "sparking": 0.6,
+      "enabled": true,
+      "opacity": 0.5
+    },
+    {
+      "name": "Fire-disabled",
+      "type": "Fire",
+      "cooling": 55,
+      "sparking": 0.6,
+      "enabled": false,
+      "opacity": 1
+    }
+  ]
+}

@@ -1,0 +1,230 @@
+{
+  "version": 2,
+  "name": "MovingGaussian",
+  "patterns": [
+    {
+      "name": "MovingGaussian-defaults",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.07,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "MovingGaussian-color-1",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.07,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "MovingGaussian-color-2",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "sigma": 0.04,
+      "speed": 0.07,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "MovingGaussian-sigma-1",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0,
+      "speed": 0.07,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "MovingGaussian-sigma-2",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 1,
+      "speed": 0.07,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "MovingGaussian-speed-1",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": -0.14,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "MovingGaussian-speed-2",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.28,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "MovingGaussian-origin-1",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.07,
+      "origin": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "MovingGaussian-origin-2",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.07,
+      "origin": 0.5,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "MovingGaussian-opacity-1",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.07,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "MovingGaussian-opacity-2",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.07,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "MovingGaussian-blendMode-1",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.07,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "MovingGaussian-blendMode-2",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.07,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "MovingGaussian-disabled",
+      "type": "MovingGaussian",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.07,
+      "origin": 0,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

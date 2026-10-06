@@ -1,0 +1,1980 @@
+{
+  "version": 2,
+  "name": "Audio",
+  "patterns": [
+    {
+      "name": "Audio-defaults",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-input-1",
+      "type": "Audio",
+      "input": 1,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-mode-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 1,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-mode-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 2,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-gain-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 0,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-gain-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 4,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-floor-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-floor-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 1,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-decay-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 0,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-decay-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 24,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-colorMode-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 1,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-colorMode-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 2,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-hue-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 360,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-hue-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 180,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-hueSpan-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": -360,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-hueSpan-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 360,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-frontColor-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 1,
+      "frontColor": {
+        "r": 255,
+        "g": 0,
+        "b": 128
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-frontColor-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 1,
+      "frontColor": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-backColor-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 1,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 0,
+        "b": 128
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-backColor-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 1,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-colorMap-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 2,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "r": 0,
+          "g": 0,
+          "b": 255,
+          "t": 0.5
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-colorMap-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 2,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "r": 0,
+          "g": 0,
+          "b": 255,
+          "t": 0,
+          "a": 1
+        },
+        {
+          "r": 53,
+          "g": 97,
+          "b": 224,
+          "t": 0.066667,
+          "a": 0.5
+        },
+        {
+          "r": 106,
+          "g": 194,
+          "b": 193,
+          "t": 0.133333,
+          "a": 1
+        },
+        {
+          "r": 159,
+          "g": 35,
+          "b": 162,
+          "t": 0.2,
+          "a": 0.5
+        },
+        {
+          "r": 212,
+          "g": 132,
+          "b": 131,
+          "t": 0.266667,
+          "a": 1
+        },
+        {
+          "r": 9,
+          "g": 229,
+          "b": 100,
+          "t": 0.333333,
+          "a": 0.5
+        },
+        {
+          "r": 62,
+          "g": 70,
+          "b": 69,
+          "t": 0.4,
+          "a": 1
+        },
+        {
+          "r": 115,
+          "g": 167,
+          "b": 38,
+          "t": 0.466667,
+          "a": 0.5
+        },
+        {
+          "r": 168,
+          "g": 8,
+          "b": 7,
+          "t": 0.533333,
+          "a": 1
+        },
+        {
+          "r": 221,
+          "g": 105,
+          "b": 232,
+          "t": 0.6,
+          "a": 0.5
+        },
+        {
+          "r": 18,
+          "g": 202,
+          "b": 201,
+          "t": 0.666667,
+          "a": 1
+        },
+        {
+          "r": 71,
+          "g": 43,
+          "b": 170,
+          "t": 0.733333,
+          "a": 0.5
+        },
+        {
+          "r": 124,
+          "g": 140,
+          "b": 139,
+          "t": 0.8,
+          "a": 1
+        },
+        {
+          "r": 177,
+          "g": 237,
+          "b": 108,
+          "t": 0.866667,
+          "a": 0.5
+        },
+        {
+          "r": 230,
+          "g": 78,
+          "b": 77,
+          "t": 0.933333,
+          "a": 1
+        },
+        {
+          "r": 27,
+          "g": 175,
+          "b": 46,
+          "t": 1,
+          "a": 0.5
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-frontHz-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 16000,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-frontHz-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 8020,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-backHz-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 30,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-backHz-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 8000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-hz-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 2,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 30,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-hz-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 2,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 16000,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-color-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 2,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-color-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 2,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-opacity-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-opacity-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Audio-blendMode-1",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Audio-blendMode-2",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Audio-disabled",
+      "type": "Audio",
+      "input": 0,
+      "mode": 0,
+      "gain": 1,
+      "floor": 0.05,
+      "decay": 6,
+      "hue": 0,
+      "hueSpan": 300,
+      "colorMode": 0,
+      "frontColor": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "backColor": {
+        "r": 255,
+        "g": 64,
+        "b": 129
+      },
+      "colorMap": [
+        {
+          "t": 0,
+          "r": 32,
+          "g": 0,
+          "b": 255
+        },
+        {
+          "t": 0.5,
+          "r": 255,
+          "g": 0,
+          "b": 128
+        },
+        {
+          "t": 1,
+          "r": 255,
+          "g": 200,
+          "b": 0
+        }
+      ],
+      "frontHz": 30,
+      "backHz": 16000,
+      "hz": 100,
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

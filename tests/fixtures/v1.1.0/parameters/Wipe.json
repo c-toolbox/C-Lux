@@ -1,0 +1,444 @@
+{
+  "version": 2,
+  "name": "Wipe",
+  "patterns": [
+    {
+      "name": "Wipe-defaults",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-color-1",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-color-2",
+      "type": "Wipe",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-color2-1",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 255,
+        "g": 0,
+        "b": 128
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-color2-2",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-speed-1",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.05,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-speed-2",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 1.2,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-hold-1",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 1,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-hold-2",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0.5,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-direction-1",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": -1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-blur-1",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-blur-2",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 1,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-origin-1",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-origin-2",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0.5,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-opacity-1",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-opacity-2",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Wipe-blendMode-1",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Wipe-blendMode-2",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Wipe-disabled",
+      "type": "Wipe",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "color2": {
+        "r": 34,
+        "g": 139,
+        "b": 230
+      },
+      "speed": 0.3,
+      "hold": 0,
+      "direction": 1,
+      "blur": 0.05,
+      "origin": 0,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

@@ -1,0 +1,278 @@
+{
+  "version": 2,
+  "name": "Sparkle",
+  "patterns": [
+    {
+      "name": "Sparkle-defaults",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-color-1",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-color-2",
+      "type": "Sparkle",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-density-1",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-density-2",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.56,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-attack-1",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0.5,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-attack-2",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0.25,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-decay-1",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 0,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-decay-2",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 12,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-hueRange-1",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 360,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-hueRange-2",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 180,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-opacity-1",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-opacity-2",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Sparkle-blendMode-1",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Sparkle-blendMode-2",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Sparkle-disabled",
+      "type": "Sparkle",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "density": 0.14,
+      "attack": 0,
+      "decay": 3,
+      "hueRange": 0,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

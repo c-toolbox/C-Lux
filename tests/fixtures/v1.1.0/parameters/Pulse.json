@@ -1,0 +1,230 @@
+{
+  "version": 2,
+  "name": "Pulse",
+  "patterns": [
+    {
+      "name": "Pulse-defaults",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 3,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Pulse-color-1",
+      "type": "Pulse",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "period": 3,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Pulse-color-2",
+      "type": "Pulse",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "period": 3,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Pulse-period-1",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 0.5,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Pulse-period-2",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 12,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Pulse-min-1",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 3,
+      "min": 1,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Pulse-min-2",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 3,
+      "min": 0.5,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Pulse-max-1",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 3,
+      "min": 0,
+      "max": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Pulse-max-2",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 3,
+      "min": 0,
+      "max": 0.5,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Pulse-opacity-1",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 3,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Pulse-opacity-2",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 3,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Pulse-blendMode-1",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 3,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Pulse-blendMode-2",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 3,
+      "min": 0,
+      "max": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Pulse-disabled",
+      "type": "Pulse",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "period": 3,
+      "min": 0,
+      "max": 1,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

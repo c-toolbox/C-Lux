@@ -1,0 +1,278 @@
+{
+  "version": 2,
+  "name": "Rain",
+  "patterns": [
+    {
+      "name": "Rain-defaults",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-color-1",
+      "type": "Rain",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-color-2",
+      "type": "Rain",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-rate-1",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 0,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-rate-2",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 16,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-speed-1",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.05,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-speed-2",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 2,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-length-1",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.01,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-length-2",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 1,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-splash-1",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-splash-2",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-opacity-1",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-opacity-2",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Rain-blendMode-1",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Rain-blendMode-2",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Rain-disabled",
+      "type": "Rain",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "rate": 4,
+      "speed": 0.5,
+      "length": 0.05,
+      "splash": 0.8,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

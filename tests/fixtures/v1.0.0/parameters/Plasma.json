@@ -1,0 +1,159 @@
+{
+  "name": "Plasma",
+  "patterns": [
+    {
+      "name": "Plasma-defaults",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "saturation": 0.9,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Plasma-hue-1",
+      "type": "Plasma",
+      "hue": 0,
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "saturation": 0.9,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Plasma-hue-2",
+      "type": "Plasma",
+      "hue": 360,
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "saturation": 0.9,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Plasma-hueRange-1",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 0,
+      "scale": 2,
+      "speed": 0.06,
+      "saturation": 0.9,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Plasma-hueRange-2",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 360,
+      "scale": 2,
+      "speed": 0.06,
+      "saturation": 0.9,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Plasma-scale-1",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 140,
+      "scale": 1,
+      "speed": 0.06,
+      "saturation": 0.9,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Plasma-scale-2",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 140,
+      "scale": 8,
+      "speed": 0.06,
+      "saturation": 0.9,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Plasma-speed-1",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 140,
+      "scale": 2,
+      "speed": -0.12,
+      "saturation": 0.9,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Plasma-speed-2",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.24,
+      "saturation": 0.9,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Plasma-saturation-1",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "saturation": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Plasma-saturation-2",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "saturation": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Plasma-opacity-1",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "saturation": 0.9,
+      "enabled": true,
+      "opacity": 0
+    },
+    {
+      "name": "Plasma-opacity-2",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "saturation": 0.9,
+      "enabled": true,
+      "opacity": 0.5
+    },
+    {
+      "name": "Plasma-disabled",
+      "type": "Plasma",
+      "hue": 200,
+      "hueRange": 140,
+      "scale": 2,
+      "speed": 0.06,
+      "saturation": 0.9,
+      "enabled": false,
+      "opacity": 1
+    }
+  ]
+}

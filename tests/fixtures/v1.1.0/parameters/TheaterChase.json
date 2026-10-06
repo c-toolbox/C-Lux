@@ -1,0 +1,186 @@
+{
+  "version": 2,
+  "name": "TheaterChase",
+  "patterns": [
+    {
+      "name": "TheaterChase-defaults",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "TheaterChase-color-1",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "TheaterChase-color-2",
+      "type": "TheaterChase",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "TheaterChase-spacing-1",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "spacing": 0.01,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "TheaterChase-spacing-2",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "spacing": 1,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "TheaterChase-speed-1",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "spacing": 0.02,
+      "speed": -0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "TheaterChase-speed-2",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "spacing": 0.02,
+      "speed": 0.2,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "TheaterChase-opacity-1",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "TheaterChase-opacity-2",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "TheaterChase-blendMode-1",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "TheaterChase-blendMode-2",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "TheaterChase-disabled",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "a": 1
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

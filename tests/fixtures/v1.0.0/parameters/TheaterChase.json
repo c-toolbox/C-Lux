@@ -1,0 +1,135 @@
+{
+  "name": "TheaterChase",
+  "patterns": [
+    {
+      "name": "TheaterChase-defaults",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "TheaterChase-color-1",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "TheaterChase-color-2",
+      "type": "TheaterChase",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "TheaterChase-spacing-1",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "spacing": 0.01,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "TheaterChase-spacing-2",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "spacing": 1,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "TheaterChase-speed-1",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "spacing": 0.02,
+      "speed": -0.1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "TheaterChase-speed-2",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "spacing": 0.02,
+      "speed": 0.2,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "TheaterChase-opacity-1",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 0
+    },
+    {
+      "name": "TheaterChase-opacity-2",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": true,
+      "opacity": 0.5
+    },
+    {
+      "name": "TheaterChase-disabled",
+      "type": "TheaterChase",
+      "color": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "spacing": 0.02,
+      "speed": 0.05,
+      "enabled": false,
+      "opacity": 1
+    }
+  ]
+}

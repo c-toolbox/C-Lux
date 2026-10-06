@@ -1,0 +1,261 @@
+{
+  "name": "Ripple",
+  "patterns": [
+    {
+      "name": "Ripple-defaults",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-color-1",
+      "type": "Ripple",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-color-2",
+      "type": "Ripple",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-speed-1",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.05,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-speed-2",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 1,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-width-1",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.01,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-width-2",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 1,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-decay-1",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-decay-2",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 2,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-interval-1",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 0.5,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-interval-2",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 8,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-origin-1",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-origin-2",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0.5,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Ripple-opacity-1",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 0
+    },
+    {
+      "name": "Ripple-opacity-2",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0,
+      "enabled": true,
+      "opacity": 0.5
+    },
+    {
+      "name": "Ripple-disabled",
+      "type": "Ripple",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247
+      },
+      "speed": 0.25,
+      "width": 0.04,
+      "decay": 0.5,
+      "interval": 2,
+      "origin": 0,
+      "enabled": false,
+      "opacity": 1
+    }
+  ]
+}

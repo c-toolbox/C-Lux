@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { validateNewPatternProps } from '../server/validation';
 import { AUDIO_BANDS, setAudioFrame } from '../shared/audio';
@@ -189,25 +189,30 @@ describe.each(PATTERN_TYPES)('%s pattern', (type) => {
           0.7
         );
       }
-      vi.spyOn(Math, 'random').mockImplementation(mulberry32(3));
+      random.mockImplementation(mulberry32(3));
       const pattern = build(params);
       const out: number[][] = [];
       for (let i = 0; i < 10; i++) {
         pattern.tick(1 / 30);
         out.push(pattern.data());
       }
-      vi.restoreAllMocks();
       return out;
     };
 
+    const random = vi.spyOn(Math, 'random');
+    onTestFinished(() => random.mockRestore());
     for (const combo of selectCombinations(type)) {
       const base = { ...defaultParameters(type), ...combo };
+      const expected = frames(base);
+      const expectedJson = JSON.stringify(expected);
       for (const [key, spec] of Object.entries(fields)) {
         if (isFieldVisible(spec, base)) continue;
-        const expected = frames(base);
         for (const value of edgeValues(spec)) {
+          const actual = frames({ ...base, [key]: value });
+          // A deep toEqual on every run is too slow; it only reports the difference.
+          if (JSON.stringify(actual) === expectedJson) continue;
           expect(
-            frames({ ...base, [key]: value }),
+            actual,
             `${key}=${JSON.stringify(value)} with ${JSON.stringify(combo)}`
           ).toEqual(expected);
         }

@@ -1,0 +1,343 @@
+{
+  "version": 2,
+  "name": "Aurora",
+  "patterns": [
+    {
+      "name": "Aurora-defaults",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-color-1",
+      "type": "Aurora",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-color-2",
+      "type": "Aurora",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-color2-1",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 255,
+        "g": 0,
+        "b": 128
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-color2-2",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-speed-1",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": -0.1,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-speed-2",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.2,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-scale-1",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 1,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-scale-2",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 8,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-intensity-1",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 0,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-intensity-2",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 0.5,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-opacity-1",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-opacity-2",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Aurora-blendMode-1",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Aurora-blendMode-2",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Aurora-disabled",
+      "type": "Aurora",
+      "color": {
+        "r": 43,
+        "g": 212,
+        "b": 125,
+        "a": 1
+      },
+      "color2": {
+        "r": 112,
+        "g": 72,
+        "b": 232
+      },
+      "speed": 0.05,
+      "scale": 2,
+      "intensity": 1,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

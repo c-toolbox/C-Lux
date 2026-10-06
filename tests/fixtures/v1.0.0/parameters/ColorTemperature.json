@@ -1,0 +1,69 @@
+{
+  "name": "ColorTemperature",
+  "patterns": [
+    {
+      "name": "ColorTemperature-defaults",
+      "type": "ColorTemperature",
+      "kelvin": 2700,
+      "brightness": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorTemperature-kelvin-1",
+      "type": "ColorTemperature",
+      "kelvin": 1000,
+      "brightness": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorTemperature-kelvin-2",
+      "type": "ColorTemperature",
+      "kelvin": 12000,
+      "brightness": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorTemperature-brightness-1",
+      "type": "ColorTemperature",
+      "kelvin": 2700,
+      "brightness": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorTemperature-brightness-2",
+      "type": "ColorTemperature",
+      "kelvin": 2700,
+      "brightness": 0.5,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "ColorTemperature-opacity-1",
+      "type": "ColorTemperature",
+      "kelvin": 2700,
+      "brightness": 1,
+      "enabled": true,
+      "opacity": 0
+    },
+    {
+      "name": "ColorTemperature-opacity-2",
+      "type": "ColorTemperature",
+      "kelvin": 2700,
+      "brightness": 1,
+      "enabled": true,
+      "opacity": 0.5
+    },
+    {
+      "name": "ColorTemperature-disabled",
+      "type": "ColorTemperature",
+      "kelvin": 2700,
+      "brightness": 1,
+      "enabled": false,
+      "opacity": 1
+    }
+  ]
+}

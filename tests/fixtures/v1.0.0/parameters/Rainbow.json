@@ -1,0 +1,125 @@
+{
+  "name": "Rainbow",
+  "patterns": [
+    {
+      "name": "Rainbow-defaults",
+      "type": "Rainbow",
+      "speed": 60,
+      "saturation": 1,
+      "value": 1,
+      "cycles": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Rainbow-speed-1",
+      "type": "Rainbow",
+      "speed": -120,
+      "saturation": 1,
+      "value": 1,
+      "cycles": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Rainbow-speed-2",
+      "type": "Rainbow",
+      "speed": 240,
+      "saturation": 1,
+      "value": 1,
+      "cycles": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Rainbow-cycles-1",
+      "type": "Rainbow",
+      "speed": 60,
+      "saturation": 1,
+      "value": 1,
+      "cycles": 0,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Rainbow-cycles-2",
+      "type": "Rainbow",
+      "speed": 60,
+      "saturation": 1,
+      "value": 1,
+      "cycles": 4,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Rainbow-saturation-1",
+      "type": "Rainbow",
+      "speed": 60,
+      "saturation": 0,
+      "value": 1,
+      "cycles": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Rainbow-saturation-2",
+      "type": "Rainbow",
+      "speed": 60,
+      "saturation": 0.5,
+      "value": 1,
+      "cycles": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Rainbow-value-1",
+      "type": "Rainbow",
+      "speed": 60,
+      "saturation": 1,
+      "value": 0,
+      "cycles": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Rainbow-value-2",
+      "type": "Rainbow",
+      "speed": 60,
+      "saturation": 1,
+      "value": 0.5,
+      "cycles": 1,
+      "enabled": true,
+      "opacity": 1
+    },
+    {
+      "name": "Rainbow-opacity-1",
+      "type": "Rainbow",
+      "speed": 60,
+      "saturation": 1,
+      "value": 1,
+      "cycles": 1,
+      "enabled": true,
+      "opacity": 0
+    },
+    {
+      "name": "Rainbow-opacity-2",
+      "type": "Rainbow",
+      "speed": 60,
+      "saturation": 1,
+      "value": 1,
+      "cycles": 1,
+      "enabled": true,
+      "opacity": 0.5
+    },
+    {
+      "name": "Rainbow-disabled",
+      "type": "Rainbow",
+      "speed": 60,
+      "saturation": 1,
+      "value": 1,
+      "cycles": 1,
+      "enabled": false,
+      "opacity": 1
+    }
+  ]
+}

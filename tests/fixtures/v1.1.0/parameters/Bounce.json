@@ -1,0 +1,186 @@
+{
+  "version": 2,
+  "name": "Bounce",
+  "patterns": [
+    {
+      "name": "Bounce-defaults",
+      "type": "Bounce",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Bounce-color-1",
+      "type": "Bounce",
+      "color": {
+        "r": 255,
+        "g": 0,
+        "b": 128,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Bounce-color-2",
+      "type": "Bounce",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.5
+      },
+      "sigma": 0.04,
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Bounce-sigma-1",
+      "type": "Bounce",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0,
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Bounce-sigma-2",
+      "type": "Bounce",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 1,
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Bounce-speed-1",
+      "type": "Bounce",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": -0.2,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Bounce-speed-2",
+      "type": "Bounce",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.4,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 0
+    },
+    {
+      "name": "Bounce-opacity-1",
+      "type": "Bounce",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 0,
+      "blendMode": 0
+    },
+    {
+      "name": "Bounce-opacity-2",
+      "type": "Bounce",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 0.5,
+      "blendMode": 0
+    },
+    {
+      "name": "Bounce-blendMode-1",
+      "type": "Bounce",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 1
+    },
+    {
+      "name": "Bounce-blendMode-2",
+      "type": "Bounce",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.1,
+      "enabled": true,
+      "opacity": 1,
+      "blendMode": 3
+    },
+    {
+      "name": "Bounce-disabled",
+      "type": "Bounce",
+      "color": {
+        "r": 77,
+        "g": 171,
+        "b": 247,
+        "a": 1
+      },
+      "sigma": 0.04,
+      "speed": 0.1,
+      "enabled": false,
+      "opacity": 1,
+      "blendMode": 0
+    }
+  ]
+}

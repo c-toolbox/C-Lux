@@ -1,7 +1,5 @@
 import { Modal } from '@mantine/core';
 
-import { DRAFT_CAPTURE } from '../lib/captures';
-import { captureFormProps } from '../PatternForm/capture';
 import { type FormValues, PatternForm } from '../PatternForm/PatternForm';
 
 interface AddPatternModalProps {
@@ -29,8 +27,6 @@ export function AddPatternModal({
         existingNames={existingNames}
         busy={busy}
         onSubmit={onSubmit}
-        capture={(type) => captureFormProps(type, DRAFT_CAPTURE, null)}
-        captureFeed={DRAFT_CAPTURE}
       />
     </Modal>
   );
